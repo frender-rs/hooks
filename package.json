@@ -5,6 +5,7 @@
   "private": true,
   "devDependencies": {
     "@nrwl/cli": "14.7.17",
+    "@nrwl/devkit": "^14.7.17",
     "@nrwl/workspace": "14.7.17",
     "@nxrs/cargo": "^0.3.3",
     "nx": "14.7.17",
