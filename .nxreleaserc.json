@@ -2,7 +2,7 @@
   "changelog": true,
   "npm": true,
   "github": true,
-  "repositoryUrl": "https://github.com/frender/hooks",
+  "repositoryUrl": "https://github.com/frender-rs/hooks",
   "branches": [
     "master"
   ]
