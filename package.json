@@ -6,6 +6,7 @@
   "devDependencies": {
     "@commitlint/cli": "^17.0.0",
     "@commitlint/config-conventional": "^17.0.0",
+    "@google/semantic-release-replace-plugin": "^1.1.0",
     "@nrwl/cli": "14.7.17",
     "@nrwl/devkit": "^14.7.17",
     "@nrwl/workspace": "14.7.17",
