@@ -3662,6 +3662,8 @@ __metadata:
     "@nrwl/devkit": ^14.7.17
     "@nrwl/workspace": 14.7.17
     "@nxrs/cargo": ^0.3.3
+    "@semantic-release/changelog": ^6.0.1
+    "@semantic-release/git": ^10.0.1
     "@theunderscorer/nx-semantic-release": ^1.14.0
     husky: ^8.0.0
     nx: 14.7.17
