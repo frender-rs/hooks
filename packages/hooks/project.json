@@ -28,7 +28,7 @@
             }
           ]
         ],
-        "gitAssets": ["${PROJECT_DIR}/Cargo.toml", "Cargo.lock"],
+        "gitAssets": ["**/Cargo.toml", "Cargo.lock"],
         "github": true,
         "changelog": true,
         "npm": false,
