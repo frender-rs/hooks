@@ -23,11 +23,12 @@
             "@semantic-release/exec",
             {
               "verifyReleaseCmd": "cargo check",
-              "publishCmd": "cargo set-version ${nextRelease.version} && cargo publish"
+              "publishCmd": "cargo set-version ${nextRelease.version} && cargo check && cargo publish && echo '{\"name\":\"hooks ${nextRelease.version}\"}'",
+              "execCwd": "packages/hooks"
             }
           ]
         ],
-        "gitAssets": ["Cargo.toml", "../../Cargo.lock"],
+        "gitAssets": ["${PROJECT_DIR}/Cargo.toml", "Cargo.lock"],
         "github": true,
         "changelog": true,
         "npm": false,
