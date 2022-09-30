@@ -22,8 +22,8 @@
           [
             "@semantic-release/exec",
             {
-              "verifyReleaseCmd": "cargo check",
-              "publishCmd": "cargo set-version ${nextRelease.version} && cargo check && cargo publish && echo '{\"name\":\"hooks ${nextRelease.version}\"}'",
+              "prepareCmd": "cargo set-version ${nextRelease.version} && cargo check",
+              "publishCmd": "cargo publish",
               "execCwd": "packages/hooks"
             }
           ]
