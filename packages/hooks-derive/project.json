@@ -28,7 +28,6 @@
             }
           ]
         ],
-        "gitAssets": ["**/Cargo.toml", "Cargo.lock"],
         "github": true,
         "changelog": true,
         "npm": false,
