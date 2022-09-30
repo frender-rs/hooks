@@ -48,8 +48,8 @@ jobs:
 
       - name: release
         run: |
-          yarn run nx hooks-derive:semantic-release
-          yarn run nx hooks:semantic-release
+          yarn nx run hooks-derive:semantic-release
+          yarn nx run hooks:semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
