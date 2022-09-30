@@ -20,29 +20,10 @@
       "options": {
         "plugins": [
           [
-            "@google/semantic-release-replace-plugin",
-            {
-              "replacements": [
-                {
-                  "files": "Cargo.toml",
-                  "from": "version = \".*\" # replace version",
-                  "to": "version = \"${nextRelease.version}\" # replace version",
-                  "results": {
-                    "file": "Cargo.toml",
-                    "hasChanged": true,
-                    "numMatches": 1,
-                    "numReplacements": 1
-                  },
-                  "countMatches": true
-                }
-              ]
-            }
-          ],
-          [
             "@semantic-release/exec",
             {
               "verifyReleaseCmd": "cargo check",
-              "publishCmd": "cargo publish"
+              "publishCmd": "cargo set-version ${nextRelease.version} && cargo publish"
             }
           ]
         ],
