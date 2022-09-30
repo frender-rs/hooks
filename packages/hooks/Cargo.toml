@@ -10,3 +10,4 @@ repository = "https://github.com/frender-rs/hooks"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+hooks-derive = { path = "../hooks-derive", version = "0.1.0" }

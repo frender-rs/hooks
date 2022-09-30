@@ -5,3 +5,10 @@ version = 3
 [[package]]
 name = "hooks"
 version = "1.0.0-alpha.1"
+dependencies = [
+ "hooks-derive",
+]
+
+[[package]]
+name = "hooks-derive"
+version = "0.1.0"
