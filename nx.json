@@ -1,6 +1,6 @@
 {
   "extends": "nx/presets/npm.json",
-  "$schema": "./node_modules/nx/schemas/nx-schema.json",
+  "$schema": "./.yarn/unplugged/nx-virtual-fb1067bda3/node_modules/nx/schemas/nx-schema.json",
   "npmScope": "hooks",
   "affected": {
     "defaultBase": "main"
