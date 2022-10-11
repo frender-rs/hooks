@@ -1,5 +1,5 @@
 {
-  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "$schema": "../../.yarn/unplugged/nx-virtual-fb1067bda3/node_modules/nx/schemas/project-schema.json",
   "projectType": "library",
   "sourceRoot": "packages/hooks-derive/src",
   "targets": {
