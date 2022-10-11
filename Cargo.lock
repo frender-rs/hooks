@@ -10,5 +10,9 @@ dependencies = [
 ]
 
 [[package]]
+name = "hooks-core"
+version = "0.1.0"
+
+[[package]]
 name = "hooks-derive"
 version = "1.0.0-alpha.1"
