@@ -27,6 +27,7 @@
   ],
   "packageManager": "yarn@3.2.3",
   "scripts": {
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "postinstall": "husky install"
   }
 }
