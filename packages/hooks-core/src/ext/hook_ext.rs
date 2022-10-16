@@ -1,28 +1,16 @@
 use std::{pin::Pin, task::Poll};
 
 use super::NextUpdate;
-use crate::{Hook, HookLifetime};
+use crate::{Hook, HookLifetime, HookPollNextUpdate};
 
-pub trait HookExt: Hook {
+pub trait HookPollNextUpdateExt: HookPollNextUpdate {
     /// A shortcut to call [`Hook::poll_next_update`] on Unpin hooks.
     #[inline]
     fn poll_next_update(&mut self, cx: &mut std::task::Context<'_>) -> Poll<bool>
     where
         Self: Unpin,
     {
-        Hook::poll_next_update(Pin::new(self), cx)
-    }
-
-    /// A shortcut to call [`Hook::use_hook`] on Unpin hooks.
-    #[inline]
-    fn use_hook<'hook>(
-        &'hook mut self,
-        args: <Self as HookLifetime<'hook>>::Args,
-    ) -> <Self as HookLifetime<'hook>>::Value
-    where
-        Self: Unpin,
-    {
-        <Self as Hook>::use_hook(Pin::new(self), args)
+        HookPollNextUpdate::poll_next_update(Pin::new(self), cx)
     }
 
     /// Get a future which polls [`Hook::poll_next_update`].
@@ -32,6 +20,19 @@ pub trait HookExt: Hook {
         Self: Unpin,
     {
         NextUpdate::new(self)
+    }
+}
+
+impl<H: HookPollNextUpdate> HookPollNextUpdateExt for H {}
+
+pub trait HookExt<Args>: Hook<Args> {
+    /// A shortcut to call [`Hook::use_hook`] on Unpin hooks.
+    #[inline]
+    fn use_hook<'hook>(&'hook mut self, args: Args) -> <Self as HookLifetime<'hook, Args>>::Value
+    where
+        Self: Unpin,
+    {
+        <Self as Hook<Args>>::use_hook(Pin::new(self), args)
     }
 
     // fn run_with_args<'hook, A: FnMut(&mut Self) -> <Self as HookLifetime<'hook>>::Args>(
@@ -45,4 +46,4 @@ pub trait HookExt: Hook {
     // }
 }
 
-impl<H: Hook + ?Sized> HookExt for H {}
+impl<Args, H: Hook<Args>> HookExt<Args> for H {}

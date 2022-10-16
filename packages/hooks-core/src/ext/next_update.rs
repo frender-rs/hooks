@@ -1,6 +1,6 @@
 use std::{future::Future, pin::Pin, task::Poll};
 
-use crate::Hook;
+use crate::HookPollNextUpdate;
 
 pub struct NextUpdate<'a, H: ?Sized> {
     hook: &'a mut H,
@@ -12,7 +12,7 @@ impl<'a, H: ?Sized> NextUpdate<'a, H> {
     }
 }
 
-impl<'a, H: Hook + Unpin + ?Sized> Future for NextUpdate<'a, H> {
+impl<'a, H: HookPollNextUpdate + Unpin + ?Sized> Future for NextUpdate<'a, H> {
     type Output = bool;
 
     #[inline]

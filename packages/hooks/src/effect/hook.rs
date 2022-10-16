@@ -1,4 +1,4 @@
-use hooks_core::{Hook, HookBounds, HookLifetime};
+use hooks_core::{Hook, HookBounds, HookLifetime, HookPollNextUpdate};
 
 use crate::EffectCleanup;
 
@@ -23,15 +23,14 @@ impl<Dep: PartialEq, E: EffectFor<Dep>> HookBounds for Effect<Dep, E> {
     type Bounds = Self;
 }
 
-impl<'hook, Dep: PartialEq, E: EffectFor<Dep>> HookLifetime<'hook> for Effect<Dep, E> {
+impl<'hook, Dep: PartialEq, E: EffectFor<Dep>> HookLifetime<'hook, (E, Dep)> for Effect<Dep, E> {
     type Value = ();
-    type Args = (E, Dep);
 }
 
-impl<Dep: PartialEq, E: EffectFor<Dep>> Hook for Effect<Dep, E> {
+impl<Dep: PartialEq, E: EffectFor<Dep>> HookPollNextUpdate for Effect<Dep, E> {
     fn poll_next_update(
         self: std::pin::Pin<&mut Self>,
-        _cx: &mut std::task::Context<'_>,
+        cx: &mut std::task::Context<'_>,
     ) -> std::task::Poll<bool> {
         let this = self.get_mut();
 
@@ -52,12 +51,13 @@ impl<Dep: PartialEq, E: EffectFor<Dep>> Hook for Effect<Dep, E> {
 
         std::task::Poll::Ready(false)
     }
+}
 
-    #[inline]
+impl<Dep: PartialEq, E: EffectFor<Dep>> Hook<(E, Dep)> for Effect<Dep, E> {
     fn use_hook<'hook>(
         self: std::pin::Pin<&'hook mut Self>,
-        (effect, dep): <Self as HookLifetime<'hook>>::Args,
-    ) -> <Self as HookLifetime<'hook>>::Value
+        (effect, dep): (E, Dep),
+    ) -> <Self as HookLifetime<'hook, (E, Dep)>>::Value
     where
         Self: 'hook,
     {

@@ -26,11 +26,36 @@ pub trait HookBounds {
 /// [compiler bug]: https://github.com/rust-lang/rust/issues/61949#issuecomment-789664939
 pub trait HookLifetime<
     'hook,
+    Args,
     ImplicitBounds: sealed::HookLifetimeBounds<'hook, Self> = &'hook <Self as HookBounds>::Bounds,
 >: HookBounds
 {
     type Value;
-    type Args;
+}
+
+pub trait HookPollNextUpdate {
+    /// The meaning of the return value is:
+    ///
+    /// - `Poll::Pending` means this hook's inner state is not updated
+    ///   after the last `use_hook`.
+    ///   The executor **DO NOT NEED** to call `use_hook` again
+    ///   because the returned value is expected to remain the same
+    ///   as the value from the last call.
+    ///   The executor **CAN** still call `use_hook`
+    ///   to re-get the returned value.
+    ///
+    /// - `Poll::Ready(true)` means this hook's inner state has been updated
+    ///   since the last `use_hook`.
+    ///   The executor **SHOULD** call `use_hook` again to get the new value.
+    ///   The executor **CAN** ignore this update, by polling next update
+    ///   without calling `use_hook`.
+    ///
+    /// - `Poll::Ready(false)` means this hook's inner state will never be updated.
+    ///   The executor **CAN** no longer call `use_hook` or even drop this hook.
+    ///   The executor **CAN** also call `use_hook` to get the value and
+    ///   the hook **MIGHT** become dynamic again during `use_hook` or when
+    ///   some operations is done to the returned value.
+    fn poll_next_update(self: Pin<&mut Self>, cx: &mut std::task::Context<'_>) -> Poll<bool>;
 }
 
 /// ## How to impl `Hook`
@@ -124,56 +149,34 @@ pub trait HookLifetime<
 ///   the executor can still get the values
 ///   from the no-longer-dynamic hooks,
 ///   and pass the values to the dynamic hooks.
-pub trait Hook: for<'hook> HookLifetime<'hook> {
-    /// The meaning of the return value is:
-    ///
-    /// - `Poll::Pending` means this hook's inner state is not updated
-    ///   after the last `use_hook`.
-    ///   The executor **DO NOT NEED** to call `use_hook` again
-    ///   because the returned value is expected to remain the same
-    ///   as the value from the last call.
-    ///   The executor **CAN** still call `use_hook`
-    ///   to re-get the returned value.
-    ///
-    /// - `Poll::Ready(true)` means this hook's inner state has been updated
-    ///   since the last `use_hook`.
-    ///   The executor **SHOULD** call `use_hook` again to get the new value.
-    ///   The executor **CAN** ignore this update, by polling next update
-    ///   without calling `use_hook`.
-    ///
-    /// - `Poll::Ready(false)` means this hook's inner state will never be updated.
-    ///   The executor **CAN** no longer call `use_hook` or even drop this hook.
-    ///   The executor **CAN** also call `use_hook` to get the value and
-    ///   the hook **MIGHT** become dynamic again during `use_hook` or when
-    ///   some operations is done to the returned value.
-    fn poll_next_update(self: Pin<&mut Self>, cx: &mut std::task::Context<'_>) -> Poll<bool>;
-
+pub trait Hook<Args>: HookPollNextUpdate + for<'hook> HookLifetime<'hook, Args> {
     fn use_hook<'hook>(
         self: Pin<&'hook mut Self>,
-        args: <Self as HookLifetime<'hook>>::Args,
-    ) -> <Self as HookLifetime<'hook>>::Value
+        args: Args,
+    ) -> <Self as HookLifetime<'hook, Args>>::Value
     where
         Self: 'hook;
 }
 
-impl<'hook, H: Hook + ?Sized> HookBounds for &mut H {
+impl<'hook, H: HookBounds + ?Sized> HookBounds for &mut H {
     type Bounds = H::Bounds;
 }
 
-impl<'hook, H: Hook + ?Sized> HookLifetime<'hook> for &mut H {
-    type Value = <H as HookLifetime<'hook>>::Value;
-    type Args = <H as HookLifetime<'hook>>::Args;
+impl<'hook, Args, H: HookLifetime<'hook, Args> + ?Sized> HookLifetime<'hook, Args> for &mut H {
+    type Value = <H as HookLifetime<'hook, Args>>::Value;
 }
 
-impl<H: Hook + Unpin + ?Sized> Hook for &mut H {
+impl<H: HookPollNextUpdate + Unpin + ?Sized> HookPollNextUpdate for &mut H {
     fn poll_next_update(self: Pin<&mut Self>, cx: &mut std::task::Context<'_>) -> Poll<bool> {
         H::poll_next_update(Pin::new(self.get_mut()), cx)
     }
+}
 
+impl<H: Hook<Args> + Unpin + ?Sized, Args> Hook<Args> for &mut H {
     fn use_hook<'hook>(
         self: Pin<&'hook mut Self>,
-        args: <Self as HookLifetime<'hook>>::Args,
-    ) -> <Self as HookLifetime<'hook>>::Value
+        args: Args,
+    ) -> <Self as HookLifetime<'hook, Args>>::Value
     where
         Self: 'hook,
     {
@@ -189,34 +192,15 @@ impl<H: Hook + Unpin + ?Sized> Hook for &mut H {
 /// [`Hook`] can be run by executor and become a `LendingAsyncIterator`,
 /// `NonLendingHook` can be run by executor and become an `AsyncIterator`
 /// (also known as [`Stream`](futures_lite::Stream)).
-pub trait NonLendingHook:
-    Hook + for<'hook> HookLifetime<'hook, Value = Self::NonGenericValue>
+pub trait NonLendingHook<Args>:
+    Hook<Args> + for<'hook> HookLifetime<'hook, Args, Value = Self::NonGenericValue>
 {
     type NonGenericValue;
 }
 
-impl<H: ?Sized, V> NonLendingHook for H
+impl<H: ?Sized, Args, V> NonLendingHook<Args> for H
 where
-    H: Hook + for<'hook> HookLifetime<'hook, Value = V>,
+    H: Hook<Args> + for<'hook> HookLifetime<'hook, Args, Value = V>,
 {
     type NonGenericValue = V;
 }
-
-/// A `NonGenericArgsHook` is a [`Hook`] whose `Args` is not generic.
-pub trait NonGenericArgsHook:
-    Hook + for<'hook> HookLifetime<'hook, Args = Self::NonGenericArgs>
-{
-    type NonGenericArgs;
-}
-
-impl<H: ?Sized, A> NonGenericArgsHook for H
-where
-    H: Hook + for<'hook> HookLifetime<'hook, Args = A>,
-{
-    type NonGenericArgs = A;
-}
-
-/// A `NonGenericHook` is a [`Hook`] whose `Args` and `Value` are both non-generic.
-pub trait NonGenericHook: NonGenericArgsHook + NonLendingHook {}
-
-impl<H: ?Sized> NonGenericHook for H where H: NonGenericArgsHook + NonLendingHook {}

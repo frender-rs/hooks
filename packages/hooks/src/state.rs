@@ -1,6 +1,6 @@
 use std::{pin::Pin, task::Poll};
 
-use hooks_core::{Hook, HookBounds, HookLifetime};
+use hooks_core::{Hook, HookBounds, HookLifetime, HookPollNextUpdate};
 
 use crate::{DeferredStateUpdater, STAGING_STATES_DEFAULT_STACK_COUNT};
 
@@ -19,17 +19,16 @@ impl<'a, T: 'a, const N: usize> HookBounds for State<'a, T, N> {
     type Bounds = Self;
 }
 
-impl<'hook, 'a, T: 'a, const N: usize> HookLifetime<'hook, &'hook Self> for State<'a, T, N> {
-    //                                                     ^^^^^^^^^^^
-    //                       Write explicitly `&'hook Self::Bounds`  |
-    //                       so that impl body has implicit bounds   |
-    //                       where `Self: 'hook`                     |
+impl<'hook, 'a, T: 'a, const N: usize> HookLifetime<'hook, (T,), &'hook Self> for State<'a, T, N> {
+    //                                                           ^^^^^^^^^^^
+    //                             Write explicitly `&'hook Self::Bounds`  |
+    //                             so that impl body has implicit bounds   |
+    //                             where `Self: 'hook`                     |
 
     type Value = (&'hook mut T, &'hook DeferredStateUpdater<'a, T, N>);
-    type Args = (T,);
 }
 
-impl<'a, T: 'a, const N: usize> Hook for State<'a, T, N> {
+impl<'a, T: 'a, const N: usize> HookPollNextUpdate for State<'a, T, N> {
     fn poll_next_update(mut self: Pin<&mut Self>, cx: &mut std::task::Context<'_>) -> Poll<bool> {
         if let Some(data) = &mut self.data {
             data.state_updater
@@ -51,11 +50,13 @@ impl<'a, T: 'a, const N: usize> Hook for State<'a, T, N> {
             Poll::Ready(true)
         }
     }
+}
 
+impl<'a, T: 'a, const N: usize> Hook<(T,)> for State<'a, T, N> {
     fn use_hook<'hook>(
         self: Pin<&'hook mut Self>,
-        (initial_state,): <Self as HookLifetime<'hook>>::Args,
-    ) -> <Self as HookLifetime<'hook, &'hook Self>>::Value
+        (initial_state,): (T,),
+    ) -> <Self as HookLifetime<'hook, (T,)>>::Value
     where
         Self: 'hook,
     {

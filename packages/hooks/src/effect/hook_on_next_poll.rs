@@ -1,4 +1,4 @@
-use hooks_core::{Hook, HookBounds, HookLifetime};
+use hooks_core::{Hook, HookBounds, HookLifetime, HookPollNextUpdate};
 
 use crate::{EffectCleanup, EffectForNoneDependency};
 
@@ -19,12 +19,11 @@ impl<E: EffectForNoneDependency> HookBounds for EffectOnNextPoll<E> {
     type Bounds = Self;
 }
 
-impl<'hook, E: EffectForNoneDependency> HookLifetime<'hook> for EffectOnNextPoll<E> {
+impl<'hook, E: EffectForNoneDependency> HookLifetime<'hook, (E,)> for EffectOnNextPoll<E> {
     type Value = ();
-    type Args = (E,);
 }
 
-impl<E: EffectForNoneDependency> Hook for EffectOnNextPoll<E> {
+impl<E: EffectForNoneDependency> HookPollNextUpdate for EffectOnNextPoll<E> {
     fn poll_next_update(
         self: std::pin::Pin<&mut Self>,
         _cx: &mut std::task::Context<'_>,
@@ -42,11 +41,13 @@ impl<E: EffectForNoneDependency> Hook for EffectOnNextPoll<E> {
 
         std::task::Poll::Ready(false)
     }
+}
 
+impl<E: EffectForNoneDependency> Hook<(E,)> for EffectOnNextPoll<E> {
     fn use_hook<'hook>(
         self: std::pin::Pin<&'hook mut Self>,
-        (effect,): <Self as HookLifetime<'hook>>::Args,
-    ) -> <Self as HookLifetime<'hook>>::Value
+        (effect,): (E,),
+    ) -> <Self as HookLifetime<'hook, (E,)>>::Value
     where
         Self: 'hook,
     {

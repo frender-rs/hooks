@@ -1,4 +1,4 @@
-use hooks_core::{Hook, HookBounds, HookLifetime};
+use hooks_core::{Hook, HookBounds, HookLifetime, HookPollNextUpdate};
 
 use crate::{EffectCleanup, EffectFor};
 
@@ -43,15 +43,16 @@ impl<Dep, E: EffectFor<Dep>> HookBounds for EffectWith<Dep, E> {
     type Bounds = Self;
 }
 
-impl<'hook, Dep, E: EffectFor<Dep>> HookLifetime<'hook> for EffectWith<Dep, E> {
+impl<'hook, Dep, E: EffectFor<Dep>, F: FnOnce(&Option<Dep>) -> Option<(Dep, E)>>
+    HookLifetime<'hook, (F,)> for EffectWith<Dep, E>
+{
     type Value = ();
-    type Args = (Box<dyn 'hook + FnOnce(&Option<Dep>) -> Option<(Dep, E)>>,);
 }
 
-impl<Dep, E: EffectFor<Dep>> Hook for EffectWith<Dep, E> {
+impl<Dep, E: EffectFor<Dep>> HookPollNextUpdate for EffectWith<Dep, E> {
     fn poll_next_update(
         self: std::pin::Pin<&mut Self>,
-        _cx: &mut std::task::Context<'_>,
+        cx: &mut std::task::Context<'_>,
     ) -> std::task::Poll<bool> {
         let this = self.get_mut();
 
@@ -70,12 +71,16 @@ impl<Dep, E: EffectFor<Dep>> Hook for EffectWith<Dep, E> {
 
         std::task::Poll::Ready(false)
     }
+}
 
+impl<Dep, E: EffectFor<Dep>, F: FnOnce(&Option<Dep>) -> Option<(Dep, E)>> Hook<(F,)>
+    for EffectWith<Dep, E>
+{
     #[inline]
     fn use_hook<'hook>(
         self: std::pin::Pin<&'hook mut Self>,
-        (get_new_dep_and_effect,): <Self as HookLifetime<'hook>>::Args,
-    ) -> <Self as HookLifetime<'hook>>::Value
+        (get_new_dep_and_effect,): (F,),
+    ) -> <Self as HookLifetime<'hook, (F,)>>::Value
     where
         Self: 'hook,
     {
@@ -98,7 +103,7 @@ mod tests {
     use std::{cell::RefCell, rc::Rc};
 
     use futures_lite::future::block_on;
-    use hooks_core::HookExt;
+    use hooks_core::{HookExt, HookPollNextUpdateExt};
 
     use super::use_effect_with;
 
@@ -114,13 +119,13 @@ mod tests {
 
             let v = "123".to_string();
 
-            hook.use_hook((Box::new(|old_v| {
+            hook.use_hook((|old_v| {
                 if old_v.as_ref() == Some(&v) {
                     None
                 } else {
-                    Some((v.clone(), |v: &String| values.push((*v).clone())))
+                    Some((v.clone(), |v: &String| values.push(v.clone())))
                 }
-            }),));
+            },));
 
             drop(v); // v is not moved before.
 
