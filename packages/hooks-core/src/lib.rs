@@ -1,14 +1,21 @@
-pub fn add(left: usize, right: usize) -> usize {
-    left + right
-}
+mod ext;
+mod hook;
+mod run_hook;
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+pub use ext::*;
+pub use hook::*;
+pub use run_hook::*;
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
+pub(crate) mod sealed {
+    pub trait HookLifetimeBounds<'hook, This: ?Sized> {}
+    impl<'hook, T: super::HookBounds<Bounds = B> + ?Sized, B: ?Sized> HookLifetimeBounds<'hook, T>
+        for &'hook B
+    {
+    }
+
+    pub trait RunHookLifetimeBounds<'hook, This: ?Sized, H: ?Sized> {}
+    impl<'hook, H: ?Sized, T: super::RunHookBounds<H, Bounds = B> + ?Sized, B: ?Sized>
+        RunHookLifetimeBounds<'hook, T, H> for &'hook B
+    {
     }
 }
