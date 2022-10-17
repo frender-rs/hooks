@@ -625,6 +625,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@iarna/toml@npm:^2.2.5":
+  version: 2.2.5
+  resolution: "@iarna/toml@npm:2.2.5"
+  checksum: b63b2b2c4fd67969a6291543ada0303d45593801ee744b60f5390f183c03d9192bc67a217abb24be945158f1935f02840d9ffff40c0142aa171b5d3b6b6a3ea5
+  languageName: node
+  linkType: hard
+
 "@isaacs/string-locale-compare@npm:*, @isaacs/string-locale-compare@npm:^1.1.0":
   version: 1.1.0
   resolution: "@isaacs/string-locale-compare@npm:1.1.0"
@@ -1173,7 +1180,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nrwl/devkit@npm:14.8.6, @nrwl/devkit@npm:^14.8.6":
+"@nrwl/devkit@npm:14.8.6":
   version: 14.8.6
   resolution: "@nrwl/devkit@npm:14.8.6"
   dependencies:
@@ -1275,14 +1282,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nxrs/cargo@npm:^0.3.3":
-  version: 0.3.3
-  resolution: "@nxrs/cargo@npm:0.3.3"
+"@nxrs/cargo@npm:@ignisda/nx-rust@14.8.1":
+  version: 14.8.1
+  resolution: "@ignisda/nx-rust@npm:14.8.1"
   dependencies:
+    "@iarna/toml": ^2.2.5
+    "@swc/helpers": ^0.3.3
     chalk: ^4.1.2
-  peerDependencies:
-    "@nrwl/devkit": ">= 12.7.0"
-  checksum: 647b7fbe95622e6b4c0ffdcd753e76c9c7dc4c0ce6aae5f711936e11b42032816191717efeb77e3b6b1ed08da34bc310f17c857a500a94a98848de402d38880b
+    stream-chain: ^2.2.5
+    stream-json: ^1.7.4
+  checksum: a2e422a44554d70dfea9b089fff0aea77b841bee858b9e3891ec4da77304a4f371c4874c247617583e2cc05e6fd4844f1f0cd2c4627258b97453db0770870b28
   languageName: node
   linkType: hard
 
@@ -1625,6 +1634,15 @@ __metadata:
   dependencies:
     "@sinonjs/commons": ^1.7.0
   checksum: 7d3aef54e17c1073101cb64d953157c19d62a40e261a30923fa1ee337b049c5f29cc47b1f0c477880f42b5659848ba9ab897607ac8ea4acd5c30ddcfac57fca6
+  languageName: node
+  linkType: hard
+
+"@swc/helpers@npm:^0.3.3":
+  version: 0.3.17
+  resolution: "@swc/helpers@npm:0.3.17"
+  dependencies:
+    tslib: ^2.4.0
+  checksum: ce3a5146d738b707f0608bba731aa1fd0a8e3f75f140ff7281225d775a769f085f085e0293b570a9d201c76e09951af178c9222d8c706d4ed0d1c85b25f55cb6
   languageName: node
   linkType: hard
 
@@ -3728,9 +3746,9 @@ __metadata:
     "@commitlint/cli": ^17.0.0
     "@commitlint/config-conventional": ^17.0.0
     "@nrwl/cli": 14.8.6
-    "@nrwl/devkit": ^14.8.6
+    "@nrwl/devkit": 14.8.6
     "@nrwl/workspace": 14.8.6
-    "@nxrs/cargo": ^0.3.3
+    "@nxrs/cargo": "npm:@ignisda/nx-rust@14.8.1"
     "@semantic-release/changelog": ^6.0.1
     "@semantic-release/commit-analyzer": ^9.0.2
     "@semantic-release/exec": ^6.0.3
@@ -6970,6 +6988,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"stream-chain@npm:^2.2.5":
+  version: 2.2.5
+  resolution: "stream-chain@npm:2.2.5"
+  checksum: c83cbf504bd11e2bcbe761a92801295b3decac7ffa4092ceffca2eb1b5d0763bcc511fa22cd8044e8a18c21ca66794fd10c8d9cd1292a3e6c0d83a4194c6b8ed
+  languageName: node
+  linkType: hard
+
 "stream-combiner2@npm:~1.1.1":
   version: 1.1.1
   resolution: "stream-combiner2@npm:1.1.1"
@@ -6977,6 +7002,15 @@ __metadata:
     duplexer2: ~0.1.0
     readable-stream: ^2.0.2
   checksum: dd32d179fa8926619c65471a7396fc638ec8866616c0b8747c4e05563ccdb0b694dd4e83cd799f1c52789c965a40a88195942b82b8cea2ee7a5536f1954060f9
+  languageName: node
+  linkType: hard
+
+"stream-json@npm:^1.7.4":
+  version: 1.7.4
+  resolution: "stream-json@npm:1.7.4"
+  dependencies:
+    stream-chain: ^2.2.5
+  checksum: 50aca250cedde7b35fcc12b3f4936d28431f351392f25f1baa7898b618d363368f8049af07c486ce7c47ee19ea15fd31642df0819e62e514c6193f1e2b05d85e
   languageName: node
   linkType: hard
 
@@ -7354,17 +7388,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tslib@npm:*, tslib@npm:^2.3.0, tslib@npm:^2.4.0":
-  version: 2.4.0
-  resolution: "tslib@npm:2.4.0"
-  checksum: 8c4aa6a3c5a754bf76aefc38026134180c053b7bd2f81338cb5e5ebf96fefa0f417bff221592bf801077f5bf990562f6264fecbc42cd3309b33872cb6fc3b113
-  languageName: node
-  linkType: hard
-
 "tslib@npm:^1.9.0":
   version: 1.14.1
   resolution: "tslib@npm:1.14.1"
   checksum: dbe628ef87f66691d5d2959b3e41b9ca0045c3ee3c7c7b906cc1e328b39f199bb1ad9e671c39025bd56122ac57dfbf7385a94843b1cc07c60a4db74795829acd
+  languageName: node
+  linkType: hard
+
+"tslib@npm:^2.3.0, tslib@npm:^2.4.0":
+  version: 2.4.0
+  resolution: "tslib@npm:2.4.0"
+  checksum: 8c4aa6a3c5a754bf76aefc38026134180c053b7bd2f81338cb5e5ebf96fefa0f417bff221592bf801077f5bf990562f6264fecbc42cd3309b33872cb6fc3b113
   languageName: node
   linkType: hard
 
