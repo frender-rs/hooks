@@ -29,9 +29,6 @@
             }
           ]
         ],
-        "github": true,
-        "changelog": true,
-        "npm": false,
         "tagFormat": "hooks-v${VERSION}"
       }
     }
