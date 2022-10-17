@@ -1,6 +1,12 @@
 use std::{pin::Pin, task::Poll};
 
-use crate::sealed;
+mod sealed {
+    pub trait HookLifetimeBounds<'hook, This: ?Sized> {}
+    impl<'hook, T: super::HookBounds<Bounds = B> + ?Sized, B: ?Sized> HookLifetimeBounds<'hook, T>
+        for &'hook B
+    {
+    }
+}
 
 pub trait HookBounds {
     type Bounds: ?Sized;

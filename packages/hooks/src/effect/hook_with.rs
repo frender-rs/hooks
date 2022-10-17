@@ -21,12 +21,6 @@ impl<Dep, E: EffectFor<Dep>> EffectWith<Dep, E> {
             this.effect = Some(effect);
         }
     }
-
-    // pub fn use_hook(
-    //     self: Pin<&mut Self>,
-    //     get_new_dep_and_effect: impl FnOnce(&Option<Dep>) -> Option<(Dep, E)>,
-    // ) {
-    // }
 }
 
 impl<Dep, E: EffectFor<Dep>> Unpin for EffectWith<Dep, E> {}
@@ -36,8 +30,6 @@ impl<Dep, E: EffectFor<Dep>> Drop for EffectWith<Dep, E> {
         self.cleanup.take().map(EffectCleanup::cleanup);
     }
 }
-
-// FnOnce(&Dep) -> Option<(Dep, E)>
 
 impl<Dep, E: EffectFor<Dep>> HookBounds for EffectWith<Dep, E> {
     type Bounds = Self;
@@ -52,7 +44,7 @@ impl<'hook, Dep, E: EffectFor<Dep>, F: FnOnce(&Option<Dep>) -> Option<(Dep, E)>>
 impl<Dep, E: EffectFor<Dep>> HookPollNextUpdate for EffectWith<Dep, E> {
     fn poll_next_update(
         self: std::pin::Pin<&mut Self>,
-        cx: &mut std::task::Context<'_>,
+        _cx: &mut std::task::Context<'_>,
     ) -> std::task::Poll<bool> {
         let this = self.get_mut();
 
@@ -100,8 +92,6 @@ pub fn use_effect_with<Dep, E: EffectFor<Dep>>() -> EffectWith<Dep, E> {
 
 #[cfg(test)]
 mod tests {
-    use std::{cell::RefCell, rc::Rc};
-
     use futures_lite::future::block_on;
     use hooks_core::{HookExt, HookPollNextUpdateExt};
 
@@ -110,7 +100,6 @@ mod tests {
     #[test]
     fn test_use_effect_with() {
         block_on(async {
-            // let mut values = Rc::new(RefCell::new(Vec::with_capacity(3)));
             let mut values = vec![];
 
             let mut hook = use_effect_with();

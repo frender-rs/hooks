@@ -30,7 +30,7 @@ impl<'hook, Dep: PartialEq, E: EffectFor<Dep>> HookLifetime<'hook, (E, Dep)> for
 impl<Dep: PartialEq, E: EffectFor<Dep>> HookPollNextUpdate for Effect<Dep, E> {
     fn poll_next_update(
         self: std::pin::Pin<&mut Self>,
-        cx: &mut std::task::Context<'_>,
+        _cx: &mut std::task::Context<'_>,
     ) -> std::task::Poll<bool> {
         let this = self.get_mut();
 
