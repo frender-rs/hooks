@@ -46,6 +46,11 @@ jobs:
 
       - run: yarn install --immutable
 
+      - name: Test
+        run: |
+          cargo check
+          cargo test
+
       - name: release
         run: |
           yarn nx run hooks-derive:semantic-release
