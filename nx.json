@@ -13,5 +13,5 @@
       }
     }
   },
-  "plugins": ["nx-cargo"]
+  "plugins": ["nx-cargo", "./tools/infer-semantic-release.js"]
 }
