@@ -31,7 +31,7 @@ impl<H: HookPollNextUpdate> HookPollNextUpdateExt for H {}
 pub trait HookExt<Args>: Hook<Args> {
     /// A shortcut to call [`Hook::use_hook`] on Unpin hooks.
     #[inline]
-    fn use_hook<'hook>(&'hook mut self, args: Args) -> <Self as HookLifetime<'hook, Args>>::Value
+    fn use_hook(&mut self, args: Args) -> <Self as HookLifetime<'_, Args>>::Value
     where
         Self: Unpin,
     {

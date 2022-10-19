@@ -13,7 +13,9 @@ pub struct Effect<Dep: PartialEq, E: EffectFor<Dep>> {
 
 impl<Dep: PartialEq, E: EffectFor<Dep>> Drop for Effect<Dep, E> {
     fn drop(&mut self) {
-        self.cleanup.take().map(EffectCleanup::cleanup);
+        if let Some(cleanup) = self.cleanup.take() {
+            cleanup.cleanup()
+        }
     }
 }
 

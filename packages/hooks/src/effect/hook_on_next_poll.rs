@@ -9,7 +9,9 @@ pub struct EffectOnNextPoll<E: EffectForNoneDependency> {
 
 impl<E: EffectForNoneDependency> Drop for EffectOnNextPoll<E> {
     fn drop(&mut self) {
-        self.cleanup.take().map(EffectCleanup::cleanup);
+        if let Some(cleanup) = self.cleanup.take() {
+            cleanup.cleanup()
+        }
     }
 }
 

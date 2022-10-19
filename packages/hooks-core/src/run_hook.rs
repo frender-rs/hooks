@@ -97,7 +97,7 @@ pub mod default_runner {
     }
 
     impl<H: Hook<Args>, G, Args> RunningHook<H, G, Args> {
-        pub fn next_value(self: &mut Self) -> RunningHookNextValue<'_, H, G, Args> {
+        pub fn next_value(&mut self) -> RunningHookNextValue<'_, H, G, Args> {
             RunningHookNextValue {
                 running_hook: Some(self),
             }

@@ -164,7 +164,7 @@ pub trait Hook<Args>: HookPollNextUpdate + for<'hook> HookLifetime<'hook, Args> 
         Self: 'hook;
 }
 
-impl<'hook, H: HookBounds + ?Sized> HookBounds for &mut H {
+impl<H: HookBounds + ?Sized> HookBounds for &mut H {
     type Bounds = H::Bounds;
 }
 

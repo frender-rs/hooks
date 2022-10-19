@@ -10,6 +10,7 @@ pub enum NewState<'a, T> {
 
 impl<'a, T: std::fmt::Debug> std::fmt::Debug for NewState<'a, T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        #[allow(clippy::borrowed_box)]
         struct BoxedType<'a, A: ?Sized>(&'a Box<A>);
 
         impl<A: ?Sized> std::fmt::Debug for BoxedType<'_, A> {
@@ -83,6 +84,13 @@ impl<'a, T, const N: usize> Clone for DeferredStateUpdater<'a, T, N> {
     }
 }
 
+impl<'a, T, const N: usize> Default for DeferredStateUpdater<'a, T, N> {
+    #[inline]
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<'a, T, const N: usize> DeferredStateUpdater<'a, T, N> {
     #[inline]
     pub fn new() -> Self {
@@ -95,10 +103,9 @@ impl<'a, T, const N: usize> DeferredStateUpdater<'a, T, N> {
         let mut waker_and_staging_states = self.waker_and_staging_states.borrow_mut();
         waker_and_staging_states.1.push(new_state);
 
-        waker_and_staging_states
-            .0
-            .take()
-            .map(std::task::Waker::wake);
+        if let Some(waker) = waker_and_staging_states.0.take() {
+            waker.wake();
+        }
     }
 
     #[inline]
@@ -159,9 +166,8 @@ impl<'a, T, const N: usize> Drop for DeferredStateUpdater<'a, T, N> {
     fn drop(&mut self) {
         let mut waker_and_staging_states = self.waker_and_staging_states.borrow_mut();
 
-        waker_and_staging_states
-            .0
-            .take()
-            .map(std::task::Waker::wake);
+        if let Some(waker) = waker_and_staging_states.0.take() {
+            waker.wake()
+        }
     }
 }

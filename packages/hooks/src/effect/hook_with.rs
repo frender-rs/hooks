@@ -27,7 +27,9 @@ impl<Dep, E: EffectFor<Dep>> Unpin for EffectWith<Dep, E> {}
 
 impl<Dep, E: EffectFor<Dep>> Drop for EffectWith<Dep, E> {
     fn drop(&mut self) {
-        self.cleanup.take().map(EffectCleanup::cleanup);
+        if let Some(cleanup) = self.cleanup.take() {
+            cleanup.cleanup()
+        }
     }
 }
 
@@ -51,7 +53,9 @@ impl<Dep, E: EffectFor<Dep>> HookPollNextUpdate for EffectWith<Dep, E> {
         if this.changed {
             this.changed = false;
 
-            this.cleanup.take().map(EffectCleanup::cleanup);
+            if let Some(cleanup) = this.cleanup.take() {
+                cleanup.cleanup()
+            }
 
             if let Some(dep) = &this.dep {
                 if let Some(effect) = this.effect.take() {
