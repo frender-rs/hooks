@@ -13,5 +13,5 @@
       }
     }
   },
-  "plugins": ["@nxrs/cargo"]
+  "plugins": ["nx-cargo"]
 }
