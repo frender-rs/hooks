@@ -73,10 +73,12 @@ pub trait HookPollNextUpdate {
 /// With `hook` macro, we can do this easily.
 ///
 /// ```
+/// # use hooks::{use_effect, hook};
+///
 /// /// Print debug on `value` change.
 /// #[hook]
-/// fn use_debug<T: std::fmt::Debug + Eq>(value: &'hook T) {
-///     use_effect_by_ref(|v| {
+/// fn use_debug<'a, T: std::fmt::Debug + Eq + 'a>(value: &'a T) {
+///     use_effect(|v: &_| {
 ///         println!("{v:?}");
 ///     }, value);
 /// }
@@ -85,11 +87,11 @@ pub trait HookPollNextUpdate {
 /// ### implement `Hook` manually.
 ///
 /// To implement `Hook` for a type, implement
-/// [`HookBounds`] and [HookLifetime<'hook>]
+/// [`HookBounds`], [HookLifetime<'hook>] and [HookPollNextUpdate]
 /// first.
 ///
 /// ```
-/// # use hooks_core::{HookBounds, HookLifetime};
+/// # use hooks_core::{HookBounds, HookLifetime, HookPollNextUpdate};
 ///
 /// struct MyHook<T>(Option<T>);
 ///
@@ -97,16 +99,21 @@ pub trait HookPollNextUpdate {
 ///     type Bounds = Self;
 /// }
 ///
-/// impl<'hook, T> HookLifetime<'hook, &'hook Self> for MyHook<T> {
-/// //                                 ^^^^^^^^^^^
-/// //                                 This must be exactly
-/// //                                 `&'hook <Self as HookBounds>::Bounds`
+/// impl<'hook, T> HookLifetime<'hook, (T,), &'hook Self> for MyHook<T> {
+/// //                                       ^^^^^^^^^^^
+/// //                                       This must be exactly
+/// //                                       `&'hook <Self as HookBounds>::Bounds`
 ///
-///     type Args = (T,);
 ///     type Value = &'hook T;
 /// //               ^^^^^^^^  We can write `&'hook T` without
 /// //                         implicitly specifying `T: 'hook`
 /// //                         because `&'hook Self` implies this.
+/// }
+///
+/// impl<T> HookPollNextUpdate for MyHook<T> {
+///     fn poll_next_update(self: std::pin::Pin<&mut Self>, cx: &mut std::task::Context<'_>) -> std::task::Poll<bool> {
+///         todo!()
+///     }
 /// }
 /// ```
 ///

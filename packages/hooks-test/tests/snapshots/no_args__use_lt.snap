@@ -1,0 +1,36 @@
+---
+source: packages/hooks-test/tests/no_args.rs
+expression: "use_lt::hook_impl_code()"
+---
+fn use_lt<'a>() -> impl ::hooks::core::Hook<
+    (),
+> + for<'hook> ::hooks::core::HookLifetime<
+    'hook,
+    (),
+    &'hook (&'a (),),
+    Value = &'a i32,
+> + ::hooks::core::HookBounds<Bounds = (&'a (),)> {
+    struct __HookTypes<'a> {
+        __: ::core::marker::PhantomData<(&'a (),)>,
+    }
+    impl<'a> ::hooks::core::HookBounds for __HookTypes<'a> {
+        type Bounds = (&'a (),);
+    }
+    impl<'hook, 'a> ::hooks::core::HookLifetime<'hook, (), &'hook (&'a (),)>
+    for __HookTypes<'a> {
+        type Value = &'a i32;
+    }
+    ::hooks::core::fn_hook::new_fn_hook::<
+        (),
+        _,
+        __HookTypes<'a>,
+    >(
+        (),
+        ::hooks::core::fn_hook::poll_next_update_ready_false,
+        |_: ::core::pin::Pin<&mut ()>, (): ()| {
+            static VALUE: i32 = 1;
+            &VALUE
+        },
+    )
+}
+

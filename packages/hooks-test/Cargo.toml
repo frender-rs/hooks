@@ -1,16 +1,20 @@
 [package]
-name = "hooks-core"
+name = "hooks-test"
 version = "0.1.0"
 edition = "2021"
-description = "Compile-time, async hooks"
-license = "MIT"
-documentation = "https://docs.rs/hooks"
-repository = "https://github.com/frender-rs/hooks"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-pin-project-lite = "0.2.9"
 
 [dev-dependencies]
 hooks = { path = "../hooks" }
+insta = "1.21.0"
+prettyplease = "0.1.21"
+futures-lite = "1.12.0"
+
+[dev-dependencies.hooks-derive-core]
+path = "../hooks-derive-core"
+features = [
+  "extra-traits",
+]

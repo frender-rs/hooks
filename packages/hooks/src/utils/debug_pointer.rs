@@ -18,3 +18,17 @@ impl<'a, T: ?Sized> std::fmt::Debug for DebugHigherKindFnPointerRefMut<'a, T> {
         )
     }
 }
+
+pub struct DebugHigherKindFnPointerRefOutput<'a, T: ?Sized, R>(pub &'a fn(&T) -> R);
+
+impl<'a, T: ?Sized, R> std::fmt::Debug for DebugHigherKindFnPointerRefOutput<'a, T, R> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "fn(&{})->{}@{}",
+            std::any::type_name::<T>(),
+            std::any::type_name::<R>(),
+            *self.0 as usize,
+        )
+    }
+}

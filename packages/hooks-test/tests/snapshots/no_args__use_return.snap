@@ -1,0 +1,32 @@
+---
+source: packages/hooks-test/tests/no_args.rs
+expression: "use_return::hook_impl_code()"
+---
+fn use_return() -> impl ::hooks::core::Hook<
+    (),
+> + for<'hook> ::hooks::core::HookLifetime<
+    'hook,
+    (),
+    &'hook (),
+    Value = i32,
+> + ::hooks::core::HookBounds<Bounds = ()> {
+    struct __HookTypes {
+        __: ::core::marker::PhantomData<()>,
+    }
+    impl ::hooks::core::HookBounds for __HookTypes {
+        type Bounds = ();
+    }
+    impl<'hook> ::hooks::core::HookLifetime<'hook, (), &'hook ()> for __HookTypes {
+        type Value = i32;
+    }
+    ::hooks::core::fn_hook::new_fn_hook::<
+        (),
+        _,
+        __HookTypes,
+    >(
+        (),
+        ::hooks::core::fn_hook::poll_next_update_ready_false,
+        |_: ::core::pin::Pin<&mut ()>, (): ()| { 1 },
+    )
+}
+

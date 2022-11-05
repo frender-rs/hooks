@@ -10,10 +10,14 @@ repository = "https://github.com/frender-rs/hooks"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-hooks-derive = { path = "../hooks-derive", version = "1.0.0-alpha.1" }
+hooks-derive = { path = "../hooks-derive", version = "1.0.0-alpha.1", optional = true }
 hooks-core = { path = "../hooks-core", version = "0.1.0" }
 pin-project-lite = "0.2.9"
 smallvec = { version = "1.10.0", features = ["const_generics"] }
 
 [dev-dependencies]
 futures-lite = "1.12.0"
+
+[features]
+default = ["derive"]
+derive = ["hooks-derive"]
