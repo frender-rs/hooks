@@ -49,6 +49,7 @@ jobs:
       - name: Test
         run: |
           cargo check
+          cargo clippy
           cargo test
 
       - name: release
