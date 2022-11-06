@@ -48,8 +48,8 @@ jobs:
 
       - name: Test
         run: |
-          cargo check
-          cargo clippy
+          cargo check --locked --all-targets
+          cargo clippy --locked --all-targets -- --deny warnings
           cargo test
 
       - name: release
