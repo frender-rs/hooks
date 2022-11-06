@@ -1,13 +1,22 @@
+/// Common behaviors of types that share a value with inner mutability.
 pub trait ShareValue<T> {
     fn is_shared(&self) -> bool;
 
+    #[inline]
     fn get(&self) -> T
     where
-        T: Copy;
+        T: Copy,
+    {
+        self.map(|v| *v)
+    }
 
+    #[inline]
     fn get_cloned(&self) -> T
     where
-        T: Clone;
+        T: Clone,
+    {
+        self.map(T::clone)
+    }
 
     #[inline]
     fn set(&self, new_value: T) {
@@ -15,9 +24,18 @@ pub trait ShareValue<T> {
     }
 
     /// The old value is returned.
-    fn replace(&self, new_value: T) -> T;
+    #[inline]
+    fn replace(&self, new_value: T) -> T {
+        self.replace_with(|_| new_value)
+    }
     /// The old value is returned.
-    fn replace_with<F: FnOnce(&mut T) -> T>(&self, f: F) -> T;
+    #[inline]
+    fn replace_with<F: FnOnce(&mut T) -> T>(&self, f: F) -> T {
+        self.map_mut(|old| {
+            let new_value = f(old);
+            std::mem::replace(old, new_value)
+        })
+    }
 
     /// The old value is returned.
     #[inline]
