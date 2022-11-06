@@ -1,18 +1,5 @@
 use hooks_derive_core::{quote::ToTokens, syn, HookArgs};
 
-pub fn assert_transformed_into(hook_args: HookArgs, source: syn::ItemFn, expected: syn::ItemFn) {
-    let (target, error) = hook_args.transform_item_fn(source);
-    error.ok_or(()).unwrap_err();
-
-    if target != expected {
-        panic!(
-            "code does not match.\n{}\n{}\n",
-            target.into_token_stream(),
-            expected.into_token_stream(),
-        )
-    }
-}
-
 pub fn pretty_item_fn(item_fn: syn::ItemFn) -> String {
     prettyplease::unparse(&syn::File {
         shebang: None,
