@@ -428,7 +428,7 @@ fn tlpc(expr: &mut syn::Expr, mutate_func_path: &mut impl FnMut(ExprCallPath)) {
                     args: &mut c.args,
                 });
             } else {
-                tlpc(&mut *c.func, mutate_func_path);
+                tlpc(&mut c.func, mutate_func_path);
             }
         }
         syn::Expr::Cast(c) => tlpc(&mut c.expr, mutate_func_path),

@@ -13,12 +13,16 @@ pub enum NewState<'a, T> {
     Fn(NewStateFn<'a, T>),
 }
 
+pub type NewStateDynReplacer<'a, T> = dyn 'a + FnOnce(&T) -> T;
+pub type NewStateDynReplacerMaybe<'a, T> = dyn 'a + FnOnce(&T) -> Option<T>;
+pub type NewStateDynMutator<'a, T> = dyn 'a + FnOnce(&mut T);
+
 pub enum NewStateFn<'a, T> {
-    ReplacerBox(Box<dyn 'a + FnOnce(&T) -> T>),
+    ReplacerBox(Box<NewStateDynReplacer<'a, T>>),
     ReplacerFnPointer(fn(&T) -> T),
-    ReplacerMaybeBox(Box<dyn 'a + FnOnce(&T) -> Option<T>>),
+    ReplacerMaybeBox(Box<NewStateDynReplacerMaybe<'a, T>>),
     ReplacerMaybeFnPointer(fn(&T) -> Option<T>),
-    MutatorBox(Box<dyn 'a + FnOnce(&mut T)>),
+    MutatorBox(Box<NewStateDynMutator<'a, T>>),
     MutatorFnPointer(fn(&mut T)),
 }
 
