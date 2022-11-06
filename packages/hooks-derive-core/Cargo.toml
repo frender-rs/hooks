@@ -2,6 +2,10 @@
 name = "hooks-derive-core"
 version = "1.0.0-alpha.1"
 edition = "2021"
+description = "Compile-time, async hooks"
+license = "MIT"
+documentation = "https://docs.rs/hooks"
+repository = "https://github.com/frender-rs/hooks"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
