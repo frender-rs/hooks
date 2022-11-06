@@ -54,6 +54,8 @@ jobs:
 
       - name: release
         run: |
+          yarn nx run hooks-core:semantic-release
+          yarn nx run hooks-derive-core:semantic-release
           yarn nx run hooks-derive:semantic-release
           yarn nx run hooks:semantic-release
         env:
