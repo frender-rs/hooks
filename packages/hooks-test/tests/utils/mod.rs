@@ -1,4 +1,4 @@
-use hooks_derive_core::{quote::ToTokens, syn, HookArgs};
+use hooks_derive_core::syn;
 
 pub fn pretty_item_fn(item_fn: syn::ItemFn) -> String {
     prettyplease::unparse(&syn::File {
