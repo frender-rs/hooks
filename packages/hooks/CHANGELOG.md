@@ -1,3 +1,15 @@
+# [1.0.0-alpha.5](https://github.com/frender-rs/hooks/compare/hooks-v1.0.0-alpha.4...hooks-v1.0.0-alpha.5) (2022-11-07)
+
+
+### Bug Fixes
+
+* **hooks:** `State` is not correctly polled ([8e25460](https://github.com/frender-rs/hooks/commit/8e25460877085a7c233c786c3e8645daa692e8d7))
+
+
+### Features
+
+* rewrite use_effect ([8a80385](https://github.com/frender-rs/hooks/commit/8a803852e6f74ae66d9c94287922a4b774b2b409))
+
 # [1.0.0-alpha.4](https://github.com/frender-rs/hooks/compare/hooks-v1.0.0-alpha.3...hooks-v1.0.0-alpha.4) (2022-11-07)
 
 

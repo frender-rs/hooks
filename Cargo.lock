@@ -106,7 +106,7 @@ dependencies = [
 
 [[package]]
 name = "hooks"
-version = "1.0.0-alpha.4"
+version = "1.0.0-alpha.5"
 dependencies = [
  "futures-lite",
  "hooks-core",
