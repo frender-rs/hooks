@@ -203,6 +203,10 @@ impl<'a, T, const N: usize> StagingStates<'a, T, N> {
     /// Returning `true` indicates there are no new states.
     #[inline]
     pub fn drain_into(&mut self, state: &mut T) -> bool {
+        if self.is_empty() {
+            return true;
+        }
+
         let mut is_equal = true;
 
         if let Some(new_state) = self.new_state.take() {
@@ -215,6 +219,10 @@ impl<'a, T, const N: usize> StagingStates<'a, T, N> {
 
     /// Returning `true` indicates there are no new states.
     fn drain_fns_into(&mut self, state: &mut T) -> bool {
+        if self.fns.is_empty() {
+            return true;
+        }
+
         let mut is_equal = true;
 
         let drain = self.fns.drain(..);
@@ -375,7 +383,7 @@ impl<'a, T, const N: usize> StateUpdater<'a, T, N> {
 }
 
 impl<'a, T, const N: usize> Drop for StateUpdater<'a, T, N> {
-    /// When [`DeferredStateUpdater`] is dropped,
+    /// When [`StateUpdater`] is dropped,
     /// it will wake up the task to notify
     /// the shared count has changed.
     fn drop(&mut self) {

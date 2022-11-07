@@ -60,7 +60,9 @@ impl<'a, T, const N: usize> State<'a, T, N> {
         if let Some(data) = &mut self.data {
             data.state_updater
                 .map_mut(|(waker, staging_states), rc_status| {
-                    if staging_states.is_empty() {
+                    let not_changed = staging_states.drain_into(&mut data.current_state);
+
+                    if not_changed {
                         match rc_status {
                             crate::utils::RcStatus::Shared => {
                                 // further updates are possible
@@ -73,12 +75,7 @@ impl<'a, T, const N: usize> State<'a, T, N> {
                             }
                         }
                     } else {
-                        let not_changed = staging_states.drain_into(&mut data.current_state);
-                        if not_changed {
-                            Poll::Pending
-                        } else {
-                            Poll::Ready(true)
-                        }
+                        Poll::Ready(true)
                     }
                 })
         } else {
