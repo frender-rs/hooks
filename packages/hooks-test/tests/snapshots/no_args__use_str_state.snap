@@ -1,0 +1,41 @@
+---
+source: packages/hooks-test/tests/no_args.rs
+expression: "use_str_state::hook_impl_code()"
+---
+fn use_str_state() -> impl ::hooks::core::Hook<
+    (),
+> + for<'hook> ::hooks::core::HookLifetime<
+    'hook,
+    (),
+    &'hook (),
+    Value = &'hook str,
+> + ::hooks::core::HookBounds<Bounds = ()> {
+    struct __HookTypes {
+        __: ::core::marker::PhantomData<()>,
+    }
+    impl ::hooks::core::HookBounds for __HookTypes {
+        type Bounds = ();
+    }
+    impl<'hook> ::hooks::core::HookLifetime<'hook, (), &'hook ()> for __HookTypes {
+        type Value = &'hook str;
+    }
+    ::hooks::core::fn_hook::new_fn_hook::<
+        (),
+        _,
+        __HookTypes,
+    >(
+        ::hooks::use_state_with(),
+        ::hooks::core::HookPollNextUpdate::poll_next_update,
+        |__hooks_hook_0, (): ()| {
+            let (state, updater) = ::hooks::core::Hook::<
+                _,
+            >::use_hook(__hooks_hook_0, (String::new,));
+            updater
+                .replace_maybe_with_fn_pointer(|old| {
+                    if old.len() < 2 { Some(format!("{} ", old)) } else { None }
+                });
+            state
+        },
+    )
+}
+

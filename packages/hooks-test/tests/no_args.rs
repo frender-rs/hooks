@@ -180,3 +180,105 @@ fn no_hooks_borrow_hook() {
         });
     }
 }
+
+#[test]
+fn one_hook() {
+    hook_macro! {
+        #[hook]
+        fn use_one_hook() -> &'hook mut i32 {
+            let v = ::hooks::use_lazy_pinned(0);
+            v.get_mut()
+        }
+    }
+
+    assert_return_ty! {
+        use_one_hook() => impl ::hooks::core::Hook<()>
+            + for<'hook> ::hooks::core::HookLifetime<'hook, (), Value = &'hook mut i32>
+            + ::hooks::core::HookBounds<Bounds = ()>
+    };
+
+    assert_eq!(
+        use_one_hook::hook_args(),
+        hooks_derive_core::HookArgs::default()
+    );
+
+    {
+        let mut hook = use_one_hook();
+        assert_eq!(
+            std::mem::size_of_val(&hook),
+            std::mem::size_of::<::hooks::LazyPinned<i32>>()
+        );
+
+        futures_lite::future::block_on(async {
+            assert!(!hook.next_update().await);
+            assert_eq!(*hook.use_hook(()), 0);
+            assert!(!hook.next_update().await);
+            *hook.use_hook(()) = -3;
+            assert!(!hook.next_update().await);
+            assert_eq!(*hook.use_hook(()), -3);
+        });
+
+        futures_lite::future::block_on(async {
+            let mut running_hook = hook.into_run_with_default_args();
+            let v = running_hook.next_value().await;
+            assert!(v.is_none());
+        });
+    }
+}
+
+#[test]
+fn one_state() {
+    hook_macro! {
+        #[hook]
+        fn use_str_state() -> &'hook str {
+            let (state, updater) = ::hooks::use_state_with(String::new);
+
+            updater.replace_maybe_with_fn_pointer(|old| {
+                if old.len() < 2 {
+                    Some(format!("{} ", old))
+                } else {
+                    None
+                }
+            });
+
+            state
+        }
+    }
+
+    assert_return_ty! {
+        use_str_state() => impl ::hooks::core::Hook<()>
+            + for<'hook> ::hooks::core::HookLifetime<'hook, (), Value = &'hook str>
+            + ::hooks::core::HookBounds<Bounds = ()>
+    };
+
+    assert_eq!(
+        use_str_state::hook_args(),
+        hooks_derive_core::HookArgs::default()
+    );
+
+    {
+        let mut hook = use_str_state();
+        assert_eq!(
+            std::mem::size_of_val(&hook),
+            std::mem::size_of::<::hooks::State<String>>()
+        );
+
+        futures_lite::future::block_on(async {
+            assert!(hook.next_update().await);
+            assert_eq!(hook.use_hook(()), "");
+            assert!(hook.next_update().await);
+            assert_eq!(hook.use_hook(()), " ");
+            assert!(hook.next_update().await);
+            assert_eq!(hook.use_hook(()), "  ");
+            assert!(!hook.next_update().await);
+        });
+    }
+
+    futures_lite::future::block_on(async {
+        let mut running_hook = use_str_state().into_run_with_default_args();
+        assert_eq!(running_hook.next_value().await, Some(""));
+        assert_eq!(running_hook.next_value().await, Some(" "));
+        assert_eq!(running_hook.next_value().await, Some("  "));
+        assert_eq!(running_hook.next_value().await, None);
+    });
+}
