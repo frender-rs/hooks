@@ -1,3 +1,10 @@
+# [1.0.0-alpha.4](https://github.com/frender-rs/hooks/compare/hooks-v1.0.0-alpha.3...hooks-v1.0.0-alpha.4) (2022-11-07)
+
+
+### Bug Fixes
+
+* add metadata to hooks-derive-core ([c1e7e8e](https://github.com/frender-rs/hooks/commit/c1e7e8e6f093d35f6fa7c97b6f268da91233b46b))
+
 # [1.0.0-alpha.3](https://github.com/frender-rs/hooks/compare/hooks-v1.0.0-alpha.2...hooks-v1.0.0-alpha.3) (2022-11-06)
 
 
