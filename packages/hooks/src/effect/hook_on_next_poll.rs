@@ -7,6 +7,25 @@ pub struct EffectOnNextPoll<E: EffectForNoneDependency> {
     cleanup: Option<E::Cleanup>,
 }
 
+impl<E: EffectForNoneDependency> std::fmt::Debug for EffectOnNextPoll<E> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("EffectOnNextPoll")
+            .field("effect", &self.effect.as_ref().and(Some("effect")))
+            .field("cleanup", &self.cleanup.as_ref().and(Some("cleanup")))
+            .finish()
+    }
+}
+
+impl<E: EffectForNoneDependency> Default for EffectOnNextPoll<E> {
+    #[inline]
+    fn default() -> Self {
+        Self {
+            effect: None,
+            cleanup: None,
+        }
+    }
+}
+
 impl<E: EffectForNoneDependency> Drop for EffectOnNextPoll<E> {
     fn drop(&mut self) {
         if let Some(cleanup) = self.cleanup.take() {

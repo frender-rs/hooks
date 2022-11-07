@@ -49,3 +49,16 @@ pub trait EffectForNoneDependency {
     #[must_use = "effect cleanups must be run or scheduled to run"]
     fn effect_for_none_dep(self) -> Self::Cleanup;
 }
+
+impl<F, C> EffectForNoneDependency for F
+where
+    F: FnOnce() -> C,
+    C: EffectCleanup,
+{
+    type Cleanup = C;
+
+    #[inline]
+    fn effect_for_none_dep(self) -> Self::Cleanup {
+        self()
+    }
+}
