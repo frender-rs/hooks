@@ -8,3 +8,5 @@ pub use run_hook::*;
 
 pub mod fn_hook;
 pub mod hook_pair;
+
+pub(crate) mod utils;
