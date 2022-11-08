@@ -1,4 +1,4 @@
-use std::{pin::Pin, task::Poll};
+use std::{marker::PhantomData, pin::Pin, task::Poll};
 
 mod sealed {
     pub trait HookLifetimeBounds<'hook, This: ?Sized> {}
@@ -216,4 +216,35 @@ where
     H: Hook<Args> + for<'hook> HookLifetime<'hook, Args, Value = V>,
 {
     type NonGenericValue = V;
+}
+
+impl<'a, H: HookBounds> HookBounds for Pin<&'a mut H> {
+    type Bounds = (&'a (), PhantomData<H::Bounds>);
+}
+
+impl<'hook, Args, H> HookLifetime<'hook, Args> for Pin<&mut H>
+where
+    H: HookLifetime<'hook, Args>,
+{
+    type Value = H::Value;
+}
+
+impl<H: HookPollNextUpdate> HookPollNextUpdate for Pin<&mut H> {
+    #[inline]
+    fn poll_next_update(self: Pin<&mut Self>, cx: &mut std::task::Context<'_>) -> Poll<bool> {
+        H::poll_next_update(self.get_mut().as_mut(), cx)
+    }
+}
+
+impl<Args, H: Hook<Args>> Hook<Args> for Pin<&mut H> {
+    #[inline]
+    fn use_hook<'hook>(
+        self: Pin<&'hook mut Self>,
+        args: Args,
+    ) -> <Self as HookLifetime<'hook, Args>>::Value
+    where
+        Self: 'hook,
+    {
+        H::use_hook(self.get_mut().as_mut(), args)
+    }
 }
