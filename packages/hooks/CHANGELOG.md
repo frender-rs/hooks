@@ -1,3 +1,11 @@
+# [1.0.0-alpha.6](https://github.com/frender-rs/hooks/compare/hooks-v1.0.0-alpha.5...hooks-v1.0.0-alpha.6) (2022-11-08)
+
+
+### Features
+
+* impl Default and Debug for Ref and RefWith ([cca89d3](https://github.com/frender-rs/hooks/commit/cca89d3b48b9c11307e20c3c41190245ba0b456e))
+* impl Hook for Pin<&mut H> ([7a27dfa](https://github.com/frender-rs/hooks/commit/7a27dfaed56856f784a1774073e27a1ac3a2e448))
+
 # [1.0.0-alpha.5](https://github.com/frender-rs/hooks/compare/hooks-v1.0.0-alpha.4...hooks-v1.0.0-alpha.5) (2022-11-07)
 
 
