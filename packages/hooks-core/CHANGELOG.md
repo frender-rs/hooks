@@ -1,3 +1,10 @@
+# [1.0.0-alpha.3](https://github.com/frender-rs/hooks/compare/hooks-core-v1.0.0-alpha.2...hooks-core-v1.0.0-alpha.3) (2022-11-08)
+
+
+### Features
+
+* `impl Hook for Pin<P> where P: DerefMut<impl Hook>` ([1e1733d](https://github.com/frender-rs/hooks/commit/1e1733dabe3b2aae330c0d15a119a589bd9618f6))
+
 # [1.0.0-alpha.2](https://github.com/frender-rs/hooks/compare/hooks-core-v1.0.0-alpha.1...hooks-core-v1.0.0-alpha.2) (2022-11-08)
 
 
