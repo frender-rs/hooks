@@ -1,4 +1,8 @@
-use std::{marker::PhantomData, pin::Pin, task::Poll};
+use std::{
+    ops::{Deref, DerefMut},
+    pin::Pin,
+    task::Poll,
+};
 
 mod sealed {
     pub trait HookLifetimeBounds<'hook, This: ?Sized> {}
@@ -218,25 +222,41 @@ where
     type NonGenericValue = V;
 }
 
-impl<'a, H: HookBounds> HookBounds for Pin<&'a mut H> {
-    type Bounds = (&'a (), PhantomData<H::Bounds>);
-}
-
-impl<'hook, Args, H> HookLifetime<'hook, Args> for Pin<&mut H>
+impl<P> HookBounds for Pin<P>
 where
-    H: HookLifetime<'hook, Args>,
+    P: DerefMut,
+    <P as Deref>::Target: HookBounds,
 {
-    type Value = H::Value;
+    type Bounds = <P::Target as HookBounds>::Bounds;
 }
 
-impl<H: HookPollNextUpdate> HookPollNextUpdate for Pin<&mut H> {
+impl<'hook, P, Args> HookLifetime<'hook, Args> for Pin<P>
+where
+    P: DerefMut,
+    <P as Deref>::Target: HookLifetime<'hook, Args>,
+{
+    type Value = <<P as Deref>::Target as HookLifetime<'hook, Args>>::Value;
+}
+
+impl<P> HookPollNextUpdate for Pin<P>
+where
+    P: DerefMut,
+    <P as Deref>::Target: HookPollNextUpdate,
+{
     #[inline]
     fn poll_next_update(self: Pin<&mut Self>, cx: &mut std::task::Context<'_>) -> Poll<bool> {
-        H::poll_next_update(self.get_mut().as_mut(), cx)
+        <P::Target as HookPollNextUpdate>::poll_next_update(
+            crate::utils::pin_as_deref_mut(self),
+            cx,
+        )
     }
 }
 
-impl<Args, H: Hook<Args>> Hook<Args> for Pin<&mut H> {
+impl<P, Args> Hook<Args> for Pin<P>
+where
+    P: DerefMut,
+    <P as Deref>::Target: Hook<Args>,
+{
     #[inline]
     fn use_hook<'hook>(
         self: Pin<&'hook mut Self>,
@@ -245,6 +265,6 @@ impl<Args, H: Hook<Args>> Hook<Args> for Pin<&mut H> {
     where
         Self: 'hook,
     {
-        H::use_hook(self.get_mut().as_mut(), args)
+        <P::Target as Hook<Args>>::use_hook(crate::utils::pin_as_deref_mut(self), args)
     }
 }
