@@ -1,3 +1,16 @@
+# [1.0.0-alpha.5](https://github.com/frender-rs/hooks/compare/hooks-core-v1.0.0-alpha.4...hooks-core-v1.0.0-alpha.5) (2022-11-09)
+
+
+### Features
+
+* impl HookPollNextUpdateExt for unsized types ([1c9b34a](https://github.com/frender-rs/hooks/commit/1c9b34a9614bbc3a185ad2aa41625dbc695bd998))
+
+
+### BREAKING CHANGES
+
+* Now unsized types that impl `HookPollNextUpdate` will auto impl `HookPollNextUpdateExt`.
+(This was intended but omitted.)
+
 # [1.0.0-alpha.4](https://github.com/frender-rs/hooks/compare/hooks-core-v1.0.0-alpha.3...hooks-core-v1.0.0-alpha.4) (2022-11-09)
 
 
