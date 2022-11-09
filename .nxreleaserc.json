@@ -4,6 +4,7 @@
   "github": true,
   "gitAssets": ["packages/**/Cargo.toml", "Cargo.lock"],
   "repositoryUrl": "https://github.com/frender-rs/hooks",
+  "commitMessage": "chore(release): ${PROJECT_NAME} ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}",
   "branches": [
     "+([0-9])?(.{+([0-9]),x}).x",
     "main",
