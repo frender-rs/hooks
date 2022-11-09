@@ -16,7 +16,8 @@ pub use state::*;
 
 pub use hooks_core as core;
 pub use hooks_core::{
-    Hook, HookBounds, HookExt, HookLifetime, HookPollNextUpdate, HookPollNextUpdateExt, RunHook,
+    AsyncIterableHook, Hook, HookBounds, HookExt, HookLifetime, HookPollNextUpdate,
+    HookPollNextUpdateExt,
 };
 
 pub use hooks_derive::hook;

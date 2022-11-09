@@ -1,4 +1,4 @@
-use hooks::{hook, HookExt, HookPollNextUpdateExt};
+use hooks::{core::AsyncIterableHook, hook, HookExt, HookPollNextUpdateExt};
 
 mod utils;
 
@@ -34,7 +34,7 @@ fn no_return_ty_no_hooks() {
     });
 
     futures_lite::future::block_on::<()>(async {
-        let val = hook.into_run_with_clone_args(()).next_value().await;
+        let val = hook.next_value(()).await;
         assert!(val.is_none());
     });
 }
@@ -70,7 +70,7 @@ fn no_hooks() {
         });
 
         futures_lite::future::block_on(async {
-            let v = hook.into_run_with_default_args().next_value().await;
+            let v = hook.next_value(()).await;
             assert!(v.is_none());
         });
     }
@@ -104,7 +104,7 @@ fn no_hooks() {
         });
 
         futures_lite::future::block_on(async {
-            let v = hook.into_run_with_default_args().next_value().await;
+            let v = hook.next_value(()).await;
             assert!(v.is_none());
         });
     }
@@ -137,7 +137,7 @@ fn no_hooks() {
         });
 
         futures_lite::future::block_on(async {
-            let v = hook.into_run_with_default_args().next_value().await;
+            let v = hook.next_value(()).await;
             assert!(v.is_none());
         });
     }
@@ -174,8 +174,7 @@ fn no_hooks_borrow_hook() {
         });
 
         futures_lite::future::block_on(async {
-            let mut running_hook = hook.into_run_with_default_args();
-            let v = running_hook.next_value().await;
+            let v = hook.next_value(()).await;
             assert!(v.is_none());
         });
     }
@@ -219,8 +218,7 @@ fn one_hook() {
         });
 
         futures_lite::future::block_on(async {
-            let mut running_hook = hook.into_run_with_default_args();
-            let v = running_hook.next_value().await;
+            let v = hook.next_value(()).await;
             assert!(v.is_none());
         });
     }
@@ -275,7 +273,7 @@ fn one_state() {
     }
 
     futures_lite::future::block_on(async {
-        let mut running_hook = use_str_state().into_run_with_default_args();
+        let mut running_hook = use_str_state().into_iter();
         assert_eq!(running_hook.next_value().await, Some(""));
         assert_eq!(running_hook.next_value().await, Some(" "));
         assert_eq!(running_hook.next_value().await, Some("  "));

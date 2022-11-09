@@ -35,12 +35,12 @@ crate::utils::impl_hook! {
 ///     state
 /// }
 ///
-/// let mut running_hook = use_demo_state_with().into_run_with_default_args();
+/// let mut running_hook = use_demo_state_with();
 ///
 /// # futures_lite::future::block_on(async {
-/// assert_eq!(running_hook.next_value().await, Some(&1));
-/// assert_eq!(running_hook.next_value().await, Some(&2));
-/// assert_eq!(running_hook.next_value().await, None);
+/// assert_eq!(running_hook.next_value(()).await, Some(&1));
+/// assert_eq!(running_hook.next_value(()).await, Some(&2));
+/// assert_eq!(running_hook.next_value(()).await, None);
 /// # })
 /// ```
 #[inline]
