@@ -122,3 +122,24 @@ pub fn use_lazy_pinned_with<T>() -> LazyPinnedWith<T> {
         inner: use_lazy_pinned(),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::{marker::PhantomPinned, pin::Pin};
+
+    use hooks_core::HookExt;
+
+    #[test]
+    fn test_lazy_pinned() {
+        let hook = super::use_lazy_pinned::<PhantomPinned>();
+        futures_lite::pin!(hook);
+
+        futures_lite::future::block_on(async {
+            assert!(hook.next_value_with_default_args().await.is_none());
+            let _: Pin<&mut PhantomPinned> = hook.use_hook((PhantomPinned,));
+            assert!(hook.next_value_with_default_args().await.is_none());
+            let _: Pin<&mut PhantomPinned> = hook.as_mut().use_hook_with(|| unreachable!());
+            assert!(hook.next_value_with_default_args().await.is_none());
+        })
+    }
+}
