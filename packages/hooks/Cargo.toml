@@ -11,7 +11,7 @@ repository = "https://github.com/frender-rs/hooks"
 
 [dependencies]
 hooks-derive = { path = "../hooks-derive", version = "1.0.0-alpha.2", optional = true }
-hooks-core = { path = "../hooks-core", version = "1.0.0-alpha.3" }
+hooks-core = { path = "../hooks-core", version = "1.0.0-alpha.3", default-features = false }
 pin-project-lite = "0.2.9"
 smallvec = { version = "1.10.0", features = ["const_generics"] }
 
@@ -19,5 +19,6 @@ smallvec = { version = "1.10.0", features = ["const_generics"] }
 futures-lite = "1.12.0"
 
 [features]
-default = ["derive"]
+default = ["derive", "futures-core"]
 derive = ["hooks-derive"]
+futures-core = ["hooks-core/futures-core"]

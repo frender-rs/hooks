@@ -119,6 +119,7 @@ dependencies = [
 name = "hooks-core"
 version = "1.0.0-alpha.3"
 dependencies = [
+ "futures-core",
  "hooks",
  "pin-project-lite",
 ]
