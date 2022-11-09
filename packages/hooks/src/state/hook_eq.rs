@@ -1,6 +1,6 @@
 use hooks_core::HookExt;
 
-use super::{StateUpdater, State, STAGING_STATES_DEFAULT_STACK_COUNT};
+use super::{State, StateUpdater, STAGING_STATES_DEFAULT_STACK_COUNT};
 
 pub struct StateEq<'a, T: 'a + PartialEq, const N: usize = STAGING_STATES_DEFAULT_STACK_COUNT>(
     State<'a, T, N>,
