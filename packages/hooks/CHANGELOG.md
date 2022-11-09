@@ -1,3 +1,23 @@
+# [1.0.0-alpha.9](https://github.com/frender-rs/hooks/compare/hooks-v1.0.0-alpha.8...hooks-v1.0.0-alpha.9) (2022-11-09)
+
+
+### Features
+
+* `use_hook_once` and `use_hook_once_with` ([fb8c448](https://github.com/frender-rs/hooks/commit/fb8c448a44238a004dd4fa8ff76683d5f1260aa9))
+* impl HookPollNextUpdateExt for unsized types ([1c9b34a](https://github.com/frender-rs/hooks/commit/1c9b34a9614bbc3a185ad2aa41625dbc695bd998))
+* rewrite use_effect ([f5e9bec](https://github.com/frender-rs/hooks/commit/f5e9bec0ddb0395468c4c0987b7cc94cc08988f4))
+
+
+### BREAKING CHANGES
+
+* - `use_effect`: before dependency is registered, its `poll_next_update` now returns `true`,
+indicating `use_hook` should be called.
+This used to return `false`.
+
+- `effect_with_fn` is renamed to `get_new_dep_and_effect`
+* Now unsized types that impl `HookPollNextUpdate` will auto impl `HookPollNextUpdateExt`.
+(This was intended but omitted.)
+
 # [1.0.0-alpha.8](https://github.com/frender-rs/hooks/compare/hooks-v1.0.0-alpha.7...hooks-v1.0.0-alpha.8) (2022-11-09)
 
 
