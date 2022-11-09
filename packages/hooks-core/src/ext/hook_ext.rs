@@ -24,7 +24,7 @@ pub trait HookPollNextUpdateExt: HookPollNextUpdate {
     }
 }
 
-impl<H: HookPollNextUpdate> HookPollNextUpdateExt for H {}
+impl<H: HookPollNextUpdate + ?Sized> HookPollNextUpdateExt for H {}
 
 pub trait HookExt<Args>: Hook<Args> {
     /// A shortcut to call [`Hook::use_hook`] on Unpin hooks.
