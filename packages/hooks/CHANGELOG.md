@@ -1,3 +1,18 @@
+# [1.0.0-alpha.8](https://github.com/frender-rs/hooks/compare/hooks-v1.0.0-alpha.7...hooks-v1.0.0-alpha.8) (2022-11-09)
+
+
+### Features
+
+* add `futures-core` feature which impl Stream for IterHook<H> ([94e52a1](https://github.com/frender-rs/hooks/commit/94e52a1725918643b7c521e752ca2c78748691d6))
+* remove RunHook for simplicity, add NextValue and AsyncIterableHook ([aa7a7e5](https://github.com/frender-rs/hooks/commit/aa7a7e5076169dd7ac873545028ac591515bba40))
+
+
+### BREAKING CHANGES
+
+* RunHook and related methods are removed.
+
+Please use `HookExt::next_value` and `AsyncIterableHook::into_iter` instead.
+
 # [1.0.0-alpha.7](https://github.com/frender-rs/hooks/compare/hooks-v1.0.0-alpha.6...hooks-v1.0.0-alpha.7) (2022-11-08)
 
 
