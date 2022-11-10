@@ -280,3 +280,68 @@ fn one_state() {
         assert_eq!(running_hook.next_value().await, None);
     });
 }
+
+#[test]
+fn two_hooks() {
+    hook_macro! {
+        #[hook]
+        fn use_state_effect() -> &'hook i32 {
+            let (state, updater) = ::hooks::use_state_with(Default::default);
+            let updater = updater.clone();
+
+            ::hooks::use_effect(move |v: &_| {
+                if *v < 2 {
+                    updater.set(*v + 1)
+                }
+            }, *state);
+
+            state
+        }
+    }
+
+    assert_return_ty! {
+        use_state_effect() => impl ::hooks::core::Hook<()>
+            + for<'hook> ::hooks::core::HookLifetime<'hook, (), Value = &'hook i32>
+            + ::hooks::core::HookBounds<Bounds = ()>
+    };
+
+    assert_eq!(
+        use_state_effect::hook_args(),
+        hooks_derive_core::HookArgs::default()
+    );
+
+    {
+        let mut hook = use_state_effect();
+
+        let dummy_effect = {
+            let updater = hooks::StateUpdater::<i32>::new();
+            let effect = move |_: &i32| drop(updater);
+            let mut hook = hooks::use_effect();
+            hook.use_hook((effect, 0));
+            hook
+        };
+
+        assert_eq!(
+            std::mem::size_of_val(&hook),
+            std::mem::size_of::<::hooks::State<i32>>() + std::mem::size_of_val(&dummy_effect),
+        );
+
+        futures_lite::future::block_on(async {
+            assert!(hook.next_update().await);
+            assert_eq!(hook.use_hook(()), &0);
+            assert!(hook.next_update().await);
+            assert_eq!(hook.use_hook(()), &1);
+            assert!(hook.next_update().await);
+            assert_eq!(hook.use_hook(()), &2);
+            assert!(!hook.next_update().await);
+        });
+    }
+
+    futures_lite::future::block_on(async {
+        let mut hook = use_state_effect().into_iter();
+        assert_eq!(hook.next_value().await, Some(&0));
+        assert_eq!(hook.next_value().await, Some(&1));
+        assert_eq!(hook.next_value().await, Some(&2));
+        assert_eq!(hook.next_value().await, None);
+    });
+}
