@@ -1,3 +1,10 @@
+# [1.0.0-alpha.10](https://github.com/frender-rs/hooks/compare/hooks-v1.0.0-alpha.9...hooks-v1.0.0-alpha.10) (2022-11-10)
+
+
+### Bug Fixes
+
+* hook macro not working when using two hooks ([71a68b6](https://github.com/frender-rs/hooks/commit/71a68b6a39144e8ef31e1f2f0821d777177626de))
+
 # [1.0.0-alpha.9](https://github.com/frender-rs/hooks/compare/hooks-v1.0.0-alpha.8...hooks-v1.0.0-alpha.9) (2022-11-09)
 
 
