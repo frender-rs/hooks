@@ -320,7 +320,7 @@ impl HookArgs {
                     while let Some(used_hook_ident) = used_hooks_idents.pop() {
                         let stmt = if !used_hooks_idents.is_empty() {
                             quote_spanned! { span_fn_name =>
-                                let (#ident_hooks_data, #used_hook_ident) = #used_hook_ident.pin_project();
+                                let (#ident_hooks_data, #used_hook_ident) = #ident_hooks_data.pin_project();
                             }
                         } else {
                             // This is the first element
