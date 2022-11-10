@@ -1,3 +1,10 @@
+# [1.0.0-alpha.3](https://github.com/frender-rs/hooks/compare/hooks-derive-core-v1.0.0-alpha.2...hooks-derive-core-v1.0.0-alpha.3) (2022-11-10)
+
+
+### Bug Fixes
+
+* hook macro not working when using two hooks ([71a68b6](https://github.com/frender-rs/hooks/commit/71a68b6a39144e8ef31e1f2f0821d777177626de))
+
 # [1.0.0-alpha.2](https://github.com/frender-rs/hooks/compare/hooks-derive-core-v1.0.0-alpha.1...hooks-derive-core-v1.0.0-alpha.2) (2022-11-07)
 
 

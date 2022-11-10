@@ -133,7 +133,7 @@ dependencies = [
 
 [[package]]
 name = "hooks-derive-core"
-version = "1.0.0-alpha.2"
+version = "1.0.0-alpha.3"
 dependencies = [
  "darling",
  "hooks",
