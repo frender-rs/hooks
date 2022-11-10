@@ -1,3 +1,11 @@
+# [1.0.0-alpha.11](https://github.com/frender-rs/hooks/compare/hooks-v1.0.0-alpha.10...hooks-v1.0.0-alpha.11) (2022-11-10)
+
+
+### Features
+
+* use_default_pinned ([f4dc7ef](https://github.com/frender-rs/hooks/commit/f4dc7ef5a239b6e777d89ddcdddd2d085faf9f5b))
+* use_lazy_pinned_hook and use_default_pinned_hook ([8d5cc75](https://github.com/frender-rs/hooks/commit/8d5cc755afeb6ebb517880475cf7c9cff5cf8f8d))
+
 # [1.0.0-alpha.10](https://github.com/frender-rs/hooks/compare/hooks-v1.0.0-alpha.9...hooks-v1.0.0-alpha.10) (2022-11-10)
 
 
