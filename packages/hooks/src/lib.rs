@@ -2,6 +2,7 @@
 
 mod effect;
 mod pinned;
+mod pinned_hook;
 mod ref_hook;
 mod share_value;
 mod shared_state;
@@ -9,6 +10,7 @@ mod state;
 
 pub use effect::*;
 pub use pinned::*;
+pub use pinned_hook::*;
 pub use ref_hook::*;
 pub use share_value::*;
 pub use shared_state::*;
