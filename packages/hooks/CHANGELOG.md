@@ -1,3 +1,11 @@
+# [1.0.0-alpha.12](https://github.com/frender-rs/hooks/compare/hooks-v1.0.0-alpha.11...hooks-v1.0.0-alpha.12) (2022-11-12)
+
+
+### Features
+
+* use_default_pinned_hook now also accepts one argument inferring hook type ([b2d14c3](https://github.com/frender-rs/hooks/commit/b2d14c30c90eaaa89b908426a37818fb493ce835))
+* use_memo ([caa71dd](https://github.com/frender-rs/hooks/commit/caa71ddf61ebe8be2764fb6f5cab4abf29e8ebcb))
+
 # [1.0.0-alpha.11](https://github.com/frender-rs/hooks/compare/hooks-v1.0.0-alpha.10...hooks-v1.0.0-alpha.11) (2022-11-10)
 
 
