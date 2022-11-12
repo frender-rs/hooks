@@ -1,6 +1,7 @@
 #![deny(clippy::undocumented_unsafe_blocks)]
 
 mod effect;
+mod memo;
 mod pinned;
 mod pinned_hook;
 mod ref_hook;
@@ -9,6 +10,7 @@ mod shared_state;
 mod state;
 
 pub use effect::*;
+pub use memo::*;
 pub use pinned::*;
 pub use pinned_hook::*;
 pub use ref_hook::*;
