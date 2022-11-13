@@ -278,6 +278,7 @@ impl<'a, T, const N: usize> StagingStates<'a, T, N> {
     }
 }
 
+#[derive(Debug)]
 pub struct StateUpdater<'a, T, const N: usize = STAGING_STATES_DEFAULT_STACK_COUNT> {
     waker_and_staging_states: Rc<RefCell<(Option<std::task::Waker>, StagingStates<'a, T, N>)>>,
 }

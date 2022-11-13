@@ -2,6 +2,7 @@ use std::{pin::Pin, task::Poll};
 
 use crate::{StateUpdater, STAGING_STATES_DEFAULT_STACK_COUNT};
 
+#[derive(Debug)]
 struct StateInner<'a, T, const N: usize> {
     current_state: T,
     state_updater: StateUpdater<'a, T, N>,
@@ -9,8 +10,16 @@ struct StateInner<'a, T, const N: usize> {
 
 impl<'a, T, const N: usize> Unpin for State<'a, T, N> {}
 
+#[derive(Debug)]
 pub struct State<'a, T, const N: usize = STAGING_STATES_DEFAULT_STACK_COUNT> {
     data: Option<StateInner<'a, T, N>>,
+}
+
+impl<'a, T, const N: usize> Default for State<'a, T, N> {
+    #[inline]
+    fn default() -> Self {
+        Self { data: None }
+    }
 }
 
 impl<'a, T, const N: usize> State<'a, T, N> {

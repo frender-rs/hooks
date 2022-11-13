@@ -2,9 +2,17 @@ use hooks_core::HookExt;
 
 use super::{State, StateUpdater, STAGING_STATES_DEFAULT_STACK_COUNT};
 
+#[derive(Debug)]
 pub struct StateEq<'a, T: 'a + PartialEq, const N: usize = STAGING_STATES_DEFAULT_STACK_COUNT>(
     State<'a, T, N>,
 );
+
+impl<'a, T: 'a + PartialEq, const N: usize> Default for StateEq<'a, T, N> {
+    #[inline]
+    fn default() -> Self {
+        Self(Default::default())
+    }
+}
 
 impl<'a, T: 'a + PartialEq, const N: usize> Unpin for StateEq<'a, T, N> {}
 
@@ -40,4 +48,14 @@ crate::utils::impl_hook! {
             ::core::pin::Pin::new(&mut self.get_mut().0).use_hook_with(get_initial_state)
         }
     }
+}
+
+#[inline]
+pub fn use_state_eq<'a, T: 'a + PartialEq>() -> StateEq<'a, T> {
+    Default::default()
+}
+
+#[inline]
+pub fn use_state_eq_n<'a, T: 'a + PartialEq, const N: usize>() -> StateEq<'a, T, N> {
+    Default::default()
 }
