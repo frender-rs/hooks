@@ -108,7 +108,7 @@ impl<'a, T, const N: usize> State<'a, T, N> {
 }
 
 crate::utils::impl_hook! {
-    impl ['a, T: 'a, const N: usize] for State<'a, T, N> {
+    impl ['a, T, const N: usize] for State<'a, T, N> {
         #[inline]
         poll_next_update(mut self, cx) {
             self.poll_next_update_always_not_equal(cx)

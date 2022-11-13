@@ -3,11 +3,11 @@ use hooks_core::HookPollNextUpdateExt;
 use crate::{use_state, use_state_n, State, StateUpdater, STAGING_STATES_DEFAULT_STACK_COUNT};
 
 #[derive(Debug)]
-pub struct StateWith<'a, T: 'a, const N: usize = STAGING_STATES_DEFAULT_STACK_COUNT> {
+pub struct StateWith<'a, T, const N: usize = STAGING_STATES_DEFAULT_STACK_COUNT> {
     inner: State<'a, T, N>,
 }
 
-impl<'a, T: 'a, const N: usize> Default for StateWith<'a, T, N> {
+impl<'a, T, const N: usize> Default for StateWith<'a, T, N> {
     fn default() -> Self {
         Self {
             inner: Default::default(),
@@ -15,10 +15,10 @@ impl<'a, T: 'a, const N: usize> Default for StateWith<'a, T, N> {
     }
 }
 
-impl<'a, T: 'a, const N: usize> Unpin for StateWith<'a, T, N> {}
+impl<'a, T, const N: usize> Unpin for StateWith<'a, T, N> {}
 
 crate::utils::impl_hook! {
-    impl ['a, T: 'a, const N: usize] for StateWith<'a, T, N> {
+    impl ['a, T, const N: usize] for StateWith<'a, T, N> {
         #[inline]
         poll_next_update(self, cx) {
             self.get_mut().inner.poll_next_update(cx)
