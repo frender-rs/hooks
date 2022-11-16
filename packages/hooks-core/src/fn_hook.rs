@@ -12,6 +12,18 @@ pin_project_lite::pin_project! {
     }
 }
 
+impl<Data, P, U, H> FnHook<Data, P, U, H> {
+    #[inline]
+    pub fn new(data: Data, poll_next_update: P, use_hook: U) -> Self {
+        Self {
+            data,
+            poll_next_update,
+            use_hook,
+            hook_hint: PhantomData,
+        }
+    }
+}
+
 pub fn new_fn_hook<Args, Data, H: for<'a> HookLifetime<'a, Args>>(
     data: Data,
     poll_next_update: impl Fn(Pin<&mut Data>, &mut std::task::Context<'_>) -> Poll<bool>,
