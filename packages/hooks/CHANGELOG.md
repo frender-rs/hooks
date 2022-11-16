@@ -1,3 +1,10 @@
+# [1.0.0-alpha.14](https://github.com/frender-rs/hooks/compare/hooks-v1.0.0-alpha.13...hooks-v1.0.0-alpha.14) (2022-11-16)
+
+
+### Features
+
+* hook macro now supports lifetime generics in args ([320639f](https://github.com/frender-rs/hooks/commit/320639fb0733eb2cd18d07032c2a15955443307b))
+
 # [1.0.0-alpha.13](https://github.com/frender-rs/hooks/compare/hooks-v1.0.0-alpha.12...hooks-v1.0.0-alpha.13) (2022-11-16)
 
 
