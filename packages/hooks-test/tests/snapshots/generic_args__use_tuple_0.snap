@@ -1,0 +1,65 @@
+---
+source: packages/hooks-test/tests/generic_args.rs
+expression: "use_tuple_0::hook_impl_code()"
+---
+fn use_tuple_0() -> impl for<'a> ::hooks::core::Hook<
+    (&'a (),),
+> + for<'hook, 'a> ::hooks::core::HookLifetime<
+    'hook,
+    (&'a (),),
+    &'hook (),
+    Value = (),
+> + ::hooks::core::HookBounds<Bounds = ()> {
+    struct __HookTypes {
+        __: ::core::marker::PhantomData<()>,
+    }
+    impl ::hooks::core::HookBounds for __HookTypes {
+        type Bounds = ();
+    }
+    impl<'hook, 'a> ::hooks::core::HookLifetime<'hook, (&'a (),), &'hook ()>
+    for __HookTypes {
+        type Value = ();
+    }
+    {
+        #[inline]
+        fn _hooks_def_fn_hook<
+            __HooksData,
+            __HooksPoll: ::core::ops::Fn(
+                    ::core::pin::Pin<&mut __HooksData>,
+                    &mut ::core::task::Context,
+                ) -> ::core::task::Poll<::core::primitive::bool>,
+            __HooksUseHook: for<'hook, 'a> ::core::ops::Fn(
+                    ::core::pin::Pin<&'hook mut __HooksData>,
+                    (&'a (),),
+                ) -> (),
+            __HookTypes,
+        >(
+            hooks_data: __HooksData,
+            hooks_poll: __HooksPoll,
+            hooks_use_hook: __HooksUseHook,
+        ) -> ::hooks::core::fn_hook::FnHook::<
+            __HooksData,
+            __HooksPoll,
+            __HooksUseHook,
+            __HookTypes,
+        > {
+            ::hooks::core::fn_hook::FnHook::<
+                __HooksData,
+                _,
+                __HooksUseHook,
+                __HookTypes,
+            >::new(hooks_data, hooks_poll, hooks_use_hook)
+        }
+        _hooks_def_fn_hook::<
+            _,
+            _,
+            _,
+            __HookTypes,
+        >(
+            (),
+            ::hooks::core::fn_hook::poll_next_update_ready_false,
+            |_: ::core::pin::Pin<&mut ()>, (_,)| {},
+        )
+    }
+}
+

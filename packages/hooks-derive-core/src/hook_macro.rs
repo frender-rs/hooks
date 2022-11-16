@@ -5,6 +5,13 @@ use proc_macro2::Span;
 use quote::{quote, quote_spanned, ToTokens};
 use syn::{parse_quote_spanned, spanned::Spanned};
 
+use crate::utils::{
+    chain::Chain, either::Either, empty_or_trailing::AutoEmptyOrTrailing,
+    type_generics::TypeGenericsWithoutBraces,
+};
+
+pub type GenericParams = syn::punctuated::Punctuated<syn::GenericParam, syn::Token![,]>;
+
 #[cfg_attr(feature = "extra-traits", derive(PartialEq, Eq))]
 #[derive(Debug, Default, FromMeta)]
 #[non_exhaustive]
@@ -36,11 +43,16 @@ pub struct HookArgs {
     /// # asserts::<()>();
     /// ```
     pub custom_bounds: Option<syn::Type>,
+
+    /// Generic params used only in `Args`.
+    /// Currently only lifetimes without bounds are supported.
+    /// Defaults to no generics.
+    pub args_generics: GenericParams,
 }
 
 impl HookArgs {
     pub fn transform_item_fn(
-        self,
+        mut self,
         mut item_fn: syn::ItemFn,
     ) -> (syn::ItemFn, Option<darling::Error>) {
         let mut errors = darling::error::Accumulator::default();
@@ -57,7 +69,7 @@ impl HookArgs {
 
         let span_fn_name = sig.ident.span();
 
-        let (hook_args_pat, hook_args_ty) = {
+        let (hook_args_pat, mut hook_args_ty) = {
             let hook_args = std::mem::take(&mut sig.inputs);
 
             let paren_token = syn::token::Paren(span_fn_name);
@@ -147,11 +159,32 @@ impl HookArgs {
             (hook_args_pat, hook_args_ty)
         };
 
+        crate::utils::elided_args_generics::auto_fill_lifetimes(
+            &mut self.args_generics,
+            &mut hook_args_ty.elems,
+        );
+
+        let args_lifetimes = &self.args_generics;
+
+        let args_lifetimes_empty = args_lifetimes.is_empty();
+
+        if !args_lifetimes_empty {
+            for g in self.args_generics.iter() {
+                match g {
+                    syn::GenericParam::Lifetime(_) => {}
+                    _ => errors.push(
+                        darling::Error::custom(
+                            "Currently args_generics only supports lifetimes without bounds",
+                        )
+                        .with_span(&g),
+                    ),
+                }
+            }
+        }
+
         let generics = &sig.generics;
 
         let (impl_generics, type_generics, where_clause) = generics.split_for_impl();
-
-        let generics_for_hook_lifetime = &generics.params;
 
         let default_hook_bounds = {
             let span = generics.span();
@@ -187,9 +220,22 @@ impl HookArgs {
                 syn::ReturnType::Type(ra, ty) => (ra, *ty),
             };
 
+            let (for_hook, for_lifetimes) = if args_lifetimes_empty {
+                (None, None)
+            } else {
+                (
+                    Some(
+                        Chain(syn::Token![for](span_fn_name), syn::Token![<](span_fn_name))
+                            .chain(args_lifetimes)
+                            .chain(syn::Token![>](span_fn_name)),
+                    ),
+                    Some(Chain(syn::Token![,](span_fn_name), args_lifetimes)),
+                )
+            };
+
             let return_ty = parse_quote_spanned! { span_fn_name =>
-                impl #hooks_core_path ::Hook<#hook_args_ty>
-                    + for<'hook> #hooks_core_path ::HookLifetime<
+                impl #for_hook #hooks_core_path ::Hook<#hook_args_ty>
+                    + for<'hook #for_lifetimes> #hooks_core_path ::HookLifetime<
                         'hook,
                         #hook_args_ty,
                         &'hook #hook_bounds,
@@ -343,6 +389,66 @@ impl HookArgs {
         };
         let impl_use_hook = stmts.into_iter();
 
+        let (generics_for_hook_lifetime, stmt_ret) = if args_lifetimes_empty {
+            let stmt_ret: syn::Expr = parse_quote_spanned! { span_fn_name =>
+                #hooks_core_path ::fn_hook::new_fn_hook::<#hook_args_ty, _, __HookTypes #type_generics>(
+                    #expr_hooks_data,
+                    #impl_poll_next_update,
+                    |#arg_hooks_data, #hook_args_pat : #hook_args_ty| {
+                        #impl_extract_hooks_data
+
+                        #(#impl_use_hook)*
+                    }
+                )
+            };
+
+            (Either::A(&generics.params), stmt_ret)
+        } else {
+            // The generics comes from `fn`, so there won't be default types like `<T = i32>`
+            let impl_generics_for_def = &generics.params;
+
+            let type_generics_for_def =
+                AutoEmptyOrTrailing(TypeGenericsWithoutBraces(&generics.params));
+
+            let stmt_ret: syn::Expr = parse_quote_spanned! { span_fn_name =>
+                {
+                    #[inline]
+                    fn _hooks_def_fn_hook<
+                        #impl_generics_for_def
+                        __HooksData,
+                        __HooksPoll: ::core::ops::Fn(::core::pin::Pin<&mut __HooksData>, &mut ::core::task::Context) -> ::core::task::Poll<::core::primitive::bool>,
+                        __HooksUseHook: for<'hook, #args_lifetimes> ::core::ops::Fn(::core::pin::Pin<&'hook mut __HooksData>, #hook_args_ty) -> #output_ty,
+                        __HookTypes,
+                    >(
+                        hooks_data: __HooksData,
+                        hooks_poll: __HooksPoll,
+                        hooks_use_hook: __HooksUseHook
+                    ) -> #hooks_core_path ::fn_hook::FnHook::<__HooksData, __HooksPoll, __HooksUseHook, __HookTypes> #where_clause {
+                        #hooks_core_path ::fn_hook::FnHook::<__HooksData, _, __HooksUseHook, __HookTypes>::new(
+                            hooks_data,
+                            hooks_poll,
+                            hooks_use_hook
+                        )
+                    }
+
+                    _hooks_def_fn_hook::<#type_generics_for_def  _, _, _, __HookTypes #type_generics>(
+                        #expr_hooks_data,
+                        #impl_poll_next_update,
+                        |#arg_hooks_data, #hook_args_pat| {
+                            #impl_extract_hooks_data
+
+                            #(#impl_use_hook)*
+                        },
+                    )
+                }
+            };
+
+            let generics_for_hook_lifetime =
+                Chain(AutoEmptyOrTrailing(self.args_generics), &generics.params);
+
+            (Either::B(generics_for_hook_lifetime), stmt_ret)
+        };
+
         item_fn.block.stmts = parse_quote_spanned! { span_fn_name =>
             struct __HookTypes #impl_generics #where_clause {
                 __: ::core::marker::PhantomData< #default_hook_bounds >
@@ -357,17 +463,9 @@ impl HookArgs {
             {
                 type Value = #output_ty;
             }
-
-            #hooks_core_path ::fn_hook::new_fn_hook::<#hook_args_ty, _, __HookTypes #type_generics>(
-                #expr_hooks_data,
-                #impl_poll_next_update,
-                |#arg_hooks_data, #hook_args_pat : #hook_args_ty| {
-                    #impl_extract_hooks_data
-
-                    #(#impl_use_hook)*
-                }
-            )
         };
+
+        item_fn.block.stmts.push(syn::Stmt::Expr(stmt_ret));
 
         (item_fn, errors.finish().err())
     }
@@ -377,6 +475,11 @@ impl HookArgs {
     ) -> darling::Result<Self> {
         let args: Vec<syn::NestedMeta> = meta_list.into_iter().collect();
         Self::from_list(&args)
+    }
+
+    pub fn with_args_generics(mut self, args_generics: GenericParams) -> Self {
+        self.args_generics = args_generics;
+        self
     }
 }
 
