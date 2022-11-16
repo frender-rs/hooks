@@ -222,6 +222,34 @@ where
     type NonGenericValue = V;
 }
 
+impl<H: ?Sized + HookBounds> HookBounds for Box<H> {
+    type Bounds = H::Bounds;
+}
+
+impl<H: ?Sized + HookPollNextUpdate + Unpin> HookPollNextUpdate for Box<H> {
+    #[inline]
+    fn poll_next_update(self: Pin<&mut Self>, cx: &mut std::task::Context<'_>) -> Poll<bool> {
+        H::poll_next_update(Pin::new(self.get_mut()), cx)
+    }
+}
+
+impl<'hook, Args, H: ?Sized + HookLifetime<'hook, Args>> HookLifetime<'hook, Args> for Box<H> {
+    type Value = <H as HookLifetime<'hook, Args>>::Value;
+}
+
+impl<Args, H: ?Sized + Hook<Args> + Unpin> Hook<Args> for Box<H> {
+    #[inline]
+    fn use_hook<'hook>(
+        self: Pin<&'hook mut Self>,
+        args: Args,
+    ) -> <Self as HookLifetime<'hook, Args>>::Value
+    where
+        Self: 'hook,
+    {
+        <H as Hook<Args>>::use_hook(Pin::new(self.get_mut()), args)
+    }
+}
+
 impl<P> HookBounds for Pin<P>
 where
     P: DerefMut,
