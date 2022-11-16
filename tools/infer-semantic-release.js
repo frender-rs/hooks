@@ -13,7 +13,7 @@ function targetSemanticRelease(execCwd, overrideOptions = {}) {
           '@semantic-release/exec',
           {
             prepareCmd:
-              'cargo set-version ${nextRelease.version} && cargo check',
+              'sleep 10 && cargo set-version ${nextRelease.version} && cargo check',
             publishCmd: 'cargo publish',
             execCwd,
           },
