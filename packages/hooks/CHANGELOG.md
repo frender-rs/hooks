@@ -1,3 +1,13 @@
+# [1.0.0-alpha.13](https://github.com/frender-rs/hooks/compare/hooks-v1.0.0-alpha.12...hooks-v1.0.0-alpha.13) (2022-11-16)
+
+
+### Features
+
+* `::hooks_core::FnHook::new` ([5c3826e](https://github.com/frender-rs/hooks/commit/5c3826eee8d2bcc137952cc8a8a466b4c3d7d014))
+* `impl Hook for Box<H: Unpin + Hook>` ([1d66ea1](https://github.com/frender-rs/hooks/commit/1d66ea166d89cd9ce7ca38fdc2ee5472fdd3f54d))
+* impl Debug and Default for use_state related structs ([afd9305](https://github.com/frender-rs/hooks/commit/afd9305a0eac181450e4e3b8e5105c2179686a74))
+* use_state related type param doesn't require T: 'a ([8f13d09](https://github.com/frender-rs/hooks/commit/8f13d09342309096f2a75d7ccd6442ee1dc7e14c))
+
 # [1.0.0-alpha.12](https://github.com/frender-rs/hooks/compare/hooks-v1.0.0-alpha.11...hooks-v1.0.0-alpha.12) (2022-11-12)
 
 
