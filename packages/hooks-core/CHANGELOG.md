@@ -1,3 +1,11 @@
+# [1.0.0-alpha.6](https://github.com/frender-rs/hooks/compare/hooks-core-v1.0.0-alpha.5...hooks-core-v1.0.0-alpha.6) (2022-11-16)
+
+
+### Features
+
+* `::hooks_core::FnHook::new` ([5c3826e](https://github.com/frender-rs/hooks/commit/5c3826eee8d2bcc137952cc8a8a466b4c3d7d014))
+* `impl Hook for Box<H: Unpin + Hook>` ([1d66ea1](https://github.com/frender-rs/hooks/commit/1d66ea166d89cd9ce7ca38fdc2ee5472fdd3f54d))
+
 # [1.0.0-alpha.5](https://github.com/frender-rs/hooks/compare/hooks-core-v1.0.0-alpha.4...hooks-core-v1.0.0-alpha.5) (2022-11-09)
 
 
