@@ -1,3 +1,10 @@
+# [1.0.0-alpha.15](https://github.com/frender-rs/hooks/compare/hooks-v1.0.0-alpha.14...hooks-v1.0.0-alpha.15) (2022-11-17)
+
+
+### Features
+
+* trait ErasedHook and dyn_hook macro ([7d41271](https://github.com/frender-rs/hooks/commit/7d4127130725e1eb347c05d6460a15dd59c89670))
+
 # [1.0.0-alpha.14](https://github.com/frender-rs/hooks/compare/hooks-v1.0.0-alpha.13...hooks-v1.0.0-alpha.14) (2022-11-16)
 
 
