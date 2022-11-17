@@ -5,7 +5,7 @@ use crate::{Hook, HookLifetime, HookPollNextUpdate};
 use super::NextUpdate;
 
 pub trait HookPollNextUpdateExt: HookPollNextUpdate {
-    /// A shortcut to call [`Hook::poll_next_update`] on Unpin hooks.
+    /// A shortcut to call [`HookPollNextUpdate::poll_next_update`] on Unpin hooks.
     #[inline]
     fn poll_next_update(&mut self, cx: &mut std::task::Context<'_>) -> Poll<bool>
     where
@@ -14,7 +14,7 @@ pub trait HookPollNextUpdateExt: HookPollNextUpdate {
         HookPollNextUpdate::poll_next_update(Pin::new(self), cx)
     }
 
-    /// Get a future which polls [`Hook::poll_next_update`].
+    /// Get a future which polls [`HookPollNextUpdate::poll_next_update`].
     #[inline]
     fn next_update(&mut self) -> NextUpdate<'_, Self>
     where

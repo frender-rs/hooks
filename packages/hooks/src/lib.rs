@@ -1,4 +1,5 @@
 #![deny(clippy::undocumented_unsafe_blocks)]
+#![doc = include_str!("../README.md")]
 
 mod effect;
 mod memo;

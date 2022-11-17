@@ -6,6 +6,8 @@ pub trait ValueGat<'hook> {
     type Value;
 }
 
+/// This trait follows the *Dyn safety* section of
+/// [*better GAT* pattern](https://sabrinajewson.org/blog/the-better-alternative-to-lifetime-gats#dyn-safety).
 pub trait ErasedHook<Args>: HookPollNextUpdate {
     type ValueGat: ?Sized + for<'hook> ValueGat<'hook>;
 
@@ -27,7 +29,7 @@ impl<Args, H: ?Sized + Hook<Args>> ErasedHook<Args> for H {
     }
 }
 
-/// See also [`dyn_hook`] macro.
+/// See also [`dyn_hook`](crate::dyn_hook) macro.
 pub type DynNonLendingHook<'a, Args, NonGenericValue> =
     dyn 'a + ErasedHook<Args, ValueGat = dyn for<'hook> ValueGat<'hook, Value = NonGenericValue>>;
 

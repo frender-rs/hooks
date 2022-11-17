@@ -70,7 +70,7 @@ pub trait HookPollNextUpdate {
 
 /// ## How to impl `Hook`
 ///
-/// ### with [`hook`] macro
+/// ### with [`hook`](hooks::hook) macro
 ///
 /// Usually, we just need a function which returns a hook,
 /// without needing a type which implements `Hook`.
@@ -207,8 +207,8 @@ impl<H: Hook<Args> + Unpin + ?Sized, Args> Hook<Args> for &mut H {
 /// In other words, `NonLendingHook` doesn't lend to its `Value`.
 ///
 /// [`Hook`] can be run by executor and become a `LendingAsyncIterator`,
-/// `NonLendingHook` can be run by executor and become an `AsyncIterator`
-/// (also known as [`Stream`](futures_lite::Stream)).
+/// `NonLendingHook` can be run by executor and become an [`AsyncIterator`](std::async_iter::AsyncIterator)
+/// (also known as [`Stream`](futures_core::Stream)).
 pub trait NonLendingHook<Args>:
     Hook<Args> + for<'hook> HookLifetime<'hook, Args, Value = Self::NonGenericValue>
 {
