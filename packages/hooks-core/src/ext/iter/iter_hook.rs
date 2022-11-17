@@ -1,6 +1,6 @@
 use std::pin::Pin;
 
-use crate::{Hook, HookPollNextUpdate, NextValue, NonLendingHook};
+use crate::NextValue;
 
 pin_project_lite::pin_project! {
     pub struct IterHook<H> {
@@ -37,7 +37,7 @@ impl<H> IterHook<H> {
 #[cfg(feature = "futures-core")]
 impl<H> futures_core::Stream for IterHook<H>
 where
-    H: NonLendingHook<()>,
+    H: crate::NonLendingHook<()>,
 {
     type Item = H::NonGenericValue;
 
@@ -47,9 +47,9 @@ where
         cx: &mut std::task::Context<'_>,
     ) -> std::task::Poll<Option<Self::Item>> {
         let mut hook = self.pin_project_hook();
-        <H as HookPollNextUpdate>::poll_next_update(hook.as_mut(), cx).map(|dynamic| {
+        <H as crate::HookPollNextUpdate>::poll_next_update(hook.as_mut(), cx).map(|dynamic| {
             if dynamic {
-                let value = <H as Hook<()>>::use_hook(hook, ());
+                let value = <H as crate::Hook<()>>::use_hook(hook, ());
                 Some(value)
             } else {
                 None
