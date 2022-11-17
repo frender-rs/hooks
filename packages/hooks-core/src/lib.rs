@@ -9,4 +9,7 @@ pub use hook::*;
 pub mod fn_hook;
 pub mod hook_pair;
 
+pub mod erased_hook;
+pub use erased_hook::DynNonLendingHook;
+
 pub(crate) mod utils;
