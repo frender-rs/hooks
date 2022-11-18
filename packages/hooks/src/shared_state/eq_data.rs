@@ -2,7 +2,15 @@ use std::task::{Context, Poll};
 
 use crate::{ShareValue, SharedStateData};
 
+#[derive(Debug)]
 pub struct SharedStateEqData<T: PartialEq>(SharedStateData<T>);
+
+impl<T: PartialEq> Clone for SharedStateEqData<T> {
+    #[inline]
+    fn clone(&self) -> Self {
+        Self(self.0.clone())
+    }
+}
 
 impl<T: PartialEq> SharedStateEqData<T> {
     #[inline]
