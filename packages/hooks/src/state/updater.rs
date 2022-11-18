@@ -1,4 +1,4 @@
-use std::{cell::RefCell, ops::DerefMut, rc::Rc};
+use std::{cell::RefCell, rc::Rc};
 
 use crate::utils::{
     debug_pointer::{
@@ -356,13 +356,6 @@ impl<'a, T, const N: usize> StateUpdater<'a, T, N> {
         self.update_by(NewState::Fn(NewStateFn::MutatorFnPointer(f)))
     }
 
-    #[inline]
-    pub(crate) fn get_mut(
-        &mut self,
-    ) -> Option<&mut (Option<std::task::Waker>, StagingStates<'a, T, N>)> {
-        Rc::get_mut(&mut self.waker_and_staging_states).map(RefCell::get_mut)
-    }
-
     /// The second argument indicates whether `RefCell::borrow_mut` is called.
     /// - [`RcStatus::Shared`] means the `Rc<RefCell<T>>` is shared, causing a runtime `RefCell::borrow_mut`.
     /// - [`RcStatus::Owned`] means there are no other Rc or Weak pointers to the same allocation.
@@ -374,12 +367,7 @@ impl<'a, T, const N: usize> StateUpdater<'a, T, N> {
         &mut self,
         f: F,
     ) -> R {
-        if let Some(v) = self.get_mut() {
-            f(v, RcStatus::Owned)
-        } else {
-            let mut v = self.waker_and_staging_states.borrow_mut();
-            f(v.deref_mut(), RcStatus::Shared)
-        }
+        crate::utils::rc_ref_cell_borrow_mut(&mut self.waker_and_staging_states, f)
     }
 }
 
