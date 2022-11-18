@@ -4,7 +4,15 @@ use hooks_core::HookPollNextUpdateExt;
 
 use super::SharedStateEqData;
 
+#[derive(Debug)]
 pub struct SharedStateEq<T: PartialEq>(Option<SharedStateEqData<T>>);
+
+impl<T: PartialEq> Default for SharedStateEq<T> {
+    #[inline]
+    fn default() -> Self {
+        Self(None)
+    }
+}
 
 impl<T: PartialEq> SharedStateEq<T> {
     pub fn use_hook_with(
@@ -19,7 +27,15 @@ impl<T: PartialEq> SharedStateEq<T> {
 
 impl<T: PartialEq> Unpin for SharedStateEq<T> {}
 
+#[derive(Debug)]
 pub struct SharedStateEqWith<T: PartialEq>(SharedStateEq<T>);
+
+impl<T: PartialEq> Default for SharedStateEqWith<T> {
+    #[inline]
+    fn default() -> Self {
+        Self(Default::default())
+    }
+}
 
 impl<T: PartialEq> Unpin for SharedStateEqWith<T> {}
 
@@ -56,10 +72,10 @@ crate::utils::impl_hook! {
 
 #[inline]
 pub fn use_shared_state_eq<T: PartialEq>() -> SharedStateEq<T> {
-    SharedStateEq(None)
+    Default::default()
 }
 
 #[inline]
 pub fn use_shared_state_eq_with<T: PartialEq>() -> SharedStateEqWith<T> {
-    SharedStateEqWith(use_shared_state_eq())
+    Default::default()
 }

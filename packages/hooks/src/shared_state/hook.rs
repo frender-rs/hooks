@@ -4,7 +4,15 @@ use hooks_core::HookPollNextUpdateExt;
 
 use super::SharedStateData;
 
+#[derive(Debug)]
 pub struct SharedState<T>(Option<SharedStateData<T>>);
+
+impl<T> Default for SharedState<T> {
+    #[inline]
+    fn default() -> Self {
+        Self(None)
+    }
+}
 
 impl<T> SharedState<T> {
     pub fn use_hook_with(
@@ -19,7 +27,15 @@ impl<T> SharedState<T> {
 
 impl<T> Unpin for SharedState<T> {}
 
+#[derive(Debug)]
 pub struct SharedStateWith<T>(SharedState<T>);
+
+impl<T> Default for SharedStateWith<T> {
+    #[inline]
+    fn default() -> Self {
+        Self(Default::default())
+    }
+}
 
 impl<T> Unpin for SharedStateWith<T> {}
 
@@ -56,10 +72,10 @@ crate::utils::impl_hook! {
 
 #[inline]
 pub fn use_shared_state<T>() -> SharedState<T> {
-    SharedState(None)
+    Default::default()
 }
 
 #[inline]
 pub fn use_shared_state_with<T>() -> SharedStateWith<T> {
-    SharedStateWith(use_shared_state())
+    Default::default()
 }
