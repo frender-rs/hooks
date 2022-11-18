@@ -21,7 +21,7 @@ impl<T> crate::ShareValue<T> for SharedRef<T> {
     #[inline]
     fn is_shared(&self) -> bool {
         // Weak is never created, thus only need to check strong count.
-        Rc::strong_count(&self.0) == 0
+        Rc::strong_count(&self.0) != 0
     }
 
     #[inline]
