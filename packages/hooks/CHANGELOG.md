@@ -1,3 +1,17 @@
+# [1.0.0-alpha.16](https://github.com/frender-rs/hooks/compare/hooks-v1.0.0-alpha.15...hooks-v1.0.0-alpha.16) (2022-11-19)
+
+
+### Bug Fixes
+
+* `SharedRef::is_shared` has wrong behavior ([35091e1](https://github.com/frender-rs/hooks/commit/35091e10b32a3c194087492788affde11f25a306))
+* use_shared_state* has wrong behavior ([3bda58c](https://github.com/frender-rs/hooks/commit/3bda58c9c0fd22e155982aa49daeed3d21b75157))
+
+
+### Features
+
+* impl Debug and Clone for SharedStateEqData ([47b2d8a](https://github.com/frender-rs/hooks/commit/47b2d8aa2e478fc7448881ce40b14d7f343948f6))
+* impl Debug and Default for use_shared_state related types ([c747989](https://github.com/frender-rs/hooks/commit/c747989e96c44fdd1f4d05664c7b9652128ea00f))
+
 # [1.0.0-alpha.15](https://github.com/frender-rs/hooks/compare/hooks-v1.0.0-alpha.14...hooks-v1.0.0-alpha.15) (2022-11-17)
 
 
