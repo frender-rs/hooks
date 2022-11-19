@@ -1,6 +1,6 @@
 use std::{future::Future, pin::Pin};
 
-use crate::{Hook, HookLifetime};
+use crate::Hook;
 
 use super::{get_args::GetArgsDefault, inner::NextValueInner};
 
@@ -22,7 +22,7 @@ where
     H: Hook<Args>,
     Args: Default,
 {
-    type Output = Option<<H as HookLifetime<'hook, Args>>::Value>;
+    type Output = Option<<H as Hook<Args>>::Value<'hook>>;
 
     #[inline]
     fn poll(

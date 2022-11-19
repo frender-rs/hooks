@@ -3,7 +3,7 @@ use std::{
     task::{Context, Poll},
 };
 
-use crate::{Hook, HookLifetime, HookPollNextUpdate};
+use crate::{Hook, HookPollNextUpdate};
 
 use super::get_args::GetArgs;
 
@@ -29,7 +29,7 @@ impl<'hook, H: ?Sized, G> NextValueInner<'hook, H, G> {
     pub fn impl_poll(
         &mut self,
         cx: &mut Context<'_>,
-    ) -> Poll<Option<<H as HookLifetime<'hook, G::Args>>::Value>>
+    ) -> Poll<Option<<H as Hook<G::Args>>::Value<'hook>>>
     where
         G: GetArgs<H>,
         H: Hook<G::Args>,

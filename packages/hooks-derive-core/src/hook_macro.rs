@@ -235,13 +235,10 @@ impl HookArgs {
 
             let return_ty = parse_quote_spanned! { span_fn_name =>
                 impl #for_hook #hooks_core_path ::Hook<#hook_args_ty>
-                    + for<'hook #for_lifetimes> #hooks_core_path ::HookLifetime<
-                        'hook,
+                    + for<'hook #for_lifetimes> #hooks_core_path ::Hook<
                         #hook_args_ty,
-                        &'hook #hook_bounds,
-                        Value = #output_ty
+                        Value<'hook> = #output_ty
                     >
-                    + #hooks_core_path ::HookBounds<Bounds = #hook_bounds>
             };
 
             *fn_rt = syn::ReturnType::Type(ra, return_ty);

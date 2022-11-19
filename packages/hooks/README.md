@@ -183,7 +183,7 @@ futures_lite::future::block_on(async {
 
     let mut hook = use_demo().into_iter();
 
-    let values = hook.collect::<Vec<_>>().await;
+    let values: Vec<_> = hook.collect().await;
     assert_eq!(values, [0, 1, 2]);
 });
 ```

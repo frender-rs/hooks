@@ -34,10 +34,6 @@ impl<Dep, E: EffectFor<Dep>> Default for Effect<Dep, E> {
 
 impl<Dep, E: EffectFor<Dep>> Unpin for Effect<Dep, E> {}
 
-impl<Dep, E: EffectFor<Dep>> crate::HookBounds for Effect<Dep, E> {
-    type Bounds = Self;
-}
-
 impl<Dep, E: EffectFor<Dep>> crate::HookPollNextUpdate for Effect<Dep, E> {
     #[inline]
     fn poll_next_update(
@@ -102,13 +98,11 @@ impl<Dep, E: EffectFor<Dep>> Effect<Dep, E> {
     }
 }
 
-impl<'hook, Dep: PartialEq, E: EffectFor<Dep>> crate::HookLifetime<'hook, (E, Dep)>
-    for Effect<Dep, E>
-{
-    type Value = ();
-}
-
 impl<Dep: PartialEq, E: EffectFor<Dep>> crate::Hook<(E, Dep)> for Effect<Dep, E> {
+    type Value<'hook> = ()
+    where
+        Self: 'hook;
+
     #[inline]
     fn use_hook<'hook>(self: std::pin::Pin<&'hook mut Self>, (effect, dep): (E, Dep))
     where
@@ -118,20 +112,18 @@ impl<Dep: PartialEq, E: EffectFor<Dep>> crate::Hook<(E, Dep)> for Effect<Dep, E>
     }
 }
 
-impl<'hook, Dep, E: EffectFor<Dep>, F: FnOnce(Option<&Dep>) -> Option<(Dep, E)>>
-    crate::HookLifetime<'hook, (F,)> for Effect<Dep, E>
-{
-    type Value = ();
-}
-
 impl<Dep, E: EffectFor<Dep>, F: FnOnce(Option<&Dep>) -> Option<(Dep, E)>> crate::Hook<(F,)>
     for Effect<Dep, E>
 {
+    type Value<'hook> = ()
+    where
+        Self: 'hook;
+
     #[inline]
     fn use_hook<'hook>(
         self: std::pin::Pin<&'hook mut Self>,
         (get_new_dep_and_effect,): (F,),
-    ) -> <Self as hooks_core::HookLifetime<'hook, (F,)>>::Value
+    ) -> Self::Value<'hook>
     where
         Self: 'hook,
     {
@@ -261,6 +253,7 @@ mod tests {
 
     use crate::{effect_fn, get_new_dep_and_effect, hook, use_effect};
 
+    #[cfg(real_gat_fail)]
     #[test]
     fn custom_hook() {
         #[hook(hooks_core_path = "::hooks_core")]

@@ -1,6 +1,6 @@
 use std::{pin::Pin, task::Poll};
 
-use crate::{Hook, HookLifetime, HookPollNextUpdate};
+use crate::{Hook, HookPollNextUpdate};
 
 use super::NextUpdate;
 
@@ -29,7 +29,7 @@ impl<H: HookPollNextUpdate + ?Sized> HookPollNextUpdateExt for H {}
 pub trait HookExt<Args>: Hook<Args> {
     /// A shortcut to call [`Hook::use_hook`] on Unpin hooks.
     #[inline]
-    fn use_hook(&mut self, args: Args) -> <Self as HookLifetime<'_, Args>>::Value
+    fn use_hook(&mut self, args: Args) -> Self::Value<'_>
     where
         Self: Unpin,
     {

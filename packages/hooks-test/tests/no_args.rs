@@ -4,6 +4,59 @@ mod utils;
 
 use utils::{assert_return_ty, hook_macro};
 
+mod ttt {
+    use std::pin::Pin;
+
+    #[allow(non_camel_case_types)]
+    struct use_type_param {}
+    fn use_type_param<T: Default>(
+    ) -> impl ::hooks::core::Hook<()> + for<'hook> ::hooks::core::Hook<(), Value<'hook> = T> {
+        ::hooks::core::__private::pin_project! {
+            struct MyFnHook<Data, F, V> {
+                #[pin]
+                data: Data,
+                use_hook: F,
+                _phantom: ::core::marker::PhantomData<V>
+            }
+        }
+
+        impl<Data, F, V> ::hooks::core::HookPollNextUpdate for MyFnHook<Data, F, V> {
+            #[inline]
+            fn poll_next_update(
+                self: std::pin::Pin<&mut Self>,
+                cx: &mut std::task::Context<'_>,
+            ) -> ::std::task::Poll<bool> {
+                ::std::task::Poll::Ready(false)
+            }
+        }
+
+        impl<T, Data, __HooksUseHook> ::hooks::core::Hook<()>
+            for MyFnHook<Data, __HooksUseHook, (::core::marker::PhantomData<T>,)>
+        where
+            __HooksUseHook: FnMut(Pin<&mut Data>, ()) -> T,
+        {
+            type Value<'hook> = T
+            where
+                Self: 'hook;
+
+            #[inline]
+            fn use_hook<'hook>(self: std::pin::Pin<&'hook mut Self>, args: ()) -> Self::Value<'hook>
+            where
+                Self: 'hook,
+            {
+                let this = self.project();
+                (this.use_hook)(this.data, args)
+            }
+        }
+
+        MyFnHook {
+            data: (),
+            use_hook: |_: ::core::pin::Pin<&mut ()>, (): ()| T::default(),
+            _phantom: ::core::marker::PhantomData,
+        }
+    }
+}
+
 #[test]
 fn no_return_ty_no_hooks() {
     hook_macro! {
@@ -14,9 +67,7 @@ fn no_return_ty_no_hooks() {
     assert_return_ty! {
         use_tuple_0() =>
             impl ::hooks::core::Hook<()>
-                + ::hooks::core::HookPollNextUpdate
-                + for<'hook> ::hooks::core::HookLifetime<'hook, (), Value = ()>
-                + ::hooks::core::HookBounds<Bounds = ()>
+                + for<'hook> ::hooks::core::Hook<(), Value<'hook> = ()>
     };
 
     assert_eq!(
@@ -51,8 +102,7 @@ fn no_hooks() {
     assert_return_ty! {
         use_return() =>
             impl ::hooks::core::Hook<()>
-                + for<'hook> ::hooks::core::HookLifetime<'hook, (), Value = i32>
-                + ::hooks::core::HookBounds<Bounds = ()>
+                + for<'hook> ::hooks::core::Hook<(), Value<'hook> = i32>
     };
 
     assert_eq!(
@@ -85,8 +135,7 @@ fn no_hooks() {
     assert_return_ty! {
         use_type_param::<String>() =>
             impl ::hooks::core::Hook<()>
-                + for<'hook> ::hooks::core::HookLifetime<'hook, (), Value = String>
-                + ::hooks::core::HookBounds<Bounds = (::core::marker::PhantomData<String>,)>
+                + for<'hook> ::hooks::core::Hook<(), Value<'hook> = String>
     };
 
     assert_eq!(
@@ -119,9 +168,9 @@ fn no_hooks() {
 
     assert_eq!(use_lt::hook_args(), hooks_derive_core::HookArgs::default());
 
-    fn assert_use_lt<'a>() -> impl ::hooks::core::Hook<()>
-           + for<'hook> ::hooks::core::HookLifetime<'hook, (), &'hook (&'a (),), Value = &'a i32>
-           + ::hooks::core::HookBounds<Bounds = (&'a (),)> {
+    fn assert_use_lt<'a>(
+    ) -> impl ::hooks::core::Hook<()> + for<'hook> ::hooks::core::Hook<(), Value<'hook> = &'a i32>
+    {
         use_lt::<'a>()
     }
 
@@ -155,8 +204,8 @@ fn no_hooks_borrow_hook() {
 
     assert_return_ty! {
         use_hook_lt() => impl ::hooks::core::Hook<()>
-            + for<'hook> ::hooks::core::HookLifetime<'hook, (), Value = &'hook i32>
-            + ::hooks::core::HookBounds<Bounds = ()>
+            + for<'hook> ::hooks::core::Hook<(), Value<'hook> = &'hook i32>
+
     };
 
     assert_eq!(
@@ -192,8 +241,8 @@ fn one_hook() {
 
     assert_return_ty! {
         use_one_hook() => impl ::hooks::core::Hook<()>
-            + for<'hook> ::hooks::core::HookLifetime<'hook, (), Value = &'hook mut i32>
-            + ::hooks::core::HookBounds<Bounds = ()>
+            + for<'hook> ::hooks::core::Hook<(), Value<'hook> = &'hook mut i32>
+
     };
 
     assert_eq!(
@@ -245,8 +294,8 @@ fn one_state() {
 
     assert_return_ty! {
         use_str_state() => impl ::hooks::core::Hook<()>
-            + for<'hook> ::hooks::core::HookLifetime<'hook, (), Value = &'hook str>
-            + ::hooks::core::HookBounds<Bounds = ()>
+            + for<'hook> ::hooks::core::Hook<(), Value<'hook> = &'hook str>
+
     };
 
     assert_eq!(
@@ -301,8 +350,8 @@ fn two_hooks() {
 
     assert_return_ty! {
         use_state_effect() => impl ::hooks::core::Hook<()>
-            + for<'hook> ::hooks::core::HookLifetime<'hook, (), Value = &'hook i32>
-            + ::hooks::core::HookBounds<Bounds = ()>
+            + for<'hook> ::hooks::core::Hook<(), Value<'hook> = &'hook i32>
+
     };
 
     assert_eq!(

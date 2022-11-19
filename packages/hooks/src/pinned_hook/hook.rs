@@ -1,6 +1,6 @@
 use std::pin::Pin;
 
-use hooks_core::{Hook, HookLifetime, HookPollNextUpdate};
+use hooks_core::{Hook, HookPollNextUpdate};
 
 pin_project_lite::pin_project! {
     #[derive(Debug, Default)]
@@ -30,18 +30,13 @@ crate::utils::impl_hook! {
     }
 }
 
-impl<'hook, H: HookPollNextUpdate + Default, F: FnOnce() -> H> HookLifetime<'hook, (F,)>
-    for DefaultPinnedHook<H>
-{
-    type Value = Pin<&'hook mut H>;
-}
-
 impl<H: HookPollNextUpdate + Default, F: FnOnce() -> H> Hook<(F,)> for DefaultPinnedHook<H> {
+    type Value<'hook> = Pin<&'hook mut H>
+    where
+        Self: 'hook;
+
     #[inline]
-    fn use_hook<'hook>(
-        self: Pin<&'hook mut Self>,
-        _: (F,),
-    ) -> <Self as HookLifetime<'hook, (F,)>>::Value
+    fn use_hook<'hook>(self: Pin<&'hook mut Self>, _: (F,)) -> Self::Value<'hook>
     where
         Self: 'hook,
     {

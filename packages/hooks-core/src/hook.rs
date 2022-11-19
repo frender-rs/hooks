@@ -90,36 +90,10 @@ pub trait HookPollNextUpdate {
 ///
 /// ### implement `Hook` manually.
 ///
-/// To implement `Hook` for a type, implement
-/// [`HookBounds`], [HookLifetime<'hook>] and [HookPollNextUpdate]
-/// first.
+/// To implement `Hook` for a type, implement [HookPollNextUpdate] first.
 ///
-/// ```
-/// # use hooks_core::{HookBounds, HookLifetime, HookPollNextUpdate};
-///
-/// struct MyHook<T>(Option<T>);
-///
-/// impl<T> HookBounds for MyHook<T> {
-///     type Bounds = Self;
-/// }
-///
-/// impl<'hook, T> HookLifetime<'hook, (T,), &'hook Self> for MyHook<T> {
-/// //                                       ^^^^^^^^^^^
-/// //                                       This must be exactly
-/// //                                       `&'hook <Self as HookBounds>::Bounds`
-///
-///     type Value = &'hook T;
-/// //               ^^^^^^^^  We can write `&'hook T` without
-/// //                         implicitly specifying `T: 'hook`
-/// //                         because `&'hook Self` implies this.
-/// }
-///
-/// impl<T> HookPollNextUpdate for MyHook<T> {
-///     fn poll_next_update(self: std::pin::Pin<&mut Self>, cx: &mut std::task::Context<'_>) -> std::task::Poll<bool> {
-///         todo!()
-///     }
-/// }
-/// ```
+/// You can use [`pin_project_lite::pin_project`] to do pin projections
+/// unless you don't the fields to be pinned.
 ///
 /// ## Comparison with `LendingAsyncIterator`
 ///
@@ -166,21 +140,14 @@ pub trait HookPollNextUpdate {
 ///   the executor can still get the values
 ///   from the no-longer-dynamic hooks,
 ///   and pass the values to the dynamic hooks.
-pub trait Hook<Args>: HookPollNextUpdate + for<'hook> HookLifetime<'hook, Args> {
-    fn use_hook<'hook>(
-        self: Pin<&'hook mut Self>,
-        args: Args,
-    ) -> <Self as HookLifetime<'hook, Args>>::Value
+pub trait Hook<Args>: HookPollNextUpdate {
+    type Value<'hook>
     where
         Self: 'hook;
-}
 
-impl<H: HookBounds + ?Sized> HookBounds for &mut H {
-    type Bounds = H::Bounds;
-}
-
-impl<'hook, Args, H: HookLifetime<'hook, Args> + ?Sized> HookLifetime<'hook, Args> for &mut H {
-    type Value = <H as HookLifetime<'hook, Args>>::Value;
+    fn use_hook<'hook>(self: Pin<&'hook mut Self>, args: Args) -> Self::Value<'hook>
+    where
+        Self: 'hook;
 }
 
 impl<H: HookPollNextUpdate + Unpin + ?Sized> HookPollNextUpdate for &mut H {
@@ -190,10 +157,11 @@ impl<H: HookPollNextUpdate + Unpin + ?Sized> HookPollNextUpdate for &mut H {
 }
 
 impl<H: Hook<Args> + Unpin + ?Sized, Args> Hook<Args> for &mut H {
-    fn use_hook<'hook>(
-        self: Pin<&'hook mut Self>,
-        args: Args,
-    ) -> <Self as HookLifetime<'hook, Args>>::Value
+    type Value<'hook> = H::Value<'hook>
+    where
+        Self: 'hook;
+
+    fn use_hook<'hook>(self: Pin<&'hook mut Self>, args: Args) -> Self::Value<'hook>
     where
         Self: 'hook,
     {
@@ -201,6 +169,7 @@ impl<H: Hook<Args> + Unpin + ?Sized, Args> Hook<Args> for &mut H {
     }
 }
 
+#[cfg(real_gat_fail)]
 /// `NonLendingHook` is a subset of [`Hook`].
 /// `Value` of `NonLendingHook` is not generic,
 /// thus not borrowing from the hook.
@@ -210,20 +179,17 @@ impl<H: Hook<Args> + Unpin + ?Sized, Args> Hook<Args> for &mut H {
 /// `NonLendingHook` can be run by executor and become an [`AsyncIterator`](std::async_iter::AsyncIterator)
 /// (also known as [`Stream`](futures_core::Stream)).
 pub trait NonLendingHook<Args>:
-    Hook<Args> + for<'hook> HookLifetime<'hook, Args, Value = Self::NonGenericValue>
+    for<'hook> Hook<Args, Value<'hook> = Self::NonGenericValue>
 {
     type NonGenericValue;
 }
 
+#[cfg(real_gat_fail)]
 impl<H: ?Sized, Args, V> NonLendingHook<Args> for H
 where
-    H: Hook<Args> + for<'hook> HookLifetime<'hook, Args, Value = V>,
+    H: for<'hook> Hook<Args, Value<'hook> = Self::NonGenericValue>,
 {
     type NonGenericValue = V;
-}
-
-impl<H: ?Sized + HookBounds> HookBounds for Box<H> {
-    type Bounds = H::Bounds;
 }
 
 impl<H: ?Sized + HookPollNextUpdate + Unpin> HookPollNextUpdate for Box<H> {
@@ -233,37 +199,18 @@ impl<H: ?Sized + HookPollNextUpdate + Unpin> HookPollNextUpdate for Box<H> {
     }
 }
 
-impl<'hook, Args, H: ?Sized + HookLifetime<'hook, Args>> HookLifetime<'hook, Args> for Box<H> {
-    type Value = <H as HookLifetime<'hook, Args>>::Value;
-}
-
 impl<Args, H: ?Sized + Hook<Args> + Unpin> Hook<Args> for Box<H> {
+    type Value<'hook> = H::Value<'hook>
+    where
+        Self: 'hook;
+
     #[inline]
-    fn use_hook<'hook>(
-        self: Pin<&'hook mut Self>,
-        args: Args,
-    ) -> <Self as HookLifetime<'hook, Args>>::Value
+    fn use_hook<'hook>(self: Pin<&'hook mut Self>, args: Args) -> Self::Value<'hook>
     where
         Self: 'hook,
     {
         <H as Hook<Args>>::use_hook(Pin::new(self.get_mut()), args)
     }
-}
-
-impl<P> HookBounds for Pin<P>
-where
-    P: DerefMut,
-    <P as Deref>::Target: HookBounds,
-{
-    type Bounds = <P::Target as HookBounds>::Bounds;
-}
-
-impl<'hook, P, Args> HookLifetime<'hook, Args> for Pin<P>
-where
-    P: DerefMut,
-    <P as Deref>::Target: HookLifetime<'hook, Args>,
-{
-    type Value = <<P as Deref>::Target as HookLifetime<'hook, Args>>::Value;
 }
 
 impl<P> HookPollNextUpdate for Pin<P>
@@ -285,11 +232,12 @@ where
     P: DerefMut,
     <P as Deref>::Target: Hook<Args>,
 {
+    type Value<'hook> = <<P as Deref>::Target as Hook<Args>>::Value<'hook>
+    where
+        Self: 'hook;
+
     #[inline]
-    fn use_hook<'hook>(
-        self: Pin<&'hook mut Self>,
-        args: Args,
-    ) -> <Self as HookLifetime<'hook, Args>>::Value
+    fn use_hook<'hook>(self: Pin<&'hook mut Self>, args: Args) -> Self::Value<'hook>
     where
         Self: 'hook,
     {

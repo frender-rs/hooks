@@ -32,8 +32,25 @@ impl<H> IterHook<H> {
     {
         NextValue::new(Pin::new(self).pin_project_hook(), ())
     }
+
+    #[cfg(not(real_gat_fail))]
+    #[inline]
+    pub async fn collect<C: Default + Extend<V>, V>(mut self) -> C
+    where
+        for<'hook> H: 'hook + crate::Hook<(), Value<'hook> = V>,
+        H: Unpin,
+    {
+        let mut collection = C::default();
+
+        while let Some(v) = self.next_value().await {
+            collection.extend([v]);
+        }
+
+        collection
+    }
 }
 
+#[cfg(real_gat_fail)]
 #[cfg(feature = "futures-core")]
 impl<H> futures_core::Stream for IterHook<H>
 where

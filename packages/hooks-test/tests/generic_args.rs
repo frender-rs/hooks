@@ -15,8 +15,7 @@ fn no_return_ty_no_hooks() {
         use_tuple_0() =>
             impl for <'a> ::hooks::core::Hook<(&'a (),)>
                 + ::hooks::core::HookPollNextUpdate
-                + for<'hook, 'a> ::hooks::core::HookLifetime<'hook, (&'a (),), Value = ()>
-                + ::hooks::core::HookBounds<Bounds = ()>
+                + for<'hook, 'a> ::hooks::core::Hook<(&'a (),), Value<'hook> = ()>
     };
 
     assert_eq!(
@@ -51,8 +50,7 @@ fn no_return_ty_no_hooks_elided() {
         use_tuple_0_elided() =>
             impl for <'a> ::hooks::core::Hook<(&'a (),)>
                 + ::hooks::core::HookPollNextUpdate
-                + for<'hook, 'a> ::hooks::core::HookLifetime<'hook, (&'a (),), Value = ()>
-                + ::hooks::core::HookBounds<Bounds = ()>
+                + for<'hook, 'a> ::hooks::core::Hook<(&'a (),), Value<'hook> = ()>
     };
 
     assert_eq!(

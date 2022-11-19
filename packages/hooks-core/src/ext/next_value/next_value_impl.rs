@@ -1,6 +1,6 @@
 use std::{future::Future, pin::Pin};
 
-use crate::{Hook, HookLifetime};
+use crate::Hook;
 
 use super::{get_args::GetArgsMove, inner::NextValueInner};
 
@@ -19,7 +19,7 @@ impl<'hook, H: ?Sized, Args> Future for NextValue<'hook, H, Args>
 where
     H: Hook<Args>,
 {
-    type Output = Option<<H as HookLifetime<'hook, Args>>::Value>;
+    type Output = Option<<H as Hook<Args>>::Value<'hook>>;
 
     #[inline]
     fn poll(

@@ -58,18 +58,6 @@ macro_rules! impl_hook {
             $use_hook:ident $([$($args_generics:tt)*])? ( $self_0:ident $($self_1:ident)? $(, $arg_pat:ident : $arg_ty:ty)* $(,)? ) -> $value:ty $impl_use_hook:block
         }
     ) => {
-        impl<$($($impl_generics)*)?> ::hooks_core::HookBounds for $ty $(where $($where)*)? {
-            type Bounds = Self;
-        }
-
-        impl<
-            'hook,
-            $($($impl_generics)*)?
-            $(, $($args_generics)*)?
-        > ::hooks_core::HookLifetime<'hook, ($($arg_ty ,)*), &'hook Self> for $ty $(where $($where)*)? {
-            type Value = $value;
-        }
-
         impl<$($($impl_generics)*)?> ::hooks_core::HookPollNextUpdate for $ty $(where $($where)*)? {
             $crate::utils::__impl_poll_next_update! {
                 $(#[$meta_poll])*
@@ -81,11 +69,13 @@ macro_rules! impl_hook {
             $($($impl_generics)*)?
             $(, $($args_generics)*)?
         > ::hooks_core::Hook<($($arg_ty ,)*)> for $ty $(where $($where)*)? {
+            type Value<'hook> = $value where Self: 'hook;
+
             $(#[$meta_use])*
             fn $use_hook<'hook>(
                 $self_0 $($self_1)?: ::core::pin::Pin<&'hook mut Self>,
                 ($($arg_pat ,)*): ($($arg_ty ,)*),
-            ) -> <Self as ::hooks_core::HookLifetime<'hook, ($($arg_ty ,)*)>>::Value
+            ) -> Self::Value<'hook>
             where
                 Self: 'hook
             $impl_use_hook

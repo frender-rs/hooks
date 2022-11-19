@@ -1,6 +1,6 @@
 use std::pin::Pin;
 
-use hooks_core::{Hook, HookLifetime};
+use hooks_core::Hook;
 
 #[derive(Debug)]
 #[non_exhaustive]
@@ -77,18 +77,13 @@ crate::utils::impl_hook! {
     }
 }
 
-impl<'hook, Data, Dep: PartialEq, F: FnOnce(&Dep) -> Data> HookLifetime<'hook, (F, Dep)>
-    for Memo<Data, Dep>
-{
-    type Value = (&'hook Data, &'hook Dep);
-}
-
 impl<Data, Dep: PartialEq, F: FnOnce(&Dep) -> Data> Hook<(F, Dep)> for Memo<Data, Dep> {
+    type Value<'hook> = (&'hook Data, &'hook Dep)
+    where
+        Self: 'hook;
+
     #[inline]
-    fn use_hook<'hook>(
-        self: Pin<&'hook mut Self>,
-        (get_data, dep): (F, Dep),
-    ) -> <Self as hooks_core::HookLifetime<'hook, (F, Dep)>>::Value
+    fn use_hook<'hook>(self: Pin<&'hook mut Self>, (get_data, dep): (F, Dep)) -> Self::Value<'hook>
     where
         Self: 'hook,
     {

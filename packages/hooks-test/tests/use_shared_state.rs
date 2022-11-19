@@ -46,6 +46,9 @@ fn shared_state_delay() {
 
     EXE.with(|exe| {
         futures_lite::future::block_on(exe.run(async {
+            #[cfg(not(real_gat_fail))]
+            let values = use_test().into_iter().collect::<Vec<_>, _>().await;
+            #[cfg(real_gat_fail)]
             let values = use_test().into_iter().collect::<Vec<_>>().await;
             assert_eq!(values, [0, 1, 2]);
         }))
@@ -90,6 +93,9 @@ fn shared_state_eq_delay() {
 
     EXE.with(|exe| {
         futures_lite::future::block_on(exe.run(async {
+            #[cfg(not(real_gat_fail))]
+            let values = use_test().into_iter().collect::<Vec<_>, _>().await;
+            #[cfg(real_gat_fail)]
             let values = use_test().into_iter().collect::<Vec<_>>().await;
             assert_eq!(values, [0, 1, 2]);
         }))

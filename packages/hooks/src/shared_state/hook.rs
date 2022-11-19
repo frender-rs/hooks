@@ -106,6 +106,9 @@ mod tests {
         }
 
         futures_lite::future::block_on(async {
+            #[cfg(not(real_gat_fail))]
+            let values = use_test().into_iter().collect::<Vec<_>, _>().await;
+            #[cfg(real_gat_fail)]
             let values = use_test().into_iter().collect::<Vec<_>>().await;
             assert_eq!(values, [0, 1, 2]);
         });

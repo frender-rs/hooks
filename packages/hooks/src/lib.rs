@@ -20,10 +20,7 @@ pub use shared_state::*;
 pub use state::*;
 
 pub use hooks_core as core;
-pub use hooks_core::{
-    dyn_hook, AsyncIterableHook, DynNonLendingHook, Hook, HookBounds, HookExt, HookLifetime,
-    HookPollNextUpdate, HookPollNextUpdateExt,
-};
+pub use hooks_core::{AsyncIterableHook, Hook, HookExt, HookPollNextUpdate, HookPollNextUpdateExt};
 
 pub use hooks_derive::hook;
 
