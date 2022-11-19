@@ -1,11 +1,21 @@
 use std::{cell::RefCell, rc::Rc};
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub enum RcStatus {
     /// There are no other Rc or Weak pointers to the same allocation.
     Owned,
     /// This Rc is shared
     Shared,
+}
+
+impl RcStatus {
+    #[inline]
+    pub fn is_owned(self) -> bool {
+        match self {
+            RcStatus::Owned => true,
+            RcStatus::Shared => false,
+        }
+    }
 }
 
 /// panics if the RefCell is already borrowed as mut.

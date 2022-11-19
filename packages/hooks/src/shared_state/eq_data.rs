@@ -19,6 +19,14 @@ impl<T: PartialEq> SharedStateEqData<T> {
     }
 
     #[inline]
+    pub fn new_with_waker(
+        initial_value: T,
+        waker: Option<std::task::Waker>,
+    ) -> SharedStateEqData<T> {
+        Self(SharedStateData::new_with_waker(initial_value, waker))
+    }
+
+    #[inline]
     pub fn inner(&self) -> &SharedStateData<T> {
         &self.0
     }

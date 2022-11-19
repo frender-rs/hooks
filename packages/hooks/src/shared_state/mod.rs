@@ -7,3 +7,5 @@ pub use data::*;
 pub use eq_data::*;
 pub use hook::*;
 pub use hook_eq::*;
+
+mod inner;

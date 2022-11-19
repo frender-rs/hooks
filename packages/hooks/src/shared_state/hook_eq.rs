@@ -5,23 +5,24 @@ use hooks_core::HookPollNextUpdateExt;
 use super::SharedStateEqData;
 
 #[derive(Debug)]
-pub struct SharedStateEq<T: PartialEq>(Option<SharedStateEqData<T>>);
+pub struct SharedStateEq<T: PartialEq>(super::inner::SharedState<SharedStateEqData<T>>);
 
 impl<T: PartialEq> Default for SharedStateEq<T> {
     #[inline]
     fn default() -> Self {
-        Self(None)
+        Self(Default::default())
     }
 }
 
 impl<T: PartialEq> SharedStateEq<T> {
+    #[inline]
     pub fn use_hook_with(
         self: Pin<&mut Self>,
         get_initial_state: impl FnOnce() -> T,
     ) -> &SharedStateEqData<T> {
-        self.get_mut()
-            .0
-            .get_or_insert_with(|| SharedStateEqData::new(get_initial_state()))
+        self.get_mut().0.get_or_init_with(move |waker| {
+            SharedStateEqData::new_with_waker(get_initial_state(), waker)
+        })
     }
 }
 
@@ -43,10 +44,7 @@ crate::utils::impl_hook! {
     impl [T: PartialEq] for SharedStateEq<T> {
         #[inline]
         poll_next_update(self, cx) {
-            self.get_mut().0.as_mut().map_or(
-                ::core::task::Poll::Ready(true),
-                |this| this.impl_poll_next_update(cx),
-            )
+            self.get_mut().0.impl_poll_next_update(cx, SharedStateEqData::impl_poll_next_update)
         }
 
         #[inline]

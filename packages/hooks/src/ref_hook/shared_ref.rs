@@ -15,6 +15,26 @@ impl<T> SharedRef<T> {
     pub fn new(initial_value: T) -> Self {
         Self(Rc::new(RefCell::new(initial_value)))
     }
+
+    #[inline]
+    pub(crate) fn shared_count(&self) -> usize {
+        // Weak is never created, thus only need strong count.
+        Rc::strong_count(&self.0)
+    }
+
+    #[inline]
+    pub(crate) fn borrow_mut<R>(
+        &mut self,
+        f: impl FnOnce(&mut T, crate::utils::RcStatus) -> R,
+    ) -> R {
+        crate::utils::rc_ref_cell_borrow_mut(&mut self.0, f)
+    }
+
+    #[inline]
+    pub(crate) fn try_borrow<R>(&self, f: impl FnOnce(Option<&T>) -> R) -> R {
+        let res = self.0.try_borrow();
+        f(res.ok().as_deref())
+    }
 }
 
 impl<T> crate::ShareValue<T> for SharedRef<T> {
