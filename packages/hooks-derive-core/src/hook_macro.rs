@@ -424,7 +424,7 @@ impl HookArgs {
                         hooks_poll: __HooksPoll,
                         hooks_use_hook: __HooksUseHook
                     ) -> #hooks_core_path ::fn_hook::FnHook::<__HooksData, __HooksPoll, __HooksUseHook, __HookTypes> #where_clause {
-                        #hooks_core_path ::fn_hook::FnHook::<__HooksData, _, __HooksUseHook, __HookTypes>::new(
+                        #hooks_core_path ::fn_hook::FnHook::<__HooksData, __HooksPoll, __HooksUseHook, __HookTypes>::new(
                             hooks_data,
                             hooks_poll,
                             hooks_use_hook

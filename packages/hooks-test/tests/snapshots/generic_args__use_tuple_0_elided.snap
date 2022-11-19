@@ -48,7 +48,7 @@ fn use_tuple_0_elided() -> impl for<'hooks_auto_lifetime_0> ::hooks::core::Hook<
         > {
             ::hooks::core::fn_hook::FnHook::<
                 __HooksData,
-                _,
+                __HooksPoll,
                 __HooksUseHook,
                 __HookTypes,
             >::new(hooks_data, hooks_poll, hooks_use_hook)
