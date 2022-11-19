@@ -29,5 +29,9 @@
   "scripts": {
     "prepare": "husky install",
     "postinstall": "husky install"
+  },
+  "volta": {
+    "node": "18.12.1",
+    "yarn": "3.2.4"
   }
 }
