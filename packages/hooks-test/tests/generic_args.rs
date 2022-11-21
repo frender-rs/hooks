@@ -74,3 +74,52 @@ fn no_return_ty_no_hooks_elided() {
         assert!(val.is_none());
     });
 }
+
+#[test]
+fn type_param() {
+    hook_macro! {
+        #[hook]
+        fn use_hooked<T: ?Sized + ToOwned + PartialEq>(v: &T) -> &'hook T {
+            use std::borrow::Borrow;
+
+            let (_, v) = hooks::use_memo::<(), T::Owned>(hooks::memo_with(|old| match old {
+                Some(old) => old,
+                old => old.insert(hooks::DataAndDep {
+                    data: (),
+                    dep: v.to_owned(),
+                }),
+            }));
+
+            v.borrow()
+        }
+    }
+
+    assert_return_ty! {
+        use_hooked::<str>() =>
+            impl for<'a> ::hooks::core::Hook<(&'a str,)>
+                + for<'hook, 'a> ::hooks::core::HookLifetime<'hook, (&'a str,), Value = &'hook str>
+                + ::hooks::core::HookBounds<Bounds = (::core::marker::PhantomData<str>,)>
+    };
+
+    assert_eq!(
+        use_hooked::hook_args(),
+        hooks_derive_core::HookArgs::default()
+    );
+
+    let mut hook = use_hooked::<str>();
+    assert_eq!(
+        std::mem::size_of_val(&hook),
+        std::mem::size_of::<hooks::Memo<(), String>>(),
+    );
+
+    futures_lite::future::block_on(async {
+        assert!(hook.next_update().await);
+        assert_eq!(hook.use_hook(("aa",)), "aa");
+        assert!(!hook.next_update().await);
+    });
+
+    futures_lite::future::block_on(async {
+        let v = hook.next_value(("a",)).await;
+        assert!(v.is_none());
+    });
+}

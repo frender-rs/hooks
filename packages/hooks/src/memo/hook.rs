@@ -100,3 +100,10 @@ impl<Data, Dep: PartialEq, F: FnOnce(&Dep) -> Data> Hook<(F, Dep)> for Memo<Data
 pub fn use_memo<Data, Dep>() -> Memo<Data, Dep> {
     Default::default()
 }
+
+#[inline]
+pub fn memo_with<Data, Dep>(
+    f: impl FnOnce(&mut Option<DataAndDep<Data, Dep>>) -> &mut DataAndDep<Data, Dep>,
+) -> impl FnOnce(&mut Option<DataAndDep<Data, Dep>>) -> &mut DataAndDep<Data, Dep> {
+    f
+}
