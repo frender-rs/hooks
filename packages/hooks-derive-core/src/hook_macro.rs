@@ -405,7 +405,7 @@ impl HookArgs {
             (Either::A(&generics.params), stmt_ret)
         } else {
             // The generics comes from `fn`, so there won't be default types like `<T = i32>`
-            let impl_generics_for_def = &generics.params;
+            let impl_generics_for_def_eot = AutoEmptyOrTrailing(&generics.params);
 
             let type_generics_for_def =
                 AutoEmptyOrTrailing(TypeGenericsWithoutBraces(&generics.params));
@@ -414,7 +414,7 @@ impl HookArgs {
                 {
                     #[inline]
                     fn _hooks_def_fn_hook<
-                        #impl_generics_for_def
+                        #impl_generics_for_def_eot
                         __HooksData,
                         __HooksPoll: ::core::ops::Fn(::core::pin::Pin<&mut __HooksData>, &mut ::core::task::Context) -> ::core::task::Poll<::core::primitive::bool>,
                         __HooksUseHook: for<'hook, #args_lifetimes> ::core::ops::Fn(::core::pin::Pin<&'hook mut __HooksData>, #hook_args_ty) -> #output_ty,
