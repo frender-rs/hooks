@@ -1,3 +1,10 @@
+# [1.0.0-alpha.5](https://github.com/frender-rs/hooks/compare/hooks-derive-core-v1.0.0-alpha.4...hooks-derive-core-v1.0.0-alpha.5) (2022-11-21)
+
+
+### Bug Fixes
+
+* hook macro missing comma when using generic arguments ([0a0ec81](https://github.com/frender-rs/hooks/commit/0a0ec813d3846ebeb012b2404d11b92e3b9e10b3))
+
 # [1.0.0-alpha.4](https://github.com/frender-rs/hooks/compare/hooks-derive-core-v1.0.0-alpha.3...hooks-derive-core-v1.0.0-alpha.4) (2022-11-16)
 
 
