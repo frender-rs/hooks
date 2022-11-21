@@ -1,3 +1,15 @@
+# [1.0.0-alpha.17](https://github.com/frender-rs/hooks/compare/hooks-v1.0.0-alpha.16...hooks-v1.0.0-alpha.17) (2022-11-21)
+
+
+### Bug Fixes
+
+* hook macro missing comma when using generic arguments ([0a0ec81](https://github.com/frender-rs/hooks/commit/0a0ec813d3846ebeb012b2404d11b92e3b9e10b3))
+
+
+### Features
+
+* hooks:memo_with helper fn ([6d1f7a2](https://github.com/frender-rs/hooks/commit/6d1f7a2b83983de4883b6c312ffa20d11055d3ed))
+
 # [1.0.0-alpha.16](https://github.com/frender-rs/hooks/compare/hooks-v1.0.0-alpha.15...hooks-v1.0.0-alpha.16) (2022-11-19)
 
 
