@@ -1,0 +1,61 @@
+---
+source: packages/hooks-test/tests/return_impl_trait.rs
+expression: "use_state_effect::hook_impl_code()"
+---
+fn use_state_effect() -> impl ::hooks::core::Hook<
+    (),
+> + for<'hook> ::hooks::core::HookLifetime<
+    'hook,
+    (),
+    &'hook (),
+    Value = impl Display,
+> + ::hooks::core::HookBounds<Bounds = ()> {
+    struct __HookTypes<HooksImplTrait0: Display> {
+        __: ::core::marker::PhantomData<(::core::marker::PhantomData<HooksImplTrait0>,)>,
+    }
+    impl<HooksImplTrait0: Display> ::hooks::core::HookBounds
+    for __HookTypes<HooksImplTrait0> {
+        type Bounds = ();
+    }
+    impl<
+        'hook,
+        HooksImplTrait0: Display,
+    > ::hooks::core::HookLifetime<'hook, (), &'hook ()>
+    for __HookTypes<HooksImplTrait0> {
+        type Value = HooksImplTrait0;
+    }
+    ::hooks::core::fn_hook::new_fn_hook::<
+        (),
+        _,
+        __HookTypes<_>,
+    >(
+        ::hooks::core::hook_pair::HookPair::new(
+            ::hooks::use_state_with::<i32>(),
+            ::hooks::use_effect(),
+        ),
+        ::hooks::core::HookPollNextUpdate::poll_next_update,
+        |__hooks_data, (): ()| {
+            let (__hooks_data, __hooks_hook_1) = __hooks_data.pin_project();
+            let __hooks_hook_0 = __hooks_data;
+            let (state, updater) = ::hooks::core::Hook::<
+                _,
+            >::use_hook(__hooks_hook_0, (Default::default,));
+            let updater = updater.clone();
+            ::hooks::core::Hook::<
+                _,
+            >::use_hook(
+                __hooks_hook_1,
+                (
+                    move |v: &_| {
+                        if *v < 2 {
+                            updater.set(*v + 1)
+                        }
+                    },
+                    *state,
+                ),
+            );
+            *state
+        },
+    )
+}
+

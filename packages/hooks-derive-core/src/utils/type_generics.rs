@@ -1,6 +1,7 @@
 use quote::ToTokens;
 
 /// [`syn::TypeGenerics`] without `< >`
+#[derive(Clone, Copy)]
 pub struct TypeGenericsWithoutBraces<'a>(
     pub &'a syn::punctuated::Punctuated<syn::GenericParam, syn::Token![,]>,
 );

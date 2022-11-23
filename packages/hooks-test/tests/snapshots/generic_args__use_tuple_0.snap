@@ -32,7 +32,6 @@ fn use_tuple_0() -> impl for<'a> ::hooks::core::Hook<
                     ::core::pin::Pin<&'hook mut __HooksData>,
                     (&'a (),),
                 ) -> (),
-            __HookTypes,
         >(
             hooks_data: __HooksData,
             hooks_poll: __HooksPoll,
@@ -54,7 +53,6 @@ fn use_tuple_0() -> impl for<'a> ::hooks::core::Hook<
             _,
             _,
             _,
-            __HookTypes,
         >(
             (),
             ::hooks::core::fn_hook::poll_next_update_ready_false,

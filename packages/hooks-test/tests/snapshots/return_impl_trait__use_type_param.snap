@@ -1,0 +1,43 @@
+---
+source: packages/hooks-test/tests/return_impl_trait.rs
+expression: "use_type_param::hook_impl_code()"
+---
+fn use_type_param<T: Default + Display>() -> impl ::hooks::core::Hook<
+    (),
+> + for<'hook> ::hooks::core::HookLifetime<
+    'hook,
+    (),
+    &'hook (::core::marker::PhantomData<T>,),
+    Value = impl Display,
+> + ::hooks::core::HookBounds<Bounds = (::core::marker::PhantomData<T>,)> {
+    struct __HookTypes<T: Default + Display, HooksImplTrait0: Display> {
+        __: ::core::marker::PhantomData<
+            (
+                ::core::marker::PhantomData<T>,
+                ::core::marker::PhantomData<HooksImplTrait0>,
+            ),
+        >,
+    }
+    impl<T: Default + Display, HooksImplTrait0: Display> ::hooks::core::HookBounds
+    for __HookTypes<T, HooksImplTrait0> {
+        type Bounds = (::core::marker::PhantomData<T>,);
+    }
+    impl<
+        'hook,
+        T: Default + Display,
+        HooksImplTrait0: Display,
+    > ::hooks::core::HookLifetime<'hook, (), &'hook (::core::marker::PhantomData<T>,)>
+    for __HookTypes<T, HooksImplTrait0> {
+        type Value = HooksImplTrait0;
+    }
+    ::hooks::core::fn_hook::new_fn_hook::<
+        (),
+        _,
+        __HookTypes<T, _>,
+    >(
+        (),
+        ::hooks::core::fn_hook::poll_next_update_ready_false,
+        |_: ::core::pin::Pin<&mut ()>, (): ()| { T::default() },
+    )
+}
+

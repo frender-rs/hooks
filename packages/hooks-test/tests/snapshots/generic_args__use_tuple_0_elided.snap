@@ -35,7 +35,6 @@ fn use_tuple_0_elided() -> impl for<'hooks_auto_lifetime_0> ::hooks::core::Hook<
                     ::core::pin::Pin<&'hook mut __HooksData>,
                     (&'hooks_auto_lifetime_0 (),),
                 ) -> (),
-            __HookTypes,
         >(
             hooks_data: __HooksData,
             hooks_poll: __HooksPoll,
@@ -57,7 +56,6 @@ fn use_tuple_0_elided() -> impl for<'hooks_auto_lifetime_0> ::hooks::core::Hook<
             _,
             _,
             _,
-            __HookTypes,
         >(
             (),
             ::hooks::core::fn_hook::poll_next_update_ready_false,

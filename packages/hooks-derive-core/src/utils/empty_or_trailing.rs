@@ -26,6 +26,7 @@ impl<T, P> IsEmptyOrTrailing for Punctuated<T, P> {
 }
 
 /// [`ToTokens`] makes sure there is a trailing punct unless empty.
+#[derive(Clone, Copy)]
 pub struct AutoEmptyOrTrailing<T: IsEmptyOrTrailing>(pub T);
 
 impl<T: IsEmptyOrTrailing> IsEmptyOrTrailing for AutoEmptyOrTrailing<T> {

@@ -1,5 +1,6 @@
 use darling::ToTokens;
 
+#[derive(Clone, Copy)]
 pub struct Chain<A, B>(pub A, pub B);
 
 impl<A, B> Chain<A, B> {
@@ -34,3 +35,12 @@ impl<A: ToTokens, B: ToTokens> ToTokens for Chain<A, B> {
         tokens
     }
 }
+
+macro_rules! chain {
+    ($e1:expr, $e2:expr $(, $e:expr)* $(,)?) => {
+        $crate::utils::chain::Chain($e1, $e2)
+            $(.chain($e))*
+    };
+}
+
+pub(crate) use chain;

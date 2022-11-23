@@ -1,0 +1,43 @@
+---
+source: packages/hooks-test/tests/return_impl_trait.rs
+expression: "use_str_state::hook_impl_code()"
+---
+fn use_str_state() -> impl ::hooks::core::Hook<
+    (),
+> + for<'hook> ::hooks::core::HookLifetime<
+    'hook,
+    (),
+    &'hook (),
+    Value = impl Any,
+> + ::hooks::core::HookBounds<Bounds = ()> {
+    struct __HookTypes<HooksImplTrait0: Any> {
+        __: ::core::marker::PhantomData<(::core::marker::PhantomData<HooksImplTrait0>,)>,
+    }
+    impl<HooksImplTrait0: Any> ::hooks::core::HookBounds
+    for __HookTypes<HooksImplTrait0> {
+        type Bounds = ();
+    }
+    impl<'hook, HooksImplTrait0: Any> ::hooks::core::HookLifetime<'hook, (), &'hook ()>
+    for __HookTypes<HooksImplTrait0> {
+        type Value = HooksImplTrait0;
+    }
+    ::hooks::core::fn_hook::new_fn_hook::<
+        (),
+        _,
+        __HookTypes<_>,
+    >(
+        ::hooks::use_state_with(),
+        ::hooks::core::HookPollNextUpdate::poll_next_update,
+        |__hooks_hook_0, (): ()| {
+            let (state, updater) = ::hooks::core::Hook::<
+                _,
+            >::use_hook(__hooks_hook_0, (String::new,));
+            updater
+                .replace_maybe_with_fn_pointer(|old| {
+                    if old.len() < 2 { Some(format!("{} ", old)) } else { None }
+                });
+            state.clone()
+        },
+    )
+}
+
