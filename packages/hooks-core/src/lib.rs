@@ -2,9 +2,11 @@
 
 mod ext;
 mod hook;
+mod macro_impl_hook;
 
 pub use ext::*;
 pub use hook::*;
+pub use macro_impl_hook::*;
 
 pub mod fn_hook;
 pub mod hook_pair;
