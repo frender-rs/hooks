@@ -1,3 +1,15 @@
+# [1.0.0-alpha.18](https://github.com/frender-rs/hooks/compare/hooks-v1.0.0-alpha.17...hooks-v1.0.0-alpha.18) (2022-11-23)
+
+
+### Bug Fixes
+
+* `HookPair` should be re-used if either hook of it should be re-used ([50682e9](https://github.com/frender-rs/hooks/commit/50682e973afd771ec799334fe1c256d5670fcf92))
+
+
+### Features
+
+* partially support `impl Trait` in return type of hook fn using hook macro ([61efdab](https://github.com/frender-rs/hooks/commit/61efdab8d0b46b2173cd7840fdbfb2da40db5d9f))
+
 # [1.0.0-alpha.17](https://github.com/frender-rs/hooks/compare/hooks-v1.0.0-alpha.16...hooks-v1.0.0-alpha.17) (2022-11-21)
 
 
