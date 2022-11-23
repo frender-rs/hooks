@@ -46,6 +46,7 @@ impl<H1: HookPollNextUpdate, H2: HookPollNextUpdate> HookPollNextUpdate for Hook
         match (hook_1, hook_2) {
             // The HookChain is dynamic if either of the two hooks is dynamic
             (Poll::Ready(v1), Poll::Ready(v2)) => Poll::Ready(v1 || v2),
+            (Poll::Ready(true), _) | (_, Poll::Ready(true)) => Poll::Ready(true),
             _ => Poll::Pending,
         }
     }
