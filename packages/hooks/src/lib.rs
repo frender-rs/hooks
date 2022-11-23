@@ -2,6 +2,7 @@
 #![doc = include_str!("../README.md")]
 
 mod effect;
+mod hook_mut;
 mod memo;
 mod pinned;
 mod pinned_hook;
@@ -11,6 +12,7 @@ mod shared_state;
 mod state;
 
 pub use effect::*;
+pub use hook_mut::*;
 pub use memo::*;
 pub use pinned::*;
 pub use pinned_hook::*;
