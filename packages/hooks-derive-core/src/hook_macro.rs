@@ -6,7 +6,7 @@ use quote::{quote, quote_spanned, ToTokens};
 use syn::{parse_quote_spanned, spanned::Spanned};
 
 use crate::utils::{
-    chain::{chain, Chain},
+    chain::Chain,
     either::Either,
     empty_or_trailing::AutoEmptyOrTrailing,
     group::{angled, parened},
@@ -84,9 +84,8 @@ impl HookArgs {
 
         let span_fn_name = sig.ident.span();
 
-        let token_add: syn::Token![+];
-
-        let lt_hook;
+        // let token_add: syn::Token![+];
+        // let lt_hook;
 
         let (hook_args_pat, mut hook_args_ty) = {
             let hook_args = std::mem::take(&mut sig.inputs);
@@ -320,17 +319,17 @@ impl HookArgs {
                 it_impl_generics_eot.len(),
             ));
 
-            token_add = <syn::Token![+]>::default();
+            // token_add = <syn::Token![+]>::default();
 
-            lt_hook = syn::Lifetime {
-                apostrophe: Span::call_site(),
-                ident: syn::Ident::new("hook", Span::call_site()),
-            };
+            // lt_hook = syn::Lifetime {
+            //     apostrophe: Span::call_site(),
+            //     ident: syn::Ident::new("hook", Span::call_site()),
+            // };
 
-            let it_where_predicates_eot = map_to_tokens(&it_impl_generics_eot, |data| {
-                data.iter()
-                    .map(|tp| chain![&tp.0, &token_add, &lt_hook, &tp.1,])
-            });
+            // let it_where_predicates_eot = map_to_tokens(&it_impl_generics_eot, |data| {
+            //     data.iter()
+            //         .map(|tp| chain![&tp.0, &token_add, &lt_hook, &tp.1,])
+            // });
 
             // hook_lifetime_where_clause = Either::B({
             //     match where_clause {
