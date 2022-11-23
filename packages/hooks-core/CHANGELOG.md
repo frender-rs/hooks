@@ -1,3 +1,10 @@
+# [1.0.0-alpha.8](https://github.com/frender-rs/hooks/compare/hooks-core-v1.0.0-alpha.7...hooks-core-v1.0.0-alpha.8) (2022-11-23)
+
+
+### Bug Fixes
+
+* `HookPair` should be re-used if either hook of it should be re-used ([50682e9](https://github.com/frender-rs/hooks/commit/50682e973afd771ec799334fe1c256d5670fcf92))
+
 # [1.0.0-alpha.7](https://github.com/frender-rs/hooks/compare/hooks-core-v1.0.0-alpha.6...hooks-core-v1.0.0-alpha.7) (2022-11-17)
 
 
