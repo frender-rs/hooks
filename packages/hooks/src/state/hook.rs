@@ -130,3 +130,44 @@ pub fn use_state<'a, T>() -> State<'a, T> {
 pub fn use_state_n<'a, T, const N: usize>() -> State<'a, T, N> {
     State { data: None }
 }
+
+#[cfg(test)]
+mod tests {
+    use futures_lite::StreamExt;
+    use hooks_core::AsyncIterableHook;
+    use hooks_derive::hook;
+
+    use crate::{use_effect, use_state, use_state_with};
+
+    #[test]
+    fn state_2() {
+        #[hook(hooks_core_path = "::hooks_core")]
+        fn use_state_2() -> (i32, i32) {
+            let (state_1, updater_1) = use_state(1);
+            let (state_2, updater_2) = use_state_with(|| *state_1 + 1);
+
+            let ret = (*state_1, *state_2);
+
+            let updater_1 = updater_1.clone();
+            let updater_2 = updater_2.clone();
+            use_effect(
+                move |(v1, v2): &_| {
+                    if *v2 > 10 {
+                        return;
+                    }
+                    updater_1.set(*v2);
+                    updater_2.set(*v1 + *v2);
+                },
+                ret,
+            );
+
+            ret
+        }
+
+        futures_lite::future::block_on(async {
+            let values = use_state_2().into_iter().collect::<Vec<_>>().await;
+
+            assert_eq!(values, [(1, 2), (2, 3), (3, 5), (5, 8), (8, 13)]);
+        });
+    }
+}
