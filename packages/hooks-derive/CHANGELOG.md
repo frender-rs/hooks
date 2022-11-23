@@ -1,3 +1,10 @@
+# [1.0.0-alpha.6](https://github.com/frender-rs/hooks/compare/hooks-derive-v1.0.0-alpha.5...hooks-derive-v1.0.0-alpha.6) (2022-11-23)
+
+
+### Features
+
+* partially support `impl Trait` in return type of hook fn using hook macro ([61efdab](https://github.com/frender-rs/hooks/commit/61efdab8d0b46b2173cd7840fdbfb2da40db5d9f))
+
 # [1.0.0-alpha.5](https://github.com/frender-rs/hooks/compare/hooks-derive-v1.0.0-alpha.4...hooks-derive-v1.0.0-alpha.5) (2022-11-21)
 
 
