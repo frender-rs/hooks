@@ -49,11 +49,15 @@ macro_rules! __impl_use_hook {
         [ $($where:tt)* ]
         {
             $(#[$meta_use:meta])*
-            $use_hook:ident $([$($args_generics:tt)*])? ( $self_0:ident $($self_1:ident)? $(, $arg_pat:ident : $arg_ty:ty)* $(,)? ) -> $value:ty $impl_use_hook:block
+            $use_hook:ident
+            $({$($args_lifetimes:tt)*})?
+            $([$($args_generics:tt)*])?
+            ( $self_0:ident $($self_1:ident)? $(, $arg_pat:ident : $arg_ty:ty)* $(,)? ) -> $value:ty $impl_use_hook:block
         }
     ) =>{
         impl<
             'hook,
+            $($($args_lifetimes)* ,)?
             $($impl_generics)*
             $($($args_generics)*)?
         > $crate::HookLifetime<'hook, ($($arg_ty ,)*), &'hook Self> for $ty $($where)* {
@@ -61,6 +65,7 @@ macro_rules! __impl_use_hook {
         }
 
         impl<
+            $($($args_lifetimes)* ,)?
             $($impl_generics)*
             $($($args_generics)*)?
         > $crate::Hook<($($arg_ty ,)*)> for $ty $($where)* {
@@ -112,7 +117,10 @@ macro_rules! impl_hook {
             $(
 
             $(#[$meta_use:meta])*
-            $use_hook:ident $([$($args_generics:tt)*])? ( $self_0:ident $($self_1:ident)? $(, $arg_pat:ident : $arg_ty:ty)* $(,)? ) -> $value:ty $impl_use_hook:block
+            $use_hook:ident
+            $({$($args_lifetimes:tt)*})?
+            $([$($args_generics:tt)*])?
+            ( $self_0:ident $($self_1:ident)? $(, $arg_pat:ident : $arg_ty:ty)* $(,)? ) -> $value:ty $impl_use_hook:block
 
             )*
         }
@@ -135,7 +143,10 @@ macro_rules! impl_hook {
             [$(where $($where)*)?]
             $({
                 $(#[$meta_use])*
-                $use_hook $([$($args_generics)*])? ( $self_0 $($self_1)? $(, $arg_pat : $arg_ty)* ) -> $value $impl_use_hook
+                $use_hook
+                $({$($args_lifetimes)*})?
+                $([$($args_generics )*])?
+                ( $self_0 $($self_1)? $(, $arg_pat : $arg_ty)* ) -> $value $impl_use_hook
             })*
         }
     };

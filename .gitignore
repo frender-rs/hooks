@@ -10,6 +10,7 @@
 !.yarn/versions
 
 # compiled output
+dist/
 /dist
 /tmp
 /out-tsc
