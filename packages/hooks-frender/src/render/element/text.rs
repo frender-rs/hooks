@@ -7,9 +7,10 @@ use crate::render::{Dom, SsrContext, UpdateRenderState};
 pub mod dom {
     use std::borrow::Cow;
 
-    use crate::render::RenderState;
+    use crate::{render::RenderState, utils::map_or_insert_with_ctx};
 
     pub struct State {
+        mounted: bool,
         node: Option<web_sys::Text>,
         cache: Option<Cow<'static, str>>,
     }
@@ -20,19 +21,30 @@ pub mod dom {
             data: Cow<'static, str>,
             dom_ctx: &mut crate::render::Dom,
         ) {
-            if self.cache.as_ref() == Some(&data) {
-                return;
-            }
-            match &mut self.node {
-                Some(node) => node.set_data(&data),
-                None => {
-                    self.node = Some({
-                        let text = dom_ctx.document.create_text_node(&data);
-                        dom_ctx.current_parent.append_child(&text).unwrap();
-                        text
-                    })
-                }
-            }
+            map_or_insert_with_ctx(
+                &mut self.node,
+                (dom_ctx, &mut self.mounted),
+                |node, (dom_ctx, mounted)| {
+                    if self.cache.as_ref() != Some(&data) {
+                        node.set_data(&data);
+                    }
+                    if *mounted {
+                        dom_ctx
+                            .next_node_position
+                            .set_as_insert_after(node.clone().into())
+                    } else {
+                        *mounted = true;
+                        dom_ctx.next_node_position.add_node(node.clone().into());
+                    }
+                },
+                |(dom_ctx, mounted)| {
+                    let text = dom_ctx.document.create_text_node(&data);
+                    dom_ctx.next_node_position.add_node(text.clone().into());
+                    *mounted = true;
+                    text
+                },
+            );
+
             self.cache = Some(data);
         }
 
@@ -41,19 +53,30 @@ pub mod dom {
             data: &str,
             dom_ctx: &mut crate::render::Dom,
         ) {
-            if self.cache.as_deref() == Some(data) {
-                return;
-            }
-            match &mut self.node {
-                Some(node) => node.set_data(data),
-                None => {
-                    self.node = Some({
-                        let text = dom_ctx.document.create_text_node(data);
-                        dom_ctx.current_parent.append_child(&text).unwrap();
-                        text
-                    })
-                }
-            }
+            map_or_insert_with_ctx(
+                &mut self.node,
+                (dom_ctx, &mut self.mounted),
+                |node, (dom_ctx, mounted)| {
+                    if self.cache.as_deref() != Some(data) {
+                        node.set_data(data);
+                    }
+                    if *mounted {
+                        dom_ctx
+                            .next_node_position
+                            .set_as_insert_after(node.clone().into())
+                    } else {
+                        *mounted = true;
+                        dom_ctx.next_node_position.add_node(node.clone().into());
+                    }
+                },
+                |(dom_ctx, mounted)| {
+                    let text = dom_ctx.document.create_text_node(data);
+                    dom_ctx.next_node_position.add_node(text.clone().into());
+                    *mounted = true;
+                    text
+                },
+            );
+
             self.cache = None;
         }
     }
@@ -63,17 +86,20 @@ pub mod dom {
     impl RenderState for State {
         fn new_uninitialized() -> Self {
             Self {
+                mounted: false,
                 node: None,
                 cache: None,
             }
         }
 
-        fn destroy(self: std::pin::Pin<&mut Self>) {
+        fn unmount(self: std::pin::Pin<&mut Self>) {
+            if !self.mounted || self.node.is_none() {
+                return;
+            }
             let this = self.get_mut();
             if let Some(node) = this.node.take() {
                 node.remove()
             }
-            this.cache = None;
         }
     }
 }
@@ -142,7 +168,7 @@ pub mod ssr {
             Self(None)
         }
 
-        fn destroy(self: std::pin::Pin<&mut Self>) {
+        fn unmount(self: std::pin::Pin<&mut Self>) {
             self.get_mut().0 = None;
         }
 

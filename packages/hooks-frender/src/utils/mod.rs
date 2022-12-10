@@ -1,5 +1,9 @@
+mod option;
+mod pin;
 mod reentrant;
 
+pub use option::*;
+pub use pin::*;
 pub use reentrant::*;
 
 macro_rules! def_dom_element {

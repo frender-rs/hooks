@@ -1,8 +1,18 @@
-use std::{pin::Pin, task::Poll};
+mod either;
+mod fn_once;
+mod option;
+mod wrappers;
+
+use std::{ops::DerefMut, pin::Pin, task::Poll};
+
+use crate::utils::pin_as_deref_mut;
 
 pub trait RenderState {
+    /// We are not using [`Default`] trait because
+    /// [`Pin<Box<_>>`] does not impl [`Default`].
     fn new_uninitialized() -> Self;
-    fn destroy(self: Pin<&mut Self>);
+
+    fn unmount(self: Pin<&mut Self>);
 
     #[inline]
     fn poll_reactive(self: Pin<&mut Self>, cx: &mut std::task::Context<'_>) -> Poll<bool> {
@@ -11,29 +21,25 @@ pub trait RenderState {
     }
 }
 
+impl<S: RenderState> RenderState for Pin<Box<S>> {
+    #[inline]
+    fn new_uninitialized() -> Self {
+        Box::pin(S::new_uninitialized())
+    }
+
+    #[inline]
+    fn unmount(self: Pin<&mut Self>) {
+        S::unmount(pin_as_deref_mut(self))
+    }
+
+    #[inline]
+    fn poll_reactive(self: Pin<&mut Self>, cx: &mut std::task::Context<'_>) -> Poll<bool> {
+        S::poll_reactive(pin_as_deref_mut(self), cx)
+    }
+}
+
 pub trait UpdateRenderState<Ctx> {
     type State: RenderState;
 
     fn update_render_state(self, ctx: &mut Ctx, state: Pin<&mut Self::State>);
-}
-
-impl<Ctx, R: UpdateRenderState<Ctx>> UpdateRenderState<Ctx> for Box<R> {
-    type State = R::State;
-
-    #[inline]
-    fn update_render_state(self, ctx: &mut Ctx, state: Pin<&mut Self::State>) {
-        R::update_render_state(*self, ctx, state)
-    }
-}
-
-impl<Ctx, R: UpdateRenderState<Ctx>> UpdateRenderState<Ctx> for Option<R> {
-    type State = R::State;
-
-    fn update_render_state(self, ctx: &mut Ctx, state: Pin<&mut Self::State>) {
-        if let Some(element) = self {
-            element.update_render_state(ctx, state)
-        } else {
-            state.destroy()
-        }
-    }
 }

@@ -7,7 +7,7 @@ impl RenderState for () {
     fn new_uninitialized() -> Self {}
 
     #[inline]
-    fn destroy(self: std::pin::Pin<&mut Self>) {}
+    fn unmount(self: std::pin::Pin<&mut Self>) {}
 }
 
 impl<Ctx> UpdateRenderState<Ctx> for () {
@@ -42,9 +42,10 @@ macro_rules! impl_render_for_tuple {
                         $($field: $field::new_uninitialized()),+
                     }
                 }
-                fn destroy(self: ::core::pin::Pin<&mut Self>) {
+
+                fn unmount(self: ::core::pin::Pin<&mut Self>) {
                     let this = self.project();
-                    $( this.$field.destroy(); )+
+                    $( this.$field.unmount(); )+
                 }
 
                 #[inline]

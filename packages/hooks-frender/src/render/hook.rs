@@ -2,9 +2,18 @@ use std::{any::Any, pin::Pin};
 
 use hooks::{Hook, HookBounds, HookLifetime, HookPollNextUpdate, LazyPinned, LazyPinnedHook};
 
-use super::{ContextAndState, Dom, RenderState, UpdateRenderState};
+use super::{ContextAndState, Dom, EndBuilder, RenderState, UpdateRenderState};
 
+#[derive(Clone, Copy, Debug)]
 pub struct HookElement<H>(pub H);
+
+impl<H> EndBuilder for HookElement<H> {
+    type Output = Self;
+
+    fn end_builder(self) -> Self::Output {
+        self
+    }
+}
 
 pin_project_lite::pin_project! {
     pub struct HookState<H: HookPollNextUpdate, S> {
@@ -28,8 +37,8 @@ where
         }
     }
 
-    fn destroy(self: Pin<&mut Self>) {
-        self.project().render_state.destroy()
+    fn unmount(self: Pin<&mut Self>) {
+        self.project().render_state.unmount()
     }
 
     fn poll_reactive(
@@ -53,7 +62,9 @@ where
                 if let (Some(hook), Some(context)) =
                     (this.hook.pin_project_hook(), this.dom.as_mut())
                 {
-                    hook.use_hook((ContextAndState::new(context, this.render_state),));
+                    context.with_position(|context| {
+                        hook.use_hook((ContextAndState::new(context, this.render_state),));
+                    });
                     cx.waker().wake_by_ref();
                     std::task::Poll::Pending
                 } else {

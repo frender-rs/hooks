@@ -1,12 +1,10 @@
-use std::borrow::Cow;
-
 use futures_io::AsyncWrite;
 use wasm_bindgen::JsCast;
-use web_sys::MouseEvent;
 
 use crate::{
     props::{events, UpdateDomEventListener},
-    render::{Dom, RenderState, SsrContext, Unset, UpdateRenderState},
+    render::{Dom, EndBuilder, SsrContext, Unset, UpdateRenderState},
+    utils::{insert_element_and_update, map_or_insert_with_ctx},
 };
 
 pub trait PropsTypeDefs {
@@ -21,6 +19,7 @@ pub mod dom {
     pin_project_lite::pin_project! {
         pub struct State<PropsTypes: ?Sized>
             where PropsTypes: PropsTypeDefs {
+            pub mounted: bool,
             pub node: Option<web_sys::HtmlButtonElement>,
             #[pin]
             pub children: PropsTypes::Children,
@@ -40,17 +39,20 @@ pub mod dom {
     {
         fn new_uninitialized() -> Self {
             Self {
+                mounted: false,
                 node: None,
                 children: RenderState::new_uninitialized(),
                 on_click: Default::default(),
             }
         }
 
-        fn destroy(self: std::pin::Pin<&mut Self>) {
+        fn unmount(self: std::pin::Pin<&mut Self>) {
+            if !self.mounted || self.node.is_none() {
+                return;
+            }
+
             let this = self.project();
-            *this.on_click = Default::default();
-            this.children.destroy();
-            if let Some(node) = this.node.take() {
+            if let Some(node) = this.node {
                 node.remove()
             }
         }
@@ -121,7 +123,7 @@ pub mod ssr {
             Self(None)
         }
 
-        fn destroy(self: std::pin::Pin<&mut Self>) {
+        fn unmount(self: std::pin::Pin<&mut Self>) {
             self.get_mut().0 = None;
         }
 
@@ -158,6 +160,15 @@ pub mod ssr {
 pub struct ButtonProps<PropsTypes: ?Sized + PropsTypeDefs> {
     pub children: PropsTypes::Children,
     pub on_click: PropsTypes::OnClick,
+}
+
+impl<PropsTypes: ?Sized + PropsTypeDefs> EndBuilder for ButtonProps<PropsTypes> {
+    type Output = Button<PropsTypes>;
+
+    #[inline]
+    fn end_builder(self) -> Self::Output {
+        Button(self)
+    }
 }
 
 impl<PropsTypes: ?Sized + PropsTypeDefs> ButtonProps<PropsTypes> {
@@ -210,17 +221,16 @@ where
     fn update_render_state(self, ctx: &mut Dom, state: std::pin::Pin<&mut Self::State>) {
         let props = self.0;
         let state = state.project();
-        let node = state.node.get_or_insert_with(|| {
-            let element = ctx.document.create_element("button").unwrap();
-            ctx.current_parent.append_child(&element).unwrap();
-            element.dyn_into::<web_sys::HtmlButtonElement>().unwrap()
-        });
 
-        ctx.current_parent = node.clone().into();
-        props.children.update_render_state(ctx, state.children);
-        props
-            .on_click
-            .update_dom_event_listener(node, state.on_click);
+        insert_element_and_update(state.node, ctx, "button", |node, children_ctx| {
+            props
+                .children
+                .update_render_state(children_ctx, state.children);
+
+            props
+                .on_click
+                .update_dom_event_listener(node, state.on_click);
+        })
     }
 }
 
