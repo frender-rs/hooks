@@ -214,9 +214,9 @@ pub fn CounterWithInitialValue() -> CounterWithInitialValue<CounterWithInitialVa
     }
 }
 
-pub struct Counter();
+pub trait Counter {}
 
-impl Counter {
+pub fn Counter() -> impl render::UpdateRenderState<Dom> + Copy {
     #[hooks::hook(args_generics = "'render_ctx")]
     pub fn use_impl_render(
         ctx: ContextAndState<'render_ctx, Dom, dyn std::any::Any>,
@@ -262,7 +262,5 @@ impl Counter {
         ))
     }
 
-    pub fn finish_builder(self) -> impl render::UpdateRenderState<Dom> + Copy {
-        render::HookElement(Self::use_impl_render)
-    }
+    render::HookElement(use_impl_render)
 }

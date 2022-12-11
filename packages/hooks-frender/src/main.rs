@@ -8,7 +8,7 @@ fn main() {
         let current_parent = document.get_element_by_id("main").unwrap();
 
         Dom::new(document, current_parent)
-            .render_element(rsx!(<Counter />), std::future::pending())
+            .render_element(Counter(), std::future::pending())
             .await;
     })
 }
