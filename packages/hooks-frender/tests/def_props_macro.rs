@@ -1,4 +1,4 @@
-use hooks_frender::def_props;
+use hooks_frender::{builder::MaybeSpecifiedFor, def_props};
 
 def_props! {
     //! The inner docs go to mod [`MyCompProps`]
@@ -92,11 +92,43 @@ def_props! {
     }
 }
 
-type Test = MyCompProps::TypesInitial;
-
 #[test]
 fn builder() {
     use MyCompProps::Builder;
-    let a = MyCompProps();
-    let b = MyCompProps().required_field(vec![]);
+    let b = MyCompProps()
+        .required_field(vec![])
+        .required_field_with_generic_input(None)
+        .generic_field(2)
+        .generic_field_maybe_specified::<String>("world".into());
+
+    fn test_valid_props(props: MyCompProps::Data<impl ?Sized + MyCompProps::ValidTypes>) {
+        // use MaybeSpe;
+
+        let field_with_default: std::borrow::Cow<'static, str> = props.field_with_default;
+        assert!(matches!(field_with_default, std::borrow::Cow::Borrowed("")));
+
+        let required_field: Vec<u8> = props.required_field;
+        assert!(required_field.is_empty());
+
+        let required_field_with_generic_input: Option<i32> =
+            props.required_field_with_generic_input;
+        assert_eq!(required_field_with_generic_input, None);
+
+        let optional_field_with_generic_input: Option<i32> =
+            props.optional_field_with_generic_input;
+        assert_eq!(optional_field_with_generic_input, Some(1));
+
+        assert_eq!(props.generic_field.into(), 2);
+
+        assert_eq!(props.generic_field_2.into(), "hello");
+
+        assert_eq!(
+            props.generic_field_maybe_specified.specified(),
+            Some("world".to_string())
+        );
+
+        assert_eq!(props.generic_field_maybe_specified_2.as_specified(), None);
+    }
+
+    test_valid_props(b);
 }

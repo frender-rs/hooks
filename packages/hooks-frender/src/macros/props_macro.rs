@@ -398,6 +398,91 @@ macro_rules! __impl_props_types_field_initial_ty_iter {
 }
 
 #[macro_export]
+macro_rules! __impl_props_types_valid_trait {
+    (
+        $([
+            $field_name:ident
+
+            $([ ?    $($field_modifier_maybe:tt)* ] $(: $(= $initial_v_maybe:expr)? , $initial_ty_maybe:ty )? ;)?
+            $([ impl $($field_modifier_impl:tt)*  ] $(: $(= $initial_v_impl:expr )? , $initial_ty_impl:ty  )? ;)?
+            $(
+                = $field_builder_default_output_value:expr =>
+                ($($field_builder_inputs:tt)*)
+                    -> $field_builder_output:ty
+                    $field_builder_impl:block
+                $([ $($builder_generics:tt)* ])? ;
+            )?
+            $(
+                ($($generic_field_builder_inputs:tt)*)
+                    -> $generic_field_builder_output:ty
+                    $generic_field_builder_impl:block
+                $([ $($builder_generics_generic:tt)* ])? ;
+            )?
+            $(
+                : = $field_default_value:expr , $field_ty:ty;
+            )?
+            $(  : , $generic_field_ty:ty;  )?
+        ])*
+    ) => {
+        pub trait ValidTypes: Types<
+            $(
+                $( $field_name = $generic_field_builder_output, )?
+                $( $field_name = $generic_field_ty, )?
+                $(
+                    $field_name = $crate::ignore_first_tt![{$($field_modifier_maybe)*} <Self as ValidTypes>::$field_name],
+                )?
+                $(
+                    $field_name = $crate::ignore_first_tt![{$($field_modifier_impl )*} <Self as ValidTypes>::$field_name],
+                )?
+            )*
+        >
+        {
+            $(
+                $(
+                    #[doc = stringify!($($field_modifier_maybe)*)]
+                    #[allow(non_camel_case_types)]
+                    type $field_name : $crate::builder::MaybeSpecifiedFor<self::tag::$field_name>;
+                )?
+
+
+                $(
+                    #[allow(non_camel_case_types)]
+                    type $field_name : $($field_modifier_impl)*;
+                )?
+            )*
+        }
+
+        impl<T: ?Sized> ValidTypes for T where T: Types<
+            $(
+                $( $field_name = $generic_field_builder_output, )?
+                $( $field_name = $generic_field_ty, )?
+            )*
+        >,
+        $(
+            $(
+                <T as Types>::$field_name : $crate::builder::MaybeSpecifiedFor<self::tag::$field_name>,
+                self::tag::$field_name: $crate::builder::FieldTag<Field = $($field_modifier_maybe)*>,
+            )?
+            $( <T as Types>::$field_name: $($field_modifier_impl)*, )?
+        )*
+    {
+        $(
+            $(
+                #[doc = stringify!($($field_modifier_maybe)*)]
+                type $field_name = <T as Types>::$field_name;
+            )?
+
+            $(
+                #[doc = stringify!($($field_modifier_impl)*)]
+                type $field_name = <T as Types>::$field_name;
+            )?
+        )*
+    }
+
+    };
+}
+
+#[macro_export]
 macro_rules! __impl_props_types_data_struct {
     ($([
             $field_name:ident
@@ -423,7 +508,7 @@ macro_rules! __impl_props_types_data_struct {
             $(  : , $generic_field_ty:ty;  )?
     ])*) => {
         #[non_exhaustive]
-        pub struct Data<TypeDefs: ?Sized + Types = TypesInitial> {$(
+        pub struct Data<TypeDefs: ?Sized + Types> {$(
             $( pub $field_name: $crate::ignore_first_tt![{$($initial_ty_maybe)?} TypeDefs::$field_name], )?
             $( pub $field_name: $crate::ignore_first_tt![{$($initial_ty_impl )?} TypeDefs::$field_name], )?
             $( pub $field_name: $crate::ignore_first_tt![{$generic_field_builder_output} TypeDefs::$field_name], )?
@@ -517,6 +602,23 @@ macro_rules! __impl_props_field_tag {
 
         impl $crate::builder::FieldTag for $field_name {
             type Field = $for_ty;
+        }
+
+        impl $crate::builder::MaybeSpecifiedFor<$field_name> for $for_ty {
+            #[inline]
+            fn specified(self) -> ::core::option::Option<Self> {
+                ::core::option::Option::Some(self)
+            }
+
+            #[inline]
+            fn as_specified(&self) -> ::core::option::Option<&Self> {
+                ::core::option::Option::Some(self)
+            }
+
+            #[inline]
+            fn as_mut_specified(&mut self) -> ::core::option::Option<&mut Self> {
+                ::core::option::Option::Some(self)
+            }
         }
     };
     ({} $($other:tt)*) => {};
@@ -724,6 +826,26 @@ macro_rules! def_props {
                     ;
                 ])*
             };
+
+            $crate::__impl_props_types_valid_trait! {
+                $([
+                    $field_name
+
+                    $(
+                        $(= $field_builder_default_output_value =>)?
+                        ($($field_builder_inputs)*)
+                            -> $field_builder_output
+                            $field_builder_impl
+                    )?
+
+                    $([ $($field_modifiers_or_builder_generics)* ])?
+
+                    $(
+                        : $( = $field_default_value)? , $field_ty
+                    )?
+                    ;
+                ])*
+            }
 
             pub type DataInitial = Data<TypesInitial>;
         }
