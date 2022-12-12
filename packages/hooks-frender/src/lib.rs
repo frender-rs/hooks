@@ -8,22 +8,11 @@ pub use macros::*;
 pub use props::*;
 pub use render::*;
 
+pub mod builder;
+
 mod utils;
 
-pub struct Unspecified;
-
-#[repr(transparent)]
-pub struct Specified<T>(pub T);
-
-pub trait WrapProps<Props> {
-    type Out;
-    fn wrap_props(props: Props) -> Self::Out;
-}
-
-pub trait UnwrapProps {
-    type Props;
-    fn unwrap_props(self) -> Self::Props;
-}
+use builder::{Unspecified, UnwrapData, WrapData};
 
 pub type CounterWithInitialValuePropsTypesAllUnspecified = dyn CounterWithInitialValuePropsTypes<
     //
@@ -34,17 +23,17 @@ pub type CounterWithInitialValuePropsTypesAllUnspecified = dyn CounterWithInitia
 pub trait CounterWithInitialValuePropsTypes {
     type initial_value;
 
-    fn initial_value<V>(self, new_value: V) -> Self::Out
+    fn initial_value<V>(self, new_value: V) -> Self::Wrapped
     where
         Self: Sized
-            + UnwrapProps<
-                Props = CounterWithInitialValueProps<
+            + UnwrapData<
+                Data = CounterWithInitialValueProps<
                     dyn CounterWithInitialValuePropsTypes<
                         //
                         initial_value = Self::initial_value,
                     >,
                 >,
-            > + WrapProps<
+            > + WrapData<
                 CounterWithInitialValueProps<
                     dyn CounterWithInitialValuePropsTypes<
                         //
@@ -54,18 +43,18 @@ pub trait CounterWithInitialValuePropsTypes {
             >,
     {
         #[allow(unused_variables)]
-        let props = Self::unwrap_props(self);
+        let props = Self::unwrap_data(self);
         let props = CounterWithInitialValueProps {
             initial_value: new_value,
         };
-        Self::wrap_props(props)
+        Self::wrap_data(props)
     }
 }
 
 impl<T, PropsTypesDef: ?Sized + CounterWithInitialValuePropsTypes> CounterWithInitialValuePropsTypes
     for T
 where
-    T: UnwrapProps<Props = CounterWithInitialValueProps<PropsTypesDef>>,
+    T: UnwrapData<Data = CounterWithInitialValueProps<PropsTypesDef>>,
 {
     type initial_value = PropsTypesDef::initial_value;
 }
@@ -82,13 +71,21 @@ pub fn CounterWithInitialValueProps() -> CounterWithInitialValueProps {
     }
 }
 
-impl<PropsTypesDef: ?Sized + CounterWithInitialValuePropsTypes> UnwrapProps
+impl<PropsTypesDef: ?Sized + CounterWithInitialValuePropsTypes> UnwrapData
     for CounterWithInitialValueProps<PropsTypesDef>
 {
-    type Props = Self;
+    type Data = Self;
 
     #[inline]
-    fn unwrap_props(self) -> Self::Props {
+    fn unwrap_data(self) -> Self::Data {
+        self
+    }
+
+    fn unwrap_as_data(&self) -> &Self::Data {
+        self
+    }
+
+    fn unwrap_as_mut_data(&mut self) -> &mut Self::Data {
         self
     }
 }
@@ -96,12 +93,12 @@ impl<PropsTypesDef: ?Sized + CounterWithInitialValuePropsTypes> UnwrapProps
 impl<
         PropsTypesDef: ?Sized + CounterWithInitialValuePropsTypes,
         PropsTypesDefNew: ?Sized + CounterWithInitialValuePropsTypes,
-    > WrapProps<CounterWithInitialValueProps<PropsTypesDefNew>>
+    > WrapData<CounterWithInitialValueProps<PropsTypesDefNew>>
     for CounterWithInitialValueProps<PropsTypesDef>
 {
-    type Out = CounterWithInitialValueProps<PropsTypesDefNew>;
+    type Wrapped = CounterWithInitialValueProps<PropsTypesDefNew>;
 
-    fn wrap_props(props: CounterWithInitialValueProps<PropsTypesDefNew>) -> Self::Out {
+    fn wrap_data(props: CounterWithInitialValueProps<PropsTypesDefNew>) -> Self::Wrapped {
         props
     }
 }
@@ -131,21 +128,29 @@ pub struct CounterWithInitialValue<Props> {
     pub props: Props,
 }
 
-impl<Props, NewProps> WrapProps<NewProps> for CounterWithInitialValue<Props> {
-    type Out = CounterWithInitialValue<NewProps>;
+impl<Props, NewProps> WrapData<NewProps> for CounterWithInitialValue<Props> {
+    type Wrapped = CounterWithInitialValue<NewProps>;
 
     #[inline]
-    fn wrap_props(props: NewProps) -> Self::Out {
+    fn wrap_data(props: NewProps) -> Self::Wrapped {
         CounterWithInitialValue { props }
     }
 }
 
-impl<Props> UnwrapProps for CounterWithInitialValue<Props> {
-    type Props = Props;
+impl<Props> UnwrapData for CounterWithInitialValue<Props> {
+    type Data = Props;
 
     #[inline]
-    fn unwrap_props(self) -> Self::Props {
+    fn unwrap_data(self) -> Self::Data {
         self.props
+    }
+
+    fn unwrap_as_data(&self) -> &Self::Data {
+        &self.props
+    }
+
+    fn unwrap_as_mut_data(&mut self) -> &mut Self::Data {
+        &mut self.props
     }
 }
 
