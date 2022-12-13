@@ -495,7 +495,7 @@ macro_rules! __impl_props_types_valid_trait {
 
 #[macro_export]
 macro_rules! __impl_props_types_data_struct {
-    ( { $name:ident } $([
+    ( {$(#[$($data_struct_attr:tt)*])*} { $name:ident } $([
             $field_name:ident
 
             $([ ?    $($field_modifier_maybe:tt)* ] $(: $(= $initial_v_maybe:expr)? , $initial_ty_maybe:ty )? ;)?
@@ -518,6 +518,7 @@ macro_rules! __impl_props_types_data_struct {
             )?
             $(  : , $generic_field_ty:ty;  )?
     ])*) => {
+        $(#[$($data_struct_attr)*])*
         #[non_exhaustive]
         pub struct $name <TypeDefs: ?Sized + Types> {$(
             $( pub $field_name: $crate::ignore_first_tt![{$($initial_ty_maybe)?} TypeDefs::$field_name], )?
@@ -638,8 +639,8 @@ macro_rules! __impl_props_field_tag {
 #[macro_export]
 macro_rules! def_props {
     (
-        $(#![$($mod_attr:tt)*])*
-        $(#[$($data_fn_attr:tt)*])*
+        $(#![$($data_struct_attr:tt)*])*
+        $(#[$($mod_and_fn_attr:tt)*])*
         $vis:vis struct $name:ident
         {
             $(
@@ -660,7 +661,7 @@ macro_rules! def_props {
             ),* $(,)?
         }
     ) => {
-        $(#[$($mod_attr)*])*
+        $(#[$($mod_and_fn_attr)*])*
         #[allow(non_snake_case)]
         $vis mod $name {
             #[allow(unused_imports)]
@@ -764,7 +765,7 @@ macro_rules! def_props {
             pub mod builder_impl_data {
                 use super::*;
 
-                $crate::__impl_props_types_data_struct! { { $name }
+                $crate::__impl_props_types_data_struct! { { $(#[$($data_struct_attr)*])* } { $name }
                     $([
                         $field_name
 
@@ -871,7 +872,7 @@ macro_rules! def_props {
             }
         }
 
-        $(#[$($data_fn_attr)*])*
+        $(#[$($mod_and_fn_attr)*])*
         #[inline]
         #[allow(non_snake_case)]
         $vis fn $name() -> $name::DataInitial {

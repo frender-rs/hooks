@@ -1,8 +1,8 @@
 use hooks_frender::{builder::MaybeSpecifiedFor, def_props, valid, Valid};
 
 def_props! {
-    //! The inner docs go to mod [`MyCompProps`]
-    /// The outer docs go to fn  [`MyCompProps`]
+    //! The inner docs go to `struct`       [`MyCompProps`], which is often hidden to user.
+    /// The outer docs go to `mod` and `fn` [`MyCompProps`].
     struct MyCompProps {
         /// This field is required because there is not a default value.
         /// All required fields are generic,
@@ -94,10 +94,12 @@ def_props! {
 
 #[test]
 fn builder() {
-    use MyCompProps::Builder;
-    let b = MyCompProps()
-        .required_field(vec![])
-        .required_field_with_generic_input(None);
+    let b = {
+        use MyCompProps::Builder;
+        MyCompProps()
+            .required_field(vec![])
+            .required_field_with_generic_input(None)
+    };
 
     let b = valid!(MyCompProps {
         generic_field: 2,
