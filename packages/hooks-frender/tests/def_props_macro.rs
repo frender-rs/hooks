@@ -1,4 +1,4 @@
-use hooks_frender::{builder::MaybeSpecifiedFor, def_props};
+use hooks_frender::{builder::MaybeSpecifiedFor, def_props, valid, Valid};
 
 def_props! {
     //! The inner docs go to mod [`MyCompProps`]
@@ -97,13 +97,15 @@ fn builder() {
     use MyCompProps::Builder;
     let b = MyCompProps()
         .required_field(vec![])
-        .required_field_with_generic_input(None)
-        .generic_field(2)
-        .generic_field_maybe_specified::<String>("world".into());
+        .required_field_with_generic_input(None);
 
-    fn test_valid_props(props: MyCompProps::Data<impl ?Sized + MyCompProps::ValidTypes>) {
-        // use MaybeSpe;
+    let b = valid!(MyCompProps {
+        generic_field: 2,
+        generic_field_maybe_specified: String::from("world"),
+        ..b
+    });
 
+    fn test_valid_props(props: Valid![MyCompProps]) {
         let field_with_default: std::borrow::Cow<'static, str> = props.field_with_default;
         assert!(matches!(field_with_default, std::borrow::Cow::Borrowed("")));
 

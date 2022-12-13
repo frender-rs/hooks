@@ -6,6 +6,17 @@ macro_rules! ignore_first_tt {
     };
 }
 
+#[doc(hidden)]
+#[macro_export]
+macro_rules! expand_a_or_b {
+    ([] [$($b:tt)*]) => {
+        $($b)*
+    };
+    ([$($a:tt)+] [$($b:tt)*]) => {
+        $($a)*
+    };
+}
+
 #[macro_export]
 macro_rules! __report_wrong_tt {
     () => {};
@@ -484,7 +495,7 @@ macro_rules! __impl_props_types_valid_trait {
 
 #[macro_export]
 macro_rules! __impl_props_types_data_struct {
-    ($([
+    ( { $name:ident } $([
             $field_name:ident
 
             $([ ?    $($field_modifier_maybe:tt)* ] $(: $(= $initial_v_maybe:expr)? , $initial_ty_maybe:ty )? ;)?
@@ -508,7 +519,7 @@ macro_rules! __impl_props_types_data_struct {
             $(  : , $generic_field_ty:ty;  )?
     ])*) => {
         #[non_exhaustive]
-        pub struct Data<TypeDefs: ?Sized + Types> {$(
+        pub struct $name <TypeDefs: ?Sized + Types> {$(
             $( pub $field_name: $crate::ignore_first_tt![{$($initial_ty_maybe)?} TypeDefs::$field_name], )?
             $( pub $field_name: $crate::ignore_first_tt![{$($initial_ty_impl )?} TypeDefs::$field_name], )?
             $( pub $field_name: $crate::ignore_first_tt![{$generic_field_builder_output} TypeDefs::$field_name], )?
@@ -750,25 +761,31 @@ macro_rules! def_props {
             impl<B> Builder for B
                 where B: Sized + Types + $crate::builder::UnwrapData<Data = Data<TypesNormalize![B]>> {}
 
-            $crate::__impl_props_types_data_struct! {
-                $([
-                    $field_name
+            pub mod builder_impl_data {
+                use super::*;
 
-                    $(
-                        $(= $field_builder_default_output_value =>)?
-                        ($($field_builder_inputs)*)
-                            -> $field_builder_output
-                            $field_builder_impl
-                    )?
+                $crate::__impl_props_types_data_struct! { { $name }
+                    $([
+                        $field_name
 
-                    $([ $($field_modifiers_or_builder_generics)* ])?
+                        $(
+                            $(= $field_builder_default_output_value =>)?
+                            ($($field_builder_inputs)*)
+                                -> $field_builder_output
+                                $field_builder_impl
+                        )?
 
-                    $(
-                        : $( = $field_default_value)? , $field_ty
-                    )?
-                    ;
-                ])*
+                        $([ $($field_modifiers_or_builder_generics)* ])?
+
+                        $(
+                            : $( = $field_default_value)? , $field_ty
+                        )?
+                        ;
+                    ])*
+                }
             }
+
+            pub use self::builder_impl_data::$name as Data;
 
             impl<TypeDefs: ?Sized + Types> $crate::builder::UnwrapData for Data<TypeDefs> {
                 type Data = Self;
@@ -848,6 +865,10 @@ macro_rules! def_props {
             }
 
             pub type DataInitial = Data<TypesInitial>;
+
+            pub mod builder_impl_prelude {
+                pub use super::Builder;
+            }
         }
 
         $(#[$($data_fn_attr)*])*
@@ -874,5 +895,121 @@ macro_rules! def_props {
                 ])*
             }
         }
+    };
+}
+
+#[macro_export]
+macro_rules! Build {
+    (
+        $($name:ident)? $(:: p:ident)*
+        $(< $($ty_field:tt)*)?
+    ) => {
+        $($name)? $(:: p)* < impl ?::core::marker::Sized + $($name)? $(:: p)*::Types $(< $($ty_field)*)? >
+    };
+}
+
+#[macro_export]
+macro_rules! build {
+    (
+        $($name:ident)? $(:: $p:ident)* {
+            .. $start:expr
+            $( ,
+                $field:ident
+                $(: $field_value:expr)?
+            )*
+            $(,)?
+        }
+    ) => {{
+        #[allow(unused_imports)]
+        use $($name)? $(:: $p)* ::builder_impl_prelude::*;
+
+        $start $(
+            . $field (
+                $crate::expand_a_or_b!([$($field_value)?][$field])
+            )
+        )*
+    }};
+    (
+        $($name:ident)? $(:: $p:ident)* {
+            $(
+                $field:ident
+                $(: $field_value:expr)?
+            ),*
+            $(,)?
+        }
+    ) => {
+        $crate::valid! (
+            $($name)? $(:: $p)* {
+                .. $($name)? $(:: $p)* (),
+                $(
+                    $field
+                    $(: $field_value)?
+                ),*
+            }
+        )
+    };
+}
+
+#[macro_export]
+macro_rules! Valid {
+    (
+        $($name:ident)? $(:: $p:ident)*
+        $(< $($ty_field:tt)*)?
+    ) => {
+        $($name)? $(:: $p)* ::Data:: < impl ?::core::marker::Sized + $($name)? $(:: $p)* ::ValidTypes $(< $($ty_field)*)? >
+    };
+}
+
+#[macro_export]
+macro_rules! valid {
+    (
+        // [$e:expr]
+        $($name:ident)? $(:: $p:ident)* {
+            $(
+                $field:ident
+                $(: $field_value:expr)?
+                ,
+            )*
+            .. $base:expr
+        }
+    ) => {{
+        #[allow(unused_imports)]
+        use $($name)? $(:: $p)* ::builder_impl_prelude::*;
+
+        #[inline]
+        fn __assert_build_valid<TypeDefs: ?::core::marker::Sized + $($name)? $(:: $p)* ::ValidTypes>(
+            v: $($name)? $(:: $p)* ::Data<TypeDefs>
+        )   -> $($name)? $(:: $p)* ::Data<TypeDefs> {
+            v
+        }
+
+        __assert_build_valid(
+            $base $(
+                . $field (
+                    $crate::expand_a_or_b!([$($field_value)?][$field])
+                )
+            )*
+        )
+    }};
+    (
+        // [$e:expr]
+        $($name:ident)? $(:: $p:ident)* {
+            $(
+                $field:path
+                $(: $field_value:expr )?
+            ),*
+            $(,)?
+        }
+    ) => {
+        $crate::valid! (
+            $($name)? $(:: $p)* {
+                $(
+                    $field
+                    $(: $field_value )?
+                    ,
+                )*
+                .. $($name)? $(:: $p)* ()
+            }
+        )
     };
 }
