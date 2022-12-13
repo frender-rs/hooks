@@ -1,5 +1,15 @@
 use hooks_frender::{builder::MaybeSpecifiedFor, def_props, valid, Valid};
 
+mod html {
+    use hooks_frender::def_props;
+
+    def_props! {
+        struct ElementProps {
+            field_with_default: std::borrow::Cow<'static,str> = "".into(),
+        }
+    }
+}
+
 def_props! {
     //! The inner docs go to `struct`       [`MyCompProps`], which is often hidden to user.
     /// The outer docs go to `mod` and `fn` [`MyCompProps`].

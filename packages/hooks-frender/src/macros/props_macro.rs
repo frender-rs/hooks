@@ -60,13 +60,17 @@ macro_rules! __impl_props_types_builder_trait_item {
                 TypesOverwriteOneField![..Self, $field_name = $field_builder_output ]
             >> {
                 let _frender_field_new_value = $field_builder_impl;
-                let Data {$(
+                let Data {
+                    __phantom_type_defs: _,
+                $(
                     $all_fields,
                 )*} = self.unwrap_data();
 
                 let $field_name = _frender_field_new_value;
 
-                Self::wrap_data(Data {$(
+                Self::wrap_data(Data {
+                    __phantom_type_defs: ::core::marker::PhantomData,
+                $(
                     $all_fields,
                 )*})
             }
@@ -519,8 +523,9 @@ macro_rules! __impl_props_types_data_struct {
             $(  : , $generic_field_ty:ty;  )?
     ])*) => {
         $(#[$($data_struct_attr)*])*
-        #[non_exhaustive]
-        pub struct $name <TypeDefs: ?Sized + Types> {$(
+        pub struct $name <TypeDefs: ?Sized + Types> {
+            pub(super) __phantom_type_defs: ::core::marker::PhantomData<TypeDefs>,
+        $(
             $( pub $field_name: $crate::ignore_first_tt![{$($initial_ty_maybe)?} TypeDefs::$field_name], )?
             $( pub $field_name: $crate::ignore_first_tt![{$($initial_ty_impl )?} TypeDefs::$field_name], )?
             $( pub $field_name: $crate::ignore_first_tt![{$generic_field_builder_output} TypeDefs::$field_name], )?
@@ -571,7 +576,9 @@ macro_rules! __impl_props_types_field_initial_value_iter {
         [$struct_name:path]
         $($field_name:ident  $field_declaration:tt)*
     ) => {
-        $struct_name {$(
+        $struct_name {
+            __phantom_type_defs: ::core::marker::PhantomData,
+        $(
             $field_name :
                 $crate::__impl_props_field_declaration_normalize! {
                     [$crate::__impl_props_types_field_initial_value] {} $field_declaration
@@ -786,6 +793,35 @@ macro_rules! def_props {
                 }
             }
 
+            pub mod builder_impl_fn_uninitialized {
+                use super::*;
+
+                $(#[$($mod_and_fn_attr)*])*
+                #[inline]
+                #[allow(non_snake_case)]
+                pub fn $name() -> super::DataInitial {
+                    $crate::__impl_props_types_field_initial_value_iter! {
+                        [super::builder_impl_data::$name]
+                        $($field_name [
+                            $(#[$($fn_attr)*])*
+                            $field_name
+
+                            $([ $($field_modifiers_or_builder_generics)* ])?
+                            $(
+                                ($($field_builder_inputs)*)
+                                    -> $field_builder_output
+                                    $(= $field_builder_default_output_value =>)?
+                                    $field_builder_impl
+                            )?
+
+                            $(
+                                : $field_ty $( = $field_default_value)?
+                            )?
+                        ])*
+                    }
+                }
+            }
+
             pub use self::builder_impl_data::$name as Data;
 
             impl<TypeDefs: ?Sized + Types> $crate::builder::UnwrapData for Data<TypeDefs> {
@@ -872,30 +908,7 @@ macro_rules! def_props {
             }
         }
 
-        $(#[$($mod_and_fn_attr)*])*
-        #[inline]
-        #[allow(non_snake_case)]
-        $vis fn $name() -> $name::DataInitial {
-            $crate::__impl_props_types_field_initial_value_iter! {
-                [$name::Data]
-                $($field_name [
-                    $(#[$($fn_attr)*])*
-                    $field_name
-
-                    $([ $($field_modifiers_or_builder_generics)* ])?
-                    $(
-                        ($($field_builder_inputs)*)
-                            -> $field_builder_output
-                            $(= $field_builder_default_output_value =>)?
-                            $field_builder_impl
-                    )?
-
-                    $(
-                        : $field_ty $( = $field_default_value)?
-                    )?
-                ])*
-            }
-        }
+        $vis use $name::builder_impl_fn_uninitialized::$name;
     };
 }
 
