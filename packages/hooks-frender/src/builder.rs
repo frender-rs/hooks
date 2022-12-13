@@ -13,11 +13,13 @@ pub trait UnwrapData {
 }
 
 pub trait FieldTag {
-    type Field;
+    type Field: ?Sized;
 }
 
 pub trait MaybeSpecifiedFor<Tag: FieldTag> {
-    fn specified(self) -> Option<Tag::Field>;
+    fn specified(self) -> Option<Tag::Field>
+    where
+        Tag::Field: Sized;
     fn as_specified(&self) -> Option<&Tag::Field>;
     fn as_mut_specified(&mut self) -> Option<&mut Tag::Field>;
 }
@@ -27,7 +29,10 @@ where
     T: MaybeSpecifiedFor<Tag>,
 {
     #[inline]
-    fn specified(self) -> Option<<Tag as FieldTag>::Field> {
+    fn specified(self) -> Option<<Tag as FieldTag>::Field>
+    where
+        Tag::Field: Sized,
+    {
         self.and_then(T::specified)
     }
 
@@ -44,7 +49,10 @@ where
 
 impl<Tag: FieldTag> MaybeSpecifiedFor<Tag> for Unspecified {
     #[inline]
-    fn specified(self) -> Option<<Tag as FieldTag>::Field> {
+    fn specified(self) -> Option<<Tag as FieldTag>::Field>
+    where
+        Tag::Field: Sized,
+    {
         None
     }
 
