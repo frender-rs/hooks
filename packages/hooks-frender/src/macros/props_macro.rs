@@ -750,7 +750,7 @@ macro_rules! def_props {
                 where B: Sized + Types + $crate::builder::UnwrapData<Data = Data<TypesNormalize![B]>> {}
 
             pub mod builder_impl_data {
-                use super::*;
+                use super::super::*;
 
                 $(#[$($data_struct_attr)*])*
                 pub struct $name <TypeDefs: ?Sized + super::Types> {
@@ -779,7 +779,7 @@ macro_rules! def_props {
             }
 
             pub mod builder_impl_fn_uninitialized {
-                use super::*;
+                use super::super::*;
 
                 $(#[$($mod_and_fn_attr)*])*
                 #[inline]
