@@ -572,24 +572,6 @@ macro_rules! __impl_props_types_impl_types_for_data {
 }
 
 #[macro_export]
-macro_rules! __impl_props_types_field_initial_value_iter {
-    (
-        [$struct_name:path]
-        $($field_name:ident  $field_declaration:tt)*
-    ) => {
-        $struct_name {
-            __phantom_type_defs: ::core::marker::PhantomData,
-        $(
-            $field_name :
-                $crate::__impl_props_field_declaration_normalize! {
-                    [$crate::__impl_props_types_field_initial_value] {} $field_declaration
-                }
-            ,
-        )*}
-    };
-}
-
-#[macro_export]
 macro_rules! __impl_props_types_field_initial_value {
     ({} $metadata:tt
         $(#[$($fn_attr:tt)*])*
@@ -785,24 +767,28 @@ macro_rules! def_props {
                 #[inline]
                 #[allow(non_snake_case)]
                 pub fn $name() -> super::DataInitial {
-                    $crate::__impl_props_types_field_initial_value_iter! {
-                        [super::builder_impl_data::$name]
-                        $($field_name [
-                            $(#[$($fn_attr)*])*
-                            $field_name
+                    super::builder_impl_data::$name {
+                        __phantom_type_defs: ::core::marker::PhantomData,
+                        $(
+                        $field_name : $crate::__impl_props_field_declaration_normalize! {
+                            [$crate::__impl_props_types_field_initial_value] {} [
+                                $(#[$($fn_attr)*])*
+                                $field_name
 
-                            $([ $($field_modifiers_or_builder_generics)* ])?
-                            $(
-                                ($($field_builder_inputs)*)
-                                    -> $field_builder_output
-                                    $(= $field_builder_default_output_value =>)?
-                                    $field_builder_impl
-                            )?
+                                $([ $($field_modifiers_or_builder_generics)* ])?
+                                $(
+                                    ($($field_builder_inputs)*)
+                                        -> $field_builder_output
+                                        $(= $field_builder_default_output_value =>)?
+                                        $field_builder_impl
+                                )?
 
-                            $(
-                                : $field_ty $( = $field_default_value)?
-                            )?
-                        ])*
+                                $(
+                                    : $field_ty $( = $field_default_value)?
+                                )?
+                            ]
+                        },
+                        )*
                     }
                 }
             }
