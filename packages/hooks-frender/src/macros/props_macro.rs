@@ -105,12 +105,30 @@ macro_rules! __impl_props_types_trait_item {
 }
 
 #[macro_export]
-macro_rules! __impl_props_types_field_ty_unspecified_or {
-    ($ty:ty) => {
-        $crate::builder::Unspecified
+macro_rules! __impl_props_types_field_ty {
+    ({$base:ty as $trait_types:path} { generic {$($meta_generic:tt)*} }
+        $(#[$($fn_attr:tt)*])*
+        $field_name:ident
+        $([ $($builder_generics:tt)* ])?
+        ($($field_builder_inputs:tt)*)
+            -> $field_builder_output:ty
+            = type($initial_ty:ty)
+             value($initial_value:expr)
+            $field_builder_impl:block
+    ) => {
+        <$base as $trait_types>::$field_name
     };
-    ($ty:ty = $default_value:expr) => {
-        $ty
+    ({$base:ty as $trait_types:path} { non_generic }
+        $(#[$($fn_attr:tt)*])*
+        $field_name:ident
+        $([ $($builder_generics:tt)* ])?
+        ($($field_builder_inputs:tt)*)
+            -> $field_builder_output:ty
+            = type($initial_ty:ty)
+            value($initial_value:expr)
+            $field_builder_impl:block
+    ) => {
+        $initial_ty
     };
 }
 
@@ -150,7 +168,7 @@ macro_rules! __impl_props_field_declaration_normalize {
             $([ $($field_modifiers_or_builder_generics)* ])?
             ($($field_builder_inputs)*)
                 -> $field_builder_output
-                = type($crate::builder::Unspecified)
+                = type($crate::builder::Unspecified::<$field_builder_output>)
                   value($crate::builder::Unspecified)
                 $field_builder_impl
 
@@ -194,7 +212,7 @@ macro_rules! __impl_props_field_declaration_normalize {
             $field_name
             (new_value: $field_ty)
                 -> $field_ty
-                = type($crate::builder::Unspecified)
+                = type($crate::builder::Unspecified<$field_ty>)
                   value($crate::builder::Unspecified)
                 { new_value }
         }
@@ -313,16 +331,6 @@ macro_rules! __impl_props_field_declaration_normalize_iter {
         )*
     };
 }
-
-// #[macro_export]
-// macro_rules! __impl_props_field_type_or_unspecified {
-//     ([] ) => {
-//         $crate::builder::Unspecified
-//     };
-//     ([] $specified:ty) => {
-//         $specified
-//     };
-// }
 
 #[macro_export]
 macro_rules! __impl_props_types_macro_rules {
@@ -524,47 +532,6 @@ macro_rules! __impl_props_types_valid_trait {
         )*
     }
 
-    };
-}
-
-#[macro_export]
-macro_rules! __impl_props_types_data_struct {
-    ( {$(#[$($data_struct_attr:tt)*])*} { $name:ident } $([
-            $field_name:ident
-
-            $([ ?    $($field_modifier_maybe:tt)* ] $(: $(= $initial_v_maybe:expr)? , $initial_ty_maybe:ty )? ;)?
-            $([ impl $($field_modifier_impl:tt)*  ] $(: $(= $initial_v_impl:expr )? , $initial_ty_impl:ty  )? ;)?
-            $([ borrow? $($field_modifier_bm:tt)* ] $(: $(= $initial_v_bm:expr   )? , $initial_ty_bm:ty    )? ;)?
-            $(
-                = $field_builder_default_output_value:expr =>
-                ($($field_builder_inputs:tt)*)
-                    -> $field_builder_output:ty
-                    $field_builder_impl:block
-                $([ $($builder_generics:tt)* ])? ;
-            )?
-            $(
-                ($($generic_field_builder_inputs:tt)*)
-                    -> $generic_field_builder_output:ty
-                    $generic_field_builder_impl:block
-                $([ $($builder_generics_generic:tt)* ])? ;
-            )?
-            $(
-                : = $field_default_value:expr , $field_ty:ty;
-            )?
-            $(  : , $generic_field_ty:ty;  )?
-    ])*) => {
-        $(#[$($data_struct_attr)*])*
-        pub struct $name <TypeDefs: ?Sized + Types> {
-            pub(super) __phantom_type_defs: ::core::marker::PhantomData<TypeDefs>,
-        $(
-            $( pub $field_name: $crate::ignore_first_tt![{$($initial_ty_maybe)?} TypeDefs::$field_name], )?
-            $( pub $field_name: $crate::ignore_first_tt![{$($initial_ty_impl )?} TypeDefs::$field_name], )?
-            $( pub $field_name: $crate::ignore_first_tt![{$($initial_ty_bm   )?} TypeDefs::$field_name], )?
-            $( pub $field_name: $crate::ignore_first_tt![{$generic_field_builder_output} TypeDefs::$field_name], )?
-            $( pub $field_name: $crate::ignore_first_tt![{$generic_field_ty    } TypeDefs::$field_name], )?
-            $( pub $field_name: $field_builder_output, )?
-            $( pub $field_name: $field_ty, )?
-        )*}
     };
 }
 
@@ -785,24 +752,29 @@ macro_rules! def_props {
             pub mod builder_impl_data {
                 use super::*;
 
-                $crate::__impl_props_types_data_struct! { { $(#[$($data_struct_attr)*])* } { $name }
-                    $([
-                        $field_name
+                $(#[$($data_struct_attr)*])*
+                pub struct $name <TypeDefs: ?Sized + super::Types> {
+                    pub(super) __phantom_type_defs: ::core::marker::PhantomData<*const TypeDefs>,
+                    $(
+                    pub $field_name : $crate::__impl_props_field_declaration_normalize! {
+                        [$crate::__impl_props_types_field_ty] {TypeDefs as super::Types} [
+                            $(#[$($fn_attr)*])*
+                            $field_name
 
-                        $(
-                            $(= $field_builder_default_output_value =>)?
-                            ($($field_builder_inputs)*)
-                                -> $field_builder_output
-                                $field_builder_impl
-                        )?
+                            $([ $($field_modifiers_or_builder_generics)* ])?
+                            $(
+                                ($($field_builder_inputs)*)
+                                    -> $field_builder_output
+                                    $(= $field_builder_default_output_value =>)?
+                                    $field_builder_impl
+                            )?
 
-                        $([ $($field_modifiers_or_builder_generics)* ])?
-
-                        $(
-                            : $( = $field_default_value)? , $field_ty
-                        )?
-                        ;
-                    ])*
+                            $(
+                                : $field_ty $( = $field_default_value)?
+                            )?
+                        ]
+                    },
+                    )*
                 }
             }
 
