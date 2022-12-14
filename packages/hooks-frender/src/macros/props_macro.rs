@@ -309,9 +309,9 @@ macro_rules! __impl_props_field_declaration_normalize {
         }
     };
     // error
-    ( [$($macro_path:tt)+] $common_data:tt
+    ( [$($macro_path:tt)+] $common_data:tt [
         $($err:tt)*
-    ) => {
+    ]) => {
         $crate::__report_wrong_tt! {$($err)*}
         ::core::compile_error!{::core::concat!(
             "invalid field declaration: `",
