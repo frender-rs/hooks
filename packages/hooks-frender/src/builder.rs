@@ -1,3 +1,9 @@
+mod maybe;
+mod maybe_borrow;
+
+pub use maybe::*;
+pub use maybe_borrow::*;
+
 pub trait WrapData<Data> {
     type Wrapped;
     fn wrap_data(props: Data) -> Self::Wrapped;
@@ -8,78 +14,6 @@ pub trait UnwrapData {
     fn unwrap_data(self) -> Self::Data;
     fn unwrap_as_data(&self) -> &Self::Data;
     fn unwrap_as_mut_data(&mut self) -> &mut Self::Data;
-}
-
-pub trait Maybe<T: ?Sized> {
-    fn some(self) -> Option<T>
-    where
-        Self: Sized,
-        T: Sized;
-    fn as_some(&self) -> Option<&T>;
-    fn as_mut_some(&mut self) -> Option<&mut T>;
-}
-
-impl<T: ?Sized> Maybe<T> for T {
-    #[inline]
-    fn some(self) -> Option<T>
-    where
-        Self: Sized,
-        T: Sized,
-    {
-        Some(self)
-    }
-
-    #[inline]
-    fn as_some(&self) -> Option<&T> {
-        Some(self)
-    }
-
-    #[inline]
-    fn as_mut_some(&mut self) -> Option<&mut T> {
-        Some(self)
-    }
-}
-
-impl<T> Maybe<T> for Option<T> {
-    #[inline]
-    fn some(self) -> Option<T>
-    where
-        Self: Sized,
-        T: Sized,
-    {
-        self
-    }
-
-    #[inline]
-    fn as_some(&self) -> Option<&T> {
-        self.as_ref()
-    }
-
-    #[inline]
-    fn as_mut_some(&mut self) -> Option<&mut T> {
-        self.as_mut()
-    }
-}
-
-impl<T> Maybe<T> for Unspecified<T> {
-    #[inline]
-    fn some(self) -> Option<T>
-    where
-        Self: Sized,
-        T: Sized,
-    {
-        None
-    }
-
-    #[inline]
-    fn as_some(&self) -> Option<&T> {
-        None
-    }
-
-    #[inline]
-    fn as_mut_some(&mut self) -> Option<&mut T> {
-        None
-    }
 }
 
 /// Instead of defining a new struct,
@@ -99,6 +33,10 @@ pub use std::marker::PhantomData as Unspecified;
 
 /// Marks a field is unspecified.
 pub use std::marker::PhantomData as UnspecifiedField;
+
+#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[repr(transparent)]
+pub struct Specified<T>(pub T);
 
 #[cfg(test)]
 mod tests {

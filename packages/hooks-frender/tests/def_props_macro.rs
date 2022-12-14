@@ -5,7 +5,7 @@ mod html {
 
     def_props! {
         struct ElementProps {
-            id: String,
+            id[borrow? str],
         }
     }
 }

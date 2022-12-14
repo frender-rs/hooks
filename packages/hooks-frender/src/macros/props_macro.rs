@@ -217,6 +217,23 @@ macro_rules! __impl_props_field_declaration_normalize {
                 { new_value }
         }
     };
+    // field[borrow? Type] $( : InitialType = get_initial_value() )?
+    //      will be normalized to:
+    // field[impl MaybeBorrow<Type>] $( : InitialType = get_initial_value() )?
+    ( [$($macro_path:tt)+] $common_data:tt [
+        $(#[$($fn_attr:tt)*])*
+        $field_name:ident
+
+        [ borrow? $for_ty:ty ]
+        $(: $field_ty:ty = $field_default_value:expr)?
+    ]) => {
+        $crate::__impl_props_field_declaration_normalize! { [$($macro_path)+] $common_data [
+            $(#[$($fn_attr)*])*
+            $field_name
+            [impl $crate::builder::MaybeBorrow<$for_ty>]
+            $(: $field_ty = $field_default_value)?
+        ]}
+    };
     // field[? Type] $( : InitialType = get_initial_value() )?
     //      will be normalized to:
     // field[impl Maybe<Type>] $( : InitialType = get_initial_value() )?
@@ -236,7 +253,7 @@ macro_rules! __impl_props_field_declaration_normalize {
     };
     // field[impl Trait]
     //      will be normalized to:
-    // field[impl Trait]: UnspecifiedField = UnspecifiedField
+    // field[impl Trait]: UnspecifiedField<tag::field> = UnspecifiedField
     ( [$($macro_path:tt)+] $common_data:tt [
         $(#[$($fn_attr:tt)*])*
         $field_name:ident
@@ -315,6 +332,7 @@ macro_rules! __impl_props_types_macro_rules {
 
             $([ ?    $($field_modifier_maybe:tt)* ] $(: $(= $initial_v_maybe:expr)? , $initial_ty_maybe:ty )? ;)?
             $([ impl $($field_modifier_impl:tt)*  ] $(: $(= $initial_v_impl:expr )? , $initial_ty_impl:ty  )? ;)?
+            $([ borrow? $($field_modifier_bm:tt)* ] $(: $(= $initial_v_bm:expr   )? , $initial_ty_bm:ty    )? ;)?
             $(
                 = $field_builder_default_output_value:expr =>
                 ($($field_builder_inputs:tt)*)
@@ -338,6 +356,7 @@ macro_rules! __impl_props_types_macro_rules {
             $(
                 $( ($ignore:tt $field_name $field_name [$a:ty][$b:ty]) => { $crate::ignore_first_tt!{ {$($initial_ty_maybe)?} $a } }; )?
                 $( ($ignore:tt $field_name $field_name [$a:ty][$b:ty]) => { $crate::ignore_first_tt!{ {$($initial_ty_impl )?} $a } }; )?
+                $( ($ignore:tt $field_name $field_name [$a:ty][$b:ty]) => { $crate::ignore_first_tt!{ {$($initial_ty_bm   )?} $a } }; )?
                 $( ($ignore:tt $field_name $field_name [$a:ty][$b:ty]) => { $crate::ignore_first_tt!{ {$generic_field_builder_output} $a } }; )?
                 $( ($ignore:tt $field_name $field_name [$a:ty][$b:ty]) => { $crate::ignore_first_tt!{ {$generic_field_ty} $a } }; )?
             )*
@@ -351,6 +370,7 @@ macro_rules! __impl_props_types_macro_rules {
                 dyn Types<$(
                     $( $field_name = $crate::ignore_first_tt![ {$($initial_ty_maybe)?} <$inherit as Types>::$field_name ] , )?
                     $( $field_name = $crate::ignore_first_tt![ {$($initial_ty_impl )?} <$inherit as Types>::$field_name ] , )?
+                    $( $field_name = $crate::ignore_first_tt![ {$($initial_ty_bm   )?} <$inherit as Types>::$field_name ] , )?
                     $( $field_name = $crate::ignore_first_tt![ {$generic_field_builder_output} <$inherit as Types>::$field_name ] , )?
                     $( $field_name = $crate::ignore_first_tt![ {$generic_field_ty    } <$inherit as Types>::$field_name ] , )?
                 )*>
@@ -365,6 +385,7 @@ macro_rules! __impl_props_types_macro_rules {
                 dyn Types<$(
                     $( $field_name = use_a_if_field_name_match![ {$($initial_ty_maybe)?} $field_name $overwrite_field [$overwrite_field_ty] [<$inherit as Types>::$field_name] ], )?
                     $( $field_name = use_a_if_field_name_match![ {$($initial_ty_impl )?} $field_name $overwrite_field [$overwrite_field_ty] [<$inherit as Types>::$field_name] ], )?
+                    $( $field_name = use_a_if_field_name_match![ {$($initial_ty_bm   )?} $field_name $overwrite_field [$overwrite_field_ty] [<$inherit as Types>::$field_name] ], )?
                     $( $field_name = use_a_if_field_name_match![ {$generic_field_builder_output} $field_name $overwrite_field [$overwrite_field_ty] [<$inherit as Types>::$field_name] ], )?
                     $( $field_name = use_a_if_field_name_match![ {$generic_field_ty} $field_name $overwrite_field [$overwrite_field_ty] [<$inherit as Types>::$field_name] ], )?
                 )*>
@@ -382,6 +403,7 @@ macro_rules! __impl_props_types_field_initial_ty_iter {
 
             $([ ?    $($field_modifier_maybe:tt)* ] $(: $(= $initial_v_maybe:expr)? , $initial_ty_maybe:ty )? ;)?
             $([ impl $($field_modifier_impl:tt)*  ] $(: $(= $initial_v_impl:expr )? , $initial_ty_impl:ty  )? ;)?
+            $([ borrow? $($field_modifier_bm:tt)* ] $(: $(= $initial_v_bm:expr   )? , $initial_ty_bm:ty    )? ;)?
             $(
                 = $field_builder_default_output_value:expr =>
                 ($($field_builder_inputs:tt)*)
@@ -405,6 +427,7 @@ macro_rules! __impl_props_types_field_initial_ty_iter {
         $(
             $( $field_name = $crate::expand_a_or_b![ [$($initial_ty_maybe)?] [$crate::builder::Unspecified<$($field_modifier_maybe)*>] ], )?
             $( $field_name = $crate::expand_a_or_b![ [$($initial_ty_impl)? ] [$crate::builder::Unspecified<builder_impl_tag::$field_name>]], )?
+            $( $field_name = $crate::expand_a_or_b![ [$($initial_ty_bm  )? ] [$crate::builder::Unspecified<$($field_modifier_bm   )*>] ], )?
             $( $field_name = $crate::builder::Unspecified<$generic_field_builder_output>, )?
             $( $field_name = $crate::builder::Unspecified<$generic_field_ty>, )?
         )*
@@ -420,6 +443,7 @@ macro_rules! __impl_props_types_valid_trait {
 
             $([ ?    $($field_modifier_maybe:tt)* ] $(: $(= $initial_v_maybe:expr)? , $initial_ty_maybe:ty )? ;)?
             $([ impl $($field_modifier_impl:tt)*  ] $(: $(= $initial_v_impl:expr )? , $initial_ty_impl:ty  )? ;)?
+            $([ borrow? $($field_modifier_bm:tt)* ] $(: $(= $initial_v_bm:expr   )? , $initial_ty_bm:ty    )? ;)?
             $(
                 = $field_builder_default_output_value:expr =>
                 ($($field_builder_inputs:tt)*)
@@ -449,6 +473,9 @@ macro_rules! __impl_props_types_valid_trait {
                 $(
                     $field_name = $crate::ignore_first_tt![{$($field_modifier_impl )*} <Self as ValidTypes>::$field_name],
                 )?
+                $(
+                    $field_name = $crate::ignore_first_tt![{$($field_modifier_bm)*   } <Self as ValidTypes>::$field_name],
+                )?
             )*
         >
         {
@@ -458,6 +485,8 @@ macro_rules! __impl_props_types_valid_trait {
                 $( type $field_name : $crate::builder::Maybe<$($field_modifier_maybe)*>; )?
 
                 $( type $field_name : $($field_modifier_impl)*; )?
+
+                $( type $field_name : $crate::builder::MaybeBorrow<$($field_modifier_bm)*>; )?
             )*
         }
 
@@ -472,6 +501,9 @@ macro_rules! __impl_props_types_valid_trait {
                 <T as Types>::$field_name : $crate::builder::Maybe<$($field_modifier_maybe)*>,
             )?
             $( <T as Types>::$field_name: $($field_modifier_impl)*, )?
+            $(
+                <T as Types>::$field_name : $crate::builder::MaybeBorrow<$($field_modifier_bm)*>,
+            )?
         )*
     {
         $(
@@ -482,6 +514,11 @@ macro_rules! __impl_props_types_valid_trait {
 
             $(
                 #[doc = stringify!($($field_modifier_impl)*)]
+                type $field_name = <T as Types>::$field_name;
+            )?
+
+            $(
+                #[doc = stringify!($($field_modifier_bm)*)]
                 type $field_name = <T as Types>::$field_name;
             )?
         )*
@@ -497,6 +534,7 @@ macro_rules! __impl_props_types_data_struct {
 
             $([ ?    $($field_modifier_maybe:tt)* ] $(: $(= $initial_v_maybe:expr)? , $initial_ty_maybe:ty )? ;)?
             $([ impl $($field_modifier_impl:tt)*  ] $(: $(= $initial_v_impl:expr )? , $initial_ty_impl:ty  )? ;)?
+            $([ borrow? $($field_modifier_bm:tt)* ] $(: $(= $initial_v_bm:expr   )? , $initial_ty_bm:ty    )? ;)?
             $(
                 = $field_builder_default_output_value:expr =>
                 ($($field_builder_inputs:tt)*)
@@ -521,6 +559,7 @@ macro_rules! __impl_props_types_data_struct {
         $(
             $( pub $field_name: $crate::ignore_first_tt![{$($initial_ty_maybe)?} TypeDefs::$field_name], )?
             $( pub $field_name: $crate::ignore_first_tt![{$($initial_ty_impl )?} TypeDefs::$field_name], )?
+            $( pub $field_name: $crate::ignore_first_tt![{$($initial_ty_bm   )?} TypeDefs::$field_name], )?
             $( pub $field_name: $crate::ignore_first_tt![{$generic_field_builder_output} TypeDefs::$field_name], )?
             $( pub $field_name: $crate::ignore_first_tt![{$generic_field_ty    } TypeDefs::$field_name], )?
             $( pub $field_name: $field_builder_output, )?
@@ -536,6 +575,7 @@ macro_rules! __impl_props_types_impl_types_for_data {
 
             $([ ?    $($field_modifier_maybe:tt)* ] $(: $(= $initial_v_maybe:expr)? , $initial_ty_maybe:ty )? ;)?
             $([ impl $($field_modifier_impl:tt)*  ] $(: $(= $initial_v_impl:expr )? , $initial_ty_impl:ty  )? ;)?
+            $([ borrow? $($field_modifier_bm:tt)*  ] $(: $(= $initial_v_bm:expr  )? , $initial_ty_bm:ty    )? ;)?
             $(
                 = $field_builder_default_output_value:expr =>
                 ($($field_builder_inputs:tt)*)
@@ -557,6 +597,7 @@ macro_rules! __impl_props_types_impl_types_for_data {
         $(
             $( type $field_name = $crate::ignore_first_tt![{$($initial_ty_maybe)?} TypeDefs::$field_name]; )?
             $( type $field_name = $crate::ignore_first_tt![{$($initial_ty_impl )?} TypeDefs::$field_name]; )?
+            $( type $field_name = $crate::ignore_first_tt![{$($initial_ty_bm)?}    TypeDefs::$field_name]; )?
             $( type $field_name = $crate::ignore_first_tt![{$generic_field_builder_output} TypeDefs::$field_name]; )?
             $( type $field_name = $crate::ignore_first_tt![{$generic_field_ty    } TypeDefs::$field_name]; )?
         )*
