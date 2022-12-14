@@ -1,5 +1,3 @@
-pub struct Unspecified;
-
 pub trait WrapData<Data> {
     type Wrapped;
     fn wrap_data(props: Data) -> Self::Wrapped;
@@ -12,57 +10,103 @@ pub trait UnwrapData {
     fn unwrap_as_mut_data(&mut self) -> &mut Self::Data;
 }
 
-pub trait FieldTag {
-    type Field: ?Sized;
-}
-
-pub trait MaybeSpecifiedFor<Tag: FieldTag> {
-    fn specified(self) -> Option<Tag::Field>
+pub trait Maybe<T: ?Sized> {
+    fn some(self) -> Option<T>
     where
-        Tag::Field: Sized;
-    fn as_specified(&self) -> Option<&Tag::Field>;
-    fn as_mut_specified(&mut self) -> Option<&mut Tag::Field>;
+        Self: Sized,
+        T: Sized;
+    fn as_some(&self) -> Option<&T>;
+    fn as_mut_some(&mut self) -> Option<&mut T>;
 }
 
-impl<T, Tag: FieldTag> MaybeSpecifiedFor<Tag> for Option<T>
-where
-    T: MaybeSpecifiedFor<Tag>,
-{
+impl<T: ?Sized> Maybe<T> for T {
     #[inline]
-    fn specified(self) -> Option<<Tag as FieldTag>::Field>
+    fn some(self) -> Option<T>
     where
-        Tag::Field: Sized,
+        Self: Sized,
+        T: Sized,
     {
-        self.and_then(T::specified)
+        Some(self)
     }
 
     #[inline]
-    fn as_specified(&self) -> Option<&<Tag as FieldTag>::Field> {
-        self.as_ref().and_then(T::as_specified)
+    fn as_some(&self) -> Option<&T> {
+        Some(self)
     }
 
     #[inline]
-    fn as_mut_specified(&mut self) -> Option<&mut <Tag as FieldTag>::Field> {
-        self.as_mut().and_then(T::as_mut_specified)
+    fn as_mut_some(&mut self) -> Option<&mut T> {
+        Some(self)
     }
 }
 
-impl<Tag: FieldTag> MaybeSpecifiedFor<Tag> for Unspecified {
+impl<T> Maybe<T> for Option<T> {
     #[inline]
-    fn specified(self) -> Option<<Tag as FieldTag>::Field>
+    fn some(self) -> Option<T>
     where
-        Tag::Field: Sized,
+        Self: Sized,
+        T: Sized,
+    {
+        self
+    }
+
+    #[inline]
+    fn as_some(&self) -> Option<&T> {
+        self.as_ref()
+    }
+
+    #[inline]
+    fn as_mut_some(&mut self) -> Option<&mut T> {
+        self.as_mut()
+    }
+}
+
+impl<T> Maybe<T> for Unspecified<T> {
+    #[inline]
+    fn some(self) -> Option<T>
+    where
+        Self: Sized,
+        T: Sized,
     {
         None
     }
 
     #[inline]
-    fn as_specified(&self) -> Option<&<Tag as FieldTag>::Field> {
+    fn as_some(&self) -> Option<&T> {
         None
     }
 
     #[inline]
-    fn as_mut_specified(&mut self) -> Option<&mut <Tag as FieldTag>::Field> {
+    fn as_mut_some(&mut self) -> Option<&mut T> {
         None
+    }
+}
+
+/// Instead of defining a new struct,
+///
+/// ```
+/// struct Unspecified<T: ?Sized> {
+///     _phantom: std::marker::PhantomData<T>
+/// }
+/// ```
+///
+/// We just use [`PhantomData`](std::marker::PhantomData)
+/// as [`Unspecified`], so that traits like [`Copy`], [`Default`] and
+/// even [`serde::Serialize`] are implemented for this type.
+///
+/// https://github.com/rust-lang/rust-analyzer/issues/1666
+pub use std::marker::PhantomData as Unspecified;
+
+/// Marks a field is unspecified.
+pub use std::marker::PhantomData as UnspecifiedField;
+
+#[cfg(test)]
+mod tests {
+    use super::Unspecified;
+
+    #[test]
+    fn size() {
+        let _: Unspecified<usize> = Unspecified;
+        assert_eq!(std::mem::size_of::<Unspecified::<usize>>(), 0);
     }
 }

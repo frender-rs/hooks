@@ -16,7 +16,7 @@ use builder::{Unspecified, UnwrapData, WrapData};
 
 pub type CounterWithInitialValuePropsTypesAllUnspecified = dyn CounterWithInitialValuePropsTypes<
     //
-    initial_value = Unspecified,
+    initial_value = Unspecified<i32>,
 >;
 
 #[allow(non_camel_case_types)]

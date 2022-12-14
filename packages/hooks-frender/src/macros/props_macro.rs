@@ -219,7 +219,7 @@ macro_rules! __impl_props_field_declaration_normalize {
     };
     // field[? Type] $( : InitialType = get_initial_value() )?
     //      will be normalized to:
-    // field[impl MaybeSpecifiedFor<tag::field>] $( : InitialType = get_initial_value() )?
+    // field[impl Maybe<Type>] $( : InitialType = get_initial_value() )?
     ( [$($macro_path:tt)+] $common_data:tt [
         $(#[$($fn_attr:tt)*])*
         $field_name:ident
@@ -227,28 +227,28 @@ macro_rules! __impl_props_field_declaration_normalize {
         [ ? $for_ty:ty ]
         $(: $field_ty:ty = $field_default_value:expr)?
     ]) => {
-        $crate::__impl_props_field_declaration_normalize! { [$($macro_path)+] $common_data {MaybeSpecifiedFor($for_ty)} [
+        $crate::__impl_props_field_declaration_normalize! { [$($macro_path)+] $common_data [
             $(#[$($fn_attr)*])*
             $field_name
-            [impl $crate::builder::MaybeSpecifiedFor<self::tag::$field_name>]
+            [impl $crate::builder::Maybe<$for_ty>]
             $(: $field_ty = $field_default_value)?
         ]}
     };
     // field[impl Trait]
     //      will be normalized to:
-    // field[impl Trait]: Unspecified = Unspecified
-    ( [$($macro_path:tt)+] $common_data:tt $({ $($other_meta:tt)* })? [
+    // field[impl Trait]: UnspecifiedField = UnspecifiedField
+    ( [$($macro_path:tt)+] $common_data:tt [
         $(#[$($fn_attr:tt)*])*
         $field_name:ident
 
         [ impl $($field_bound:tt)* ]
     ]) => {
         $crate::__impl_props_field_declaration_normalize! {
-            [$($macro_path)+] $common_data $({ $($other_meta)* })? [
+            [$($macro_path)+] $common_data { tag() } [
                 $(#[$($fn_attr)*])*
                 $field_name
 
-                [ impl $($field_bound)* ]: $crate::builder::Unspecified = $crate::builder::Unspecified
+                [ impl $($field_bound)* ]: $crate::builder::UnspecifiedField<builder_impl_tag::$field_name> = $crate::builder::UnspecifiedField
             ]
         }
     };
@@ -297,15 +297,15 @@ macro_rules! __impl_props_field_declaration_normalize_iter {
     };
 }
 
-#[macro_export]
-macro_rules! __impl_props_field_type_or_unspecified {
-    ($({$($ignore:tt)*})?) => {
-        $crate::builder::Unspecified
-    };
-    ($({$($ignore:tt)*})? $specified:ty) => {
-        $specified
-    };
-}
+// #[macro_export]
+// macro_rules! __impl_props_field_type_or_unspecified {
+//     ([] ) => {
+//         $crate::builder::Unspecified
+//     };
+//     ([] $specified:ty) => {
+//         $specified
+//     };
+// }
 
 #[macro_export]
 macro_rules! __impl_props_types_macro_rules {
@@ -403,10 +403,10 @@ macro_rules! __impl_props_types_field_initial_ty_iter {
     ) => {
         $($full_prefix)*
         $(
-            $( $field_name = $crate::__impl_props_field_type_or_unspecified![$($initial_ty_maybe)?], )?
-            $( $field_name = $crate::__impl_props_field_type_or_unspecified![$($initial_ty_impl)?], )?
-            $( $field_name = $crate::__impl_props_field_type_or_unspecified![{$generic_field_builder_output}], )?
-            $( $field_name = $crate::__impl_props_field_type_or_unspecified![{$generic_field_ty}], )?
+            $( $field_name = $crate::expand_a_or_b![ [$($initial_ty_maybe)?] [$crate::builder::Unspecified<$($field_modifier_maybe)*>] ], )?
+            $( $field_name = $crate::expand_a_or_b![ [$($initial_ty_impl)? ] [$crate::builder::Unspecified<builder_impl_tag::$field_name>]], )?
+            $( $field_name = $crate::builder::Unspecified<$generic_field_builder_output>, )?
+            $( $field_name = $crate::builder::Unspecified<$generic_field_ty>, )?
         )*
         $($full_suffix)*
     };
@@ -452,18 +452,12 @@ macro_rules! __impl_props_types_valid_trait {
             )*
         >
         {
+            #![allow(non_camel_case_types)]
+
             $(
-                $(
-                    #[doc = stringify!($($field_modifier_maybe)*)]
-                    #[allow(non_camel_case_types)]
-                    type $field_name : $crate::builder::MaybeSpecifiedFor<self::tag::$field_name>;
-                )?
+                $( type $field_name : $crate::builder::Maybe<$($field_modifier_maybe)*>; )?
 
-
-                $(
-                    #[allow(non_camel_case_types)]
-                    type $field_name : $($field_modifier_impl)*;
-                )?
+                $( type $field_name : $($field_modifier_impl)*; )?
             )*
         }
 
@@ -475,8 +469,7 @@ macro_rules! __impl_props_types_valid_trait {
         >,
         $(
             $(
-                <T as Types>::$field_name : $crate::builder::MaybeSpecifiedFor<self::tag::$field_name>,
-                self::tag::$field_name: $crate::builder::FieldTag<Field = $($field_modifier_maybe)*>,
+                <T as Types>::$field_name : $crate::builder::Maybe<$($field_modifier_maybe)*>,
             )?
             $( <T as Types>::$field_name: $($field_modifier_impl)*, )?
         )*
@@ -606,7 +599,7 @@ macro_rules! __impl_props_types_field_initial_value {
 
 #[macro_export]
 macro_rules! __impl_props_field_tag {
-    ({} { generic { valid $valid_meta:tt MaybeSpecifiedFor($for_ty:ty) }}
+    ({} { generic { valid $valid_meta:tt tag() }}
         $(#[$($fn_attr:tt)*])*
         $field_name:ident
         $([ $($builder_generics:tt)* ])?
@@ -618,27 +611,6 @@ macro_rules! __impl_props_field_tag {
     ) => {
         #[allow(non_camel_case_types)]
         pub enum $field_name {}
-
-        impl $crate::builder::FieldTag for $field_name {
-            type Field = $for_ty;
-        }
-
-        impl $crate::builder::MaybeSpecifiedFor<$field_name> for $for_ty {
-            #[inline]
-            fn specified(self) -> ::core::option::Option<Self> {
-                ::core::option::Option::Some(self)
-            }
-
-            #[inline]
-            fn as_specified(&self) -> ::core::option::Option<&Self> {
-                ::core::option::Option::Some(self)
-            }
-
-            #[inline]
-            fn as_mut_specified(&mut self) -> ::core::option::Option<&mut Self> {
-                ::core::option::Option::Some(self)
-            }
-        }
     };
     ({} $($other:tt)*) => {};
 }
@@ -695,7 +667,7 @@ macro_rules! def_props {
                 ])*
             }
 
-            pub mod tag {
+            pub mod builder_impl_tag {
                 use super::*;
 
                 $crate::__impl_props_field_declaration_normalize_iter! {

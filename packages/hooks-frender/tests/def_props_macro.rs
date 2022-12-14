@@ -1,11 +1,11 @@
-use hooks_frender::{builder::MaybeSpecifiedFor, def_props, valid, Valid};
+use hooks_frender::{builder::Maybe, def_props, valid, Valid};
 
 mod html {
     use hooks_frender::def_props;
 
     def_props! {
         struct ElementProps {
-            field_with_default: std::borrow::Cow<'static,str> = "".into(),
+            id: String,
         }
     }
 }
@@ -137,11 +137,11 @@ fn builder() {
         assert_eq!(props.generic_field_2.into(), "hello");
 
         assert_eq!(
-            props.generic_field_maybe_specified.specified(),
+            props.generic_field_maybe_specified.some(),
             Some("world".to_string())
         );
 
-        assert_eq!(props.generic_field_maybe_specified_2.as_specified(), None);
+        assert_eq!(props.generic_field_maybe_specified_2.as_some(), None);
     }
 
     test_valid_props(b);
