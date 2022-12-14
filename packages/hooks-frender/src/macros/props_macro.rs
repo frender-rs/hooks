@@ -338,9 +338,7 @@ macro_rules! __impl_props_types_macro_rules {
         $([
             $field_name:ident
 
-            $([ ?    $($field_modifier_maybe:tt)* ] $(: $(= $initial_v_maybe:expr)? , $initial_ty_maybe:ty )? ;)?
-            $([ impl $($field_modifier_impl:tt)*  ] $(: $(= $initial_v_impl:expr )? , $initial_ty_impl:ty  )? ;)?
-            $([ borrow? $($field_modifier_bm:tt)* ] $(: $(= $initial_v_bm:expr   )? , $initial_ty_bm:ty    )? ;)?
+            $([ $($field_modifier:tt)* ] $(: $(= $initial_v_mod:expr)? , $initial_ty_mod:ty )? ;)?
             $(
                 = $field_builder_default_output_value:expr =>
                 ($($field_builder_inputs:tt)*)
@@ -362,9 +360,7 @@ macro_rules! __impl_props_types_macro_rules {
     ) => {
         macro_rules! use_a_if_field_name_match {
             $(
-                $( ($ignore:tt $field_name $field_name [$a:ty][$b:ty]) => { $crate::ignore_first_tt!{ {$($initial_ty_maybe)?} $a } }; )?
-                $( ($ignore:tt $field_name $field_name [$a:ty][$b:ty]) => { $crate::ignore_first_tt!{ {$($initial_ty_impl )?} $a } }; )?
-                $( ($ignore:tt $field_name $field_name [$a:ty][$b:ty]) => { $crate::ignore_first_tt!{ {$($initial_ty_bm   )?} $a } }; )?
+                $( ($ignore:tt $field_name $field_name [$a:ty][$b:ty]) => { $crate::ignore_first_tt!{ {$($initial_ty_mod)?} $a } }; )?
                 $( ($ignore:tt $field_name $field_name [$a:ty][$b:ty]) => { $crate::ignore_first_tt!{ {$generic_field_builder_output} $a } }; )?
                 $( ($ignore:tt $field_name $field_name [$a:ty][$b:ty]) => { $crate::ignore_first_tt!{ {$generic_field_ty} $a } }; )?
             )*
@@ -374,13 +370,11 @@ macro_rules! __impl_props_types_macro_rules {
         }
 
         macro_rules! TypesNormalize {
-            ($inherit:ty) => {
+            ($base:ty) => {
                 dyn Types<$(
-                    $( $field_name = $crate::ignore_first_tt![ {$($initial_ty_maybe)?} <$inherit as Types>::$field_name ] , )?
-                    $( $field_name = $crate::ignore_first_tt![ {$($initial_ty_impl )?} <$inherit as Types>::$field_name ] , )?
-                    $( $field_name = $crate::ignore_first_tt![ {$($initial_ty_bm   )?} <$inherit as Types>::$field_name ] , )?
-                    $( $field_name = $crate::ignore_first_tt![ {$generic_field_builder_output} <$inherit as Types>::$field_name ] , )?
-                    $( $field_name = $crate::ignore_first_tt![ {$generic_field_ty    } <$inherit as Types>::$field_name ] , )?
+                    $( $field_name = $crate::ignore_first_tt![ {$($initial_ty_mod)?} <$base as Types>::$field_name ] , )?
+                    $( $field_name = $crate::ignore_first_tt![ {$generic_field_builder_output} <$base as Types>::$field_name ] , )?
+                    $( $field_name = $crate::ignore_first_tt![ {$generic_field_ty    } <$base as Types>::$field_name ] , )?
                 )*>
             };
         }
@@ -391,9 +385,7 @@ macro_rules! __impl_props_types_macro_rules {
                 $overwrite_field:ident = $overwrite_field_ty:ty
             ) => {
                 dyn Types<$(
-                    $( $field_name = use_a_if_field_name_match![ {$($initial_ty_maybe)?} $field_name $overwrite_field [$overwrite_field_ty] [<$inherit as Types>::$field_name] ], )?
-                    $( $field_name = use_a_if_field_name_match![ {$($initial_ty_impl )?} $field_name $overwrite_field [$overwrite_field_ty] [<$inherit as Types>::$field_name] ], )?
-                    $( $field_name = use_a_if_field_name_match![ {$($initial_ty_bm   )?} $field_name $overwrite_field [$overwrite_field_ty] [<$inherit as Types>::$field_name] ], )?
+                    $( $field_name = use_a_if_field_name_match![ {$($initial_ty_mod)?} $field_name $overwrite_field [$overwrite_field_ty] [<$inherit as Types>::$field_name] ], )?
                     $( $field_name = use_a_if_field_name_match![ {$generic_field_builder_output} $field_name $overwrite_field [$overwrite_field_ty] [<$inherit as Types>::$field_name] ], )?
                     $( $field_name = use_a_if_field_name_match![ {$generic_field_ty} $field_name $overwrite_field [$overwrite_field_ty] [<$inherit as Types>::$field_name] ], )?
                 )*>
