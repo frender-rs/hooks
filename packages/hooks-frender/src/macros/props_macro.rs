@@ -105,6 +105,32 @@ macro_rules! __impl_props_types_trait_item {
 }
 
 #[macro_export]
+macro_rules! __impl_props_types_impl_types_for_data_field {
+    ({$base:ty as $trait_name:path} { non_generic }
+        $(#[$($fn_attr:tt)*])*
+        $field_name:ident
+        $([ $($builder_generics:tt)* ])?
+        ($($field_builder_inputs:tt)*)
+            -> $field_builder_output:ty
+            = type($initial_ty:ty)
+            value($initial_value:expr)
+            $field_builder_impl:block
+    ) => {};
+    ({$base:ty as $trait_name:path} { generic $($opts:tt)* }
+        $(#[$($fn_attr:tt)*])*
+        $field_name:ident
+        $([ $($builder_generics:tt)* ])?
+        ($($field_builder_inputs:tt)*)
+            -> $field_builder_output:ty
+            = type($initial_ty:ty)
+            value($initial_value:expr)
+            $field_builder_impl:block
+    ) => {
+        type $field_name = <$base as $trait_name>::$field_name;
+    };
+}
+
+#[macro_export]
 macro_rules! __impl_props_types_field_ty {
     ({$base:ty as $trait_types:path} { generic {$($meta_generic:tt)*} }
         $(#[$($fn_attr:tt)*])*
@@ -528,42 +554,6 @@ macro_rules! __impl_props_types_valid_trait {
 }
 
 #[macro_export]
-macro_rules! __impl_props_types_impl_types_for_data {
-    ($([
-            $field_name:ident
-
-            $([ ?    $($field_modifier_maybe:tt)* ] $(: $(= $initial_v_maybe:expr)? , $initial_ty_maybe:ty )? ;)?
-            $([ impl $($field_modifier_impl:tt)*  ] $(: $(= $initial_v_impl:expr )? , $initial_ty_impl:ty  )? ;)?
-            $([ borrow? $($field_modifier_bm:tt)*  ] $(: $(= $initial_v_bm:expr  )? , $initial_ty_bm:ty    )? ;)?
-            $(
-                = $field_builder_default_output_value:expr =>
-                ($($field_builder_inputs:tt)*)
-                    -> $field_builder_output:ty
-                    $field_builder_impl:block
-                $([ $($builder_generics:tt)* ])? ;
-            )?
-            $(
-                ($($generic_field_builder_inputs:tt)*)
-                    -> $generic_field_builder_output:ty
-                    $generic_field_builder_impl:block
-                $([ $($builder_generics_generic:tt)* ])? ;
-            )?
-            $(
-                : = $field_default_value:expr , $field_ty:ty;
-            )?
-            $(  : , $generic_field_ty:ty;  )?
-    ])*) => {
-        $(
-            $( type $field_name = $crate::ignore_first_tt![{$($initial_ty_maybe)?} TypeDefs::$field_name]; )?
-            $( type $field_name = $crate::ignore_first_tt![{$($initial_ty_impl )?} TypeDefs::$field_name]; )?
-            $( type $field_name = $crate::ignore_first_tt![{$($initial_ty_bm)?}    TypeDefs::$field_name]; )?
-            $( type $field_name = $crate::ignore_first_tt![{$generic_field_builder_output} TypeDefs::$field_name]; )?
-            $( type $field_name = $crate::ignore_first_tt![{$generic_field_ty    } TypeDefs::$field_name]; )?
-        )*
-    };
-}
-
-#[macro_export]
 macro_rules! __impl_props_types_field_initial_value {
     ({} $metadata:tt
         $(#[$($fn_attr:tt)*])*
@@ -625,9 +615,6 @@ macro_rules! def_props {
         $(#[$($mod_and_fn_attr)*])*
         #[allow(non_snake_case)]
         $vis mod $name {
-            #[allow(unused_imports)]
-            use super::*;
-
             $crate::__impl_props_types_macro_rules! {
                 {$}
                 $([
@@ -650,7 +637,7 @@ macro_rules! def_props {
             }
 
             pub mod builder_impl_tag {
-                use super::*;
+                use super::super::*;
 
                 $crate::__impl_props_field_declaration_normalize_iter! {
                     [$crate::__impl_props_field_tag]
@@ -798,23 +785,26 @@ macro_rules! def_props {
             }
 
             impl<TypeDefs: ?Sized + Types> Types for Data<TypeDefs> {
-                $crate::__impl_props_types_impl_types_for_data! {$([
-                    $field_name
+                $crate::__impl_props_field_declaration_normalize_iter! {
+                    [$crate::__impl_props_types_impl_types_for_data_field]
+                    {TypeDefs as Types}
+                    $([
+                        $(#[$($fn_attr)*])*
+                        $field_name
 
-                    $(
-                        $(= $field_builder_default_output_value =>)?
-                        ($($field_builder_inputs)*)
-                            -> $field_builder_output
-                            $field_builder_impl
-                    )?
+                        $([ $($field_modifiers_or_builder_generics)* ])?
+                        $(
+                            ($($field_builder_inputs)*)
+                                -> $field_builder_output
+                                $(= $field_builder_default_output_value =>)?
+                                $field_builder_impl
+                        )?
 
-                    $([ $($field_modifiers_or_builder_generics)* ])?
-
-                    $(
-                        : $( = $field_default_value)? , $field_ty
-                    )?
-                    ;
-                ])*}
+                        $(
+                            : $field_ty $( = $field_default_value)?
+                        )?
+                    ])*
+                }
             }
 
             impl<TypeDefs: ?Sized + Types, NewTypeDefs: ?Sized + Types> $crate::builder::WrapData<Data<NewTypeDefs>> for Data<TypeDefs> {
