@@ -4,16 +4,40 @@ mod maybe_borrow;
 pub use maybe::*;
 pub use maybe_borrow::*;
 
-pub trait WrapData<Data> {
-    type Wrapped;
-    fn wrap_data(props: Data) -> Self::Wrapped;
+pub trait JoinData<Data> {
+    type Joined;
+    fn join_data(self, data: Data) -> Self::Joined;
 }
 
-pub trait UnwrapData {
-    type Data;
-    fn unwrap_data(self) -> Self::Data;
-    fn unwrap_as_data(&self) -> &Self::Data;
-    fn unwrap_as_mut_data(&mut self) -> &mut Self::Data;
+pub trait TakeData<Data> {
+    type Left;
+    fn take_data(self) -> (Self::Left, Data);
+    fn as_mut_taken(&mut self) -> &mut Data;
+}
+
+pub struct NothingLeft;
+
+impl<Data> JoinData<Data> for NothingLeft {
+    type Joined = Data;
+
+    #[inline]
+    fn join_data(self, data: Data) -> Self::Joined {
+        data
+    }
+}
+
+impl<Data> TakeData<Data> for Data {
+    type Left = NothingLeft;
+
+    #[inline]
+    fn take_data(self) -> (Self::Left, Data) {
+        (NothingLeft, self)
+    }
+
+    #[inline]
+    fn as_mut_taken(&mut self) -> &mut Data {
+        self
+    }
 }
 
 /// Instead of defining a new struct,

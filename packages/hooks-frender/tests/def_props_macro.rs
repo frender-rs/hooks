@@ -4,7 +4,7 @@ mod html {
     use hooks_frender::def_props;
 
     def_props! {
-        struct ElementProps {
+        pub struct ElementProps {
             id[borrow? str],
         }
     }
@@ -99,6 +99,7 @@ def_props! {
         /// The valid type is `TypeDefs::generic_field_maybe_specified_2 where TypeDefs::generic_field_maybe_specified_2: MaybeSpecifiedFor<generic_field_maybe_specified_2>`.
         /// The builder method just *changes* this type and value.
         generic_field_maybe_specified_2[? String]: Option<String> = None,
+        element_props[inherit html::ElementProps],
     }
 }
 
@@ -114,6 +115,7 @@ fn builder() {
     let b = valid!(MyCompProps {
         generic_field: 2,
         generic_field_maybe_specified: String::from("world"),
+        id: "my-id",
         ..b
     });
 
