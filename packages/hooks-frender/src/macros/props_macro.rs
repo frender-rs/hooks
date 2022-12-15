@@ -1169,18 +1169,18 @@ macro_rules! Build {
 macro_rules! build {
     (
         $($name:ident)? $(:: $p:ident)* {
-            .. $start:expr
-            $( ,
+            $(
                 $field:ident
                 $(: $field_value:expr)?
+                ,
             )*
-            $(,)?
+            .. $base:expr
         }
     ) => {{
         #[allow(unused_imports)]
         use $($name)? $(:: $p)* ::prelude::*;
 
-        $start $(
+        $base $(
             . $field (
                 $crate::expand_a_or_b!([$($field_value)?][$field])
             )
@@ -1190,18 +1190,19 @@ macro_rules! build {
         $($name:ident)? $(:: $p:ident)* {
             $(
                 $field:ident
-                $(: $field_value:expr)?
+                $(: $field_value:expr )?
             ),*
             $(,)?
         }
     ) => {
-        $crate::valid! (
+        $crate::build! (
             $($name)? $(:: $p)* {
-                .. $($name)? $(:: $p)* (),
                 $(
                     $field
-                    $(: $field_value)?
-                ),*
+                    $(: $field_value )?
+                    ,
+                )*
+                .. ($($name)? $(:: $p)* ())
             }
         )
     };
@@ -1220,19 +1221,10 @@ macro_rules! Valid {
 #[macro_export]
 macro_rules! valid {
     (
-        // [$e:expr]
         $($name:ident)? $(:: $p:ident)* {
-            $(
-                $field:ident
-                $(: $field_value:expr)?
-                ,
-            )*
-            .. $base:expr
+            $($field:tt)*
         }
     ) => {{
-        #[allow(unused_imports)]
-        use $($name)? $(:: $p)* ::prelude::*;
-
         #[inline]
         fn __assert_build_valid<TypeDefs: ?::core::marker::Sized + $($name)? $(:: $p)* ::ValidTypes>(
             v: $($name)? $(:: $p)* ::Data<TypeDefs>
@@ -1240,33 +1232,8 @@ macro_rules! valid {
             v
         }
 
-        __assert_build_valid(
-            $base $(
-                . $field (
-                    $crate::expand_a_or_b!([$($field_value)?][$field])
-                )
-            )*
-        )
+        __assert_build_valid($crate::build!(
+            $($name)? $(:: $p)* { $($field)* }
+        ))
     }};
-    (
-        // [$e:expr]
-        $($name:ident)? $(:: $p:ident)* {
-            $(
-                $field:path
-                $(: $field_value:expr )?
-            ),*
-            $(,)?
-        }
-    ) => {
-        $crate::valid! (
-            $($name)? $(:: $p)* {
-                $(
-                    $field
-                    $(: $field_value )?
-                    ,
-                )*
-                .. $($name)? $(:: $p)* ()
-            }
-        )
-    };
 }
