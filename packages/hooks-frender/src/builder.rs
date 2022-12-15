@@ -72,3 +72,11 @@ mod tests {
         assert_eq!(std::mem::size_of::<Unspecified::<usize>>(), 0);
     }
 }
+
+pub trait PhantomTypeParam<T: ?Sized> {
+    type Out: ?Sized;
+}
+
+impl<T: ?Sized, R: ?Sized> PhantomTypeParam<R> for T {
+    type Out = R;
+}

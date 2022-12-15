@@ -56,11 +56,11 @@ macro_rules! __impl_props_types_builder_trait_item {
         fn $field_name
             $(< $($builder_generics)* >)?
             (self, $($field_builder_inputs)*) ->
-                <<Self as $crate::builder::TakeData<Data<TypesNormalize![[Types] Self]>>>::Left as $crate::builder::JoinData<Data<
-                    TypesOverwriteOneField![[Types] ..Self, $field_name = $field_builder_output ]
+                <<Self as $crate::builder::TakeData<Data<TypesNormalize<Self>>>>::Left as $crate::builder::JoinData<Data<
+                    self::overwrite:: $field_name ::<Self, $field_builder_output>
                 >>>::Joined
-            where <Self as $crate::builder::TakeData<Data<TypesNormalize![[Types] Self]>>>::Left : $crate::builder::JoinData<Data<
-                TypesOverwriteOneField![[Types] ..Self, $field_name = $field_builder_output ]
+            where <Self as $crate::builder::TakeData<Data<TypesNormalize<Self>>>>::Left : $crate::builder::JoinData<Data<
+                self::overwrite:: $field_name ::<Self, $field_builder_output>
             >> {
                 let _builder_impl_field_new_value = $field_builder_impl;
                 let (
@@ -75,7 +75,9 @@ macro_rules! __impl_props_types_builder_trait_item {
 
                 let $field_name = _builder_impl_field_new_value;
 
-                $crate::builder::JoinData::<Data<TypesOverwriteOneField![[Types] ..Self, $field_name = $field_builder_output ]>>::join_data(
+                $crate::builder::JoinData::<Data<
+                    self::overwrite:: $field_name ::<Self, $field_builder_output>
+                >>::join_data(
                     _builder_impl_field_left,
                     Data {
                         __phantom_type_defs: ::core::marker::PhantomData,
@@ -100,11 +102,11 @@ macro_rules! __impl_props_types_builder_trait_item {
         fn $field_name
             $(< $($builder_generics)* >)?
             (self, $($field_builder_inputs)*) ->
-                <<Self as $crate::builder::TakeData<Data<TypesNormalize![[Types] Self]>>>::Left as $crate::builder::JoinData<Data<
-                    TypesOverwriteOneField![[Types] ..Self, $field_name = $field_builder_output ]
+                <<Self as $crate::builder::TakeData<Data<TypesNormalize<Self>>>>::Left as $crate::builder::JoinData<Data<
+                    self::overwrite:: $field_name ::<Self, $field_builder_output>
                 >>>::Joined
-            where <Self as $crate::builder::TakeData<Data<TypesNormalize![[Types] Self]>>>::Left : $crate::builder::JoinData<Data<
-                TypesOverwriteOneField![[Types] ..Self, $field_name = $field_builder_output ]
+            where <Self as $crate::builder::TakeData<Data<TypesNormalize<Self>>>>::Left : $crate::builder::JoinData<Data<
+                self::overwrite:: $field_name ::<Self, $field_builder_output>
             >> {
                 let _builder_impl_field_new_value = $field_builder_impl;
                 let (
@@ -119,7 +121,9 @@ macro_rules! __impl_props_types_builder_trait_item {
 
                 let $field_name = _builder_impl_field_new_value;
 
-                $crate::builder::JoinData::<Data<TypesOverwriteOneField![[Types] ..Self, $field_name = $field_builder_output ]>>::join_data(
+                $crate::builder::JoinData::<Data<
+                    self::overwrite:: $field_name ::<Self, $field_builder_output>
+                >>::join_data(
                     _builder_impl_field_left,
                     Data {
                         __phantom_type_defs: ::core::marker::PhantomData,
@@ -459,8 +463,8 @@ macro_rules! __impl_props_field_declaration_normalize_iter {
 }
 
 #[macro_export]
-macro_rules! __impl_props_types_macro_rules {
-    ( { $dollar:tt }
+macro_rules! __impl_props_types_normalize {
+    (
         $([
             $field_name:ident
 
@@ -484,6 +488,7 @@ macro_rules! __impl_props_types_macro_rules {
             $(  : , $generic_field_ty:ty;  )?
         ])*
     ) => {
+        #[allow(unused_macros)]
         macro_rules! use_a_if_field_name_match {
             $(
                 $( ($ignore:tt $field_name $field_name [$a:ty][$b:ty]) => { $crate::ignore_first_tt!{ {$($initial_ty_mod)?} $a } }; )?
@@ -495,32 +500,13 @@ macro_rules! __impl_props_types_macro_rules {
             };
         }
 
-        macro_rules! TypesNormalize {
-            (
-                [$dollar ($trait_name:tt)*]
-                $base:ty
-            ) => {
-                dyn $dollar ($trait_name)* <$(
-                    $( $field_name = $crate::ignore_first_tt![ {$($initial_ty_mod)?} <$base as Types>::$field_name ] , )?
-                    $( $field_name = $crate::ignore_first_tt![ {$generic_field_builder_output} <$base as Types>::$field_name ] , )?
-                    $( $field_name = $crate::ignore_first_tt![ {$generic_field_ty    } <$base as Types>::$field_name ] , )?
-                )*>
-            };
-        }
-
-        macro_rules! TypesOverwriteOneField {
-            (
-                [$dollar ($trait_name:tt)*]
-                ..$inherit:ty,
-                $overwrite_field:ident = $overwrite_field_ty:ty
-            ) => {
-                dyn $dollar ($trait_name)* <$(
-                    $( $field_name = use_a_if_field_name_match![ {$($initial_ty_mod)?} $field_name $overwrite_field [$overwrite_field_ty] [<$inherit as $dollar ($trait_name)*>::$field_name] ], )?
-                    $( $field_name = use_a_if_field_name_match![ {$generic_field_builder_output} $field_name $overwrite_field [$overwrite_field_ty] [<$inherit as $dollar ($trait_name)*>::$field_name] ], )?
-                    $( $field_name = use_a_if_field_name_match![ {$generic_field_ty} $field_name $overwrite_field [$overwrite_field_ty] [<$inherit as $dollar ($trait_name)*>::$field_name] ], )?
-                )*>
-            };
-        }
+        pub type TypesNormalize<TypeDefs> =
+            dyn Types <$(
+                $( $field_name = $crate::ignore_first_tt![ {$($initial_ty_mod)?} <TypeDefs as Types>::$field_name ] , )?
+                $( $field_name = $crate::ignore_first_tt![ {$generic_field_builder_output} <TypeDefs as Types>::$field_name ] , )?
+                $( $field_name = $crate::ignore_first_tt![ {$generic_field_ty    } <TypeDefs as Types>::$field_name ] , )?
+            )*>
+        ;
     };
 }
 
@@ -564,6 +550,103 @@ macro_rules! __impl_props_types_field_initial_ty_iter {
             $( $field_name = $crate::builder::Unspecified<$generic_field_ty>, )?
         )*
         $($full_suffix)*
+    };
+}
+
+#[macro_export]
+macro_rules! __impl_props_overwrite_field {
+    (
+        $common_data:tt
+        { non_generic }
+        $type_and_field_name:ident
+        $($other:tt)*
+    ) => {};
+    (
+        {[
+            $field_name:ident
+
+            $([ $($field_modifier_mod:tt)* ] $(: $(= $initial_v_mod:expr   )? , $initial_ty_mod:ty    )? ;)?
+            $(
+                = $field_builder_default_output_value:expr =>
+                ($($field_builder_inputs:tt)*)
+                    -> $field_builder_output:ty
+                    $field_builder_impl:block
+                $([ $($builder_generics:tt)* ])? ;
+            )?
+            $(
+                ($($generic_field_builder_inputs:tt)*)
+                    -> $generic_field_builder_output:ty
+                    $generic_field_builder_impl:block
+                $([ $($builder_generics_generic:tt)* ])? ;
+            )?
+            $(
+                : = $field_default_value:expr , $field_ty:ty;
+            )?
+            $(  : , $generic_field_ty:ty;  )?
+        ]}
+        $metadata:tt
+        $type_and_field_name:ident
+        $($other:tt)*
+    ) => {
+        #[allow(non_camel_case_types)]
+        pub type $type_and_field_name <TypeDefs, $type_and_field_name> = dyn super::Types<
+            $field_name = <TypeDefs as $crate::builder::PhantomTypeParam<$type_and_field_name>>::Out
+        >;
+    };
+    (
+        {$([
+            $field_name:ident
+
+            $([ $($field_modifier_mod:tt)* ] $(: $(= $initial_v_mod:expr   )? , $initial_ty_mod:ty    )? ;)?
+            $(
+                = $field_builder_default_output_value:expr =>
+                ($($field_builder_inputs:tt)*)
+                    -> $field_builder_output:ty
+                    $field_builder_impl:block
+                $([ $($builder_generics:tt)* ])? ;
+            )?
+            $(
+                ($($generic_field_builder_inputs:tt)*)
+                    -> $generic_field_builder_output:ty
+                    $generic_field_builder_impl:block
+                $([ $($builder_generics_generic:tt)* ])? ;
+            )?
+            $(
+                : = $field_default_value:expr , $field_ty:ty;
+            )?
+            $(  : , $generic_field_ty:ty;  )?
+        ])*}
+        $metadata:tt
+        $type_and_field_name:ident
+        $($other:tt)*
+    ) => {
+        #[allow(non_camel_case_types)]
+        pub type $type_and_field_name <TypeDefs, $type_and_field_name> = dyn super::Types<$(
+            $(
+                $field_name = use_a_if_field_name_match![
+                    { $($initial_ty_mod)? }
+                    $type_and_field_name $field_name
+                    [$type_and_field_name]
+                    [<TypeDefs as super::Types>::$field_name]
+                ],
+            )?
+            $(
+                $field_name = use_a_if_field_name_match![
+                    { $generic_field_builder_output }
+                    $type_and_field_name $field_name
+                    [$type_and_field_name]
+                    [<TypeDefs as super::Types>::$field_name]
+                ],
+            )?
+            $(
+                $field_name = use_a_if_field_name_match![
+                    { $generic_field_ty }
+                    $type_and_field_name $field_name
+                    [$type_and_field_name]
+                    [<TypeDefs as super::Types>::$field_name]
+                ],
+            )?
+        )*>;
     };
 }
 
@@ -760,10 +843,7 @@ macro_rules! __impl_props_inherit_take_data {
             TypeDefs: ?Sized + super::Types,
         > $crate::builder::JoinData<$($inherit_path)*::Data<NewInheritedTypeDefs>> for super::Data<TypeDefs> {
             type Joined = super::Data<
-                TypesOverwriteOneField![[super::Types]
-                    ..TypeDefs,
-                    $field_name = $($inherit_path)*::Data<NewInheritedTypeDefs>
-                ]
+                super::overwrite:: $field_name ::<TypeDefs, $($inherit_path)*::Data<NewInheritedTypeDefs>>
             >;
 
             #[inline]
@@ -794,10 +874,12 @@ macro_rules! __impl_props_inherit_take_data {
         > $crate::builder::TakeData<
             $($inherit_path)*::Data<InheritedTypeDefs>
         > for super::Data<TypeDefs> {
-            type Left = super::Data<TypesOverwriteOneField![[super::Types]
-                ..TypeDefs,
-                $field_name = $crate::builder::UnspecifiedField<super::builder_impl_tag:: $field_name>
-            ]>;
+            type Left = super::Data<
+                super::overwrite:: $field_name ::<
+                    TypeDefs,
+                    $crate::builder::UnspecifiedField<super::builder_impl_tag:: $field_name>,
+                >
+            >;
 
             #[inline]
             fn take_data(self) -> (Self::Left, $($inherit_path)*::Data<InheritedTypeDefs>) {
@@ -856,8 +938,7 @@ macro_rules! def_props {
         $vis mod $name {
             use super::*;
 
-            $crate::__impl_props_types_macro_rules! {
-                {$}
+            $crate::__impl_props_types_normalize! {
                 $([
                     $field_name
 
@@ -875,6 +956,45 @@ macro_rules! def_props {
                     )?
                     ;
                 ])*
+            }
+
+            pub mod overwrite {
+                $crate::__impl_props_field_declaration_normalize_iter! {
+                    [$crate::__impl_props_overwrite_field]
+                    {$([
+                        $field_name
+
+                        $(
+                            $(= $field_builder_default_output_value =>)?
+                            ($($field_builder_inputs)*)
+                                -> $field_builder_output
+                                $field_builder_impl
+                        )?
+
+                        $([ $($field_modifiers_or_builder_generics)* ])?
+
+                        $(
+                            : $( = $field_default_value)? , $field_ty
+                        )?
+                        ;
+                    ])*}
+                    $([
+                        // $(#[$($fn_attr)*])* // ignore attributes
+                        $field_name
+
+                        $([ $($field_modifiers_or_builder_generics)* ])?
+                        $(
+                            ($($field_builder_inputs)*)
+                                -> $field_builder_output
+                                $(= $field_builder_default_output_value =>)?
+                                $field_builder_impl
+                        )?
+
+                        $(
+                            : $field_ty $( = $field_default_value)?
+                        )?
+                    ])*
+                }
             }
 
             pub mod builder_impl_tag {
@@ -925,7 +1045,7 @@ macro_rules! def_props {
                 }
             }
 
-            pub trait Builder: Sized + Types + $crate::builder::TakeData<Data<TypesNormalize![[Types] Self]>> {
+            pub trait Builder: Sized + Types + $crate::builder::TakeData<Data<TypesNormalize<Self>>> {
                 $crate::__impl_props_field_declaration_normalize_iter! {
                     [$crate::__impl_props_types_builder_trait_item]
                     {$($field_name),*}
@@ -949,7 +1069,7 @@ macro_rules! def_props {
             }
 
             impl<B> Builder for B
-                where B: Sized + Types + $crate::builder::TakeData<Data<TypesNormalize![[Types] B]>> {}
+                where B: Sized + Types + $crate::builder::TakeData<Data<TypesNormalize<B>>> {}
 
             pub mod builder_impl_data {
                 use super::super::*;
