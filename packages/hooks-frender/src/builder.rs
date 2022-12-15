@@ -4,15 +4,17 @@ mod maybe_borrow;
 pub use maybe::*;
 pub use maybe_borrow::*;
 
+pub type TakeAndRejoined<T, Take, Join> = <<T as TakeData<Take>>::Left as JoinData<Join>>::Joined;
+
 pub trait JoinData<Data> {
     type Joined;
-    fn join_data(self, data: Data) -> Self::Joined;
+    fn join_data(this: Self, data: Data) -> Self::Joined;
 }
 
 pub trait TakeData<Data> {
     type Left;
-    fn take_data(self) -> (Self::Left, Data);
-    fn as_mut_taken(&mut self) -> &mut Data;
+    fn take_data(this: Self) -> (Self::Left, Data);
+    fn as_mut_taken(this: &mut Self) -> &mut Data;
 }
 
 pub struct NothingLeft;
@@ -21,7 +23,7 @@ impl<Data> JoinData<Data> for NothingLeft {
     type Joined = Data;
 
     #[inline]
-    fn join_data(self, data: Data) -> Self::Joined {
+    fn join_data(this: Self, data: Data) -> Self::Joined {
         data
     }
 }
@@ -30,13 +32,13 @@ impl<Data> TakeData<Data> for Data {
     type Left = NothingLeft;
 
     #[inline]
-    fn take_data(self) -> (Self::Left, Data) {
-        (NothingLeft, self)
+    fn take_data(this: Self) -> (Self::Left, Data) {
+        (NothingLeft, this)
     }
 
     #[inline]
-    fn as_mut_taken(&mut self) -> &mut Data {
-        self
+    fn as_mut_taken(this: &mut Self) -> &mut Data {
+        this
     }
 }
 

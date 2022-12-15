@@ -38,7 +38,7 @@ macro_rules! __impl_props_types_builder_trait_item {
         fn $field_name
             $(< $($builder_generics)* >)?
             (mut self, $($field_builder_inputs)*) -> Self {
-                self.as_mut_taken().$field_name = $field_builder_impl;
+                <Self as $crate::builder::TakeData<Data<TypesNormalize<Self>>>>::as_mut_taken(&mut self).$field_name = $field_builder_impl;
                 self
             }
     };
@@ -56,9 +56,11 @@ macro_rules! __impl_props_types_builder_trait_item {
         fn $field_name
             $(< $($builder_generics)* >)?
             (self, $($field_builder_inputs)*) ->
-                <<Self as $crate::builder::TakeData<Data<TypesNormalize<Self>>>>::Left as $crate::builder::JoinData<Data<
-                    self::overwrite:: $field_name ::<Self, $field_builder_output>
-                >>>::Joined
+                $crate::builder::TakeAndRejoined<
+                    Self,
+                    Data<TypesNormalize<Self>>,
+                    Data<self::overwrite:: $field_name ::<Self, $field_builder_output>>,
+                >
             where <Self as $crate::builder::TakeData<Data<TypesNormalize<Self>>>>::Left : $crate::builder::JoinData<Data<
                 self::overwrite:: $field_name ::<Self, $field_builder_output>
             >> {
@@ -71,7 +73,7 @@ macro_rules! __impl_props_types_builder_trait_item {
                         $all_fields,
                     )*
                     }
-                ) = self.take_data();
+                ) = <Self as $crate::builder::TakeData<Data<TypesNormalize<Self>>>>::take_data(self);
 
                 let $field_name = _builder_impl_field_new_value;
 
@@ -117,7 +119,7 @@ macro_rules! __impl_props_types_builder_trait_item {
                         $all_fields,
                     )*
                     }
-                ) = self.take_data();
+                ) = <Self as $crate::builder::TakeData<Data<TypesNormalize<Self>>>>::take_data(self);
 
                 let $field_name = _builder_impl_field_new_value;
 
@@ -847,11 +849,13 @@ macro_rules! __impl_props_inherit_take_data {
             >;
 
             #[inline]
-            fn join_data(self, __builder_impl_v_data: $($inherit_path)*::Data<NewInheritedTypeDefs>) -> Self::Joined {
-                let Self {
+            fn join_data(
+                Self {
                     __phantom_type_defs,
                     $($all_fields),*
-                } = self;
+                }: Self,
+                __builder_impl_v_data: $($inherit_path)*::Data<NewInheritedTypeDefs>
+            ) -> Self::Joined {
                 let _ = $field_name;
                 let $field_name = __builder_impl_v_data;
                 super::Data {
@@ -882,11 +886,12 @@ macro_rules! __impl_props_inherit_take_data {
             >;
 
             #[inline]
-            fn take_data(self) -> (Self::Left, $($inherit_path)*::Data<InheritedTypeDefs>) {
-                let Self {
+            fn take_data(
+                Self {
                     __phantom_type_defs,
                     $($all_fields),*
-                } = self;
+                }: Self
+            ) -> (Self::Left, $($inherit_path)*::Data<InheritedTypeDefs>) {
                 let __builder_impl_v_taken = $field_name;
                 let $field_name = $crate::builder::UnspecifiedField;
                 (
@@ -900,8 +905,8 @@ macro_rules! __impl_props_inherit_take_data {
             }
 
             #[inline]
-            fn as_mut_taken(&mut self) -> &mut $($inherit_path)*::Data<InheritedTypeDefs> {
-                &mut self. $field_name
+            fn as_mut_taken(this: &mut Self) -> &mut $($inherit_path)*::Data<InheritedTypeDefs> {
+                &mut this. $field_name
             }
         }
     };
@@ -1136,7 +1141,9 @@ macro_rules! def_props {
             pub use self::builder_impl_data::$name as Data;
 
             pub trait Inherit {
-                type InheritedTypeDefs: ?::core::marker::Sized;
+                type InheritedTypeDefs: ?::core::marker::Sized + Types;
+
+                // fn take_inherited(this: Self, )
             }
 
             impl<
