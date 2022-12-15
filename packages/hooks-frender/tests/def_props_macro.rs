@@ -106,10 +106,11 @@ def_props! {
 #[test]
 fn builder() {
     let b = {
-        use MyCompProps::Builder;
+        use MyCompProps::prelude::*;
         MyCompProps()
             .required_field(vec![])
             .required_field_with_generic_input(None)
+            .id("")
     };
 
     let b = valid!(MyCompProps {

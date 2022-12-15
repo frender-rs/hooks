@@ -38,11 +38,11 @@ macro_rules! __impl_props_types_builder_trait_item {
         fn $field_name
             $(< $($builder_generics)* >)?
             (mut self, $($field_builder_inputs)*) -> Self {
-                <Self as $crate::builder::TakeData<Data<TypesNormalize<Self>>>>::as_mut_taken(&mut self).$field_name = $field_builder_impl;
+                <Self as super::Inherit>::as_mut_inherited(&mut self).$field_name = $field_builder_impl;
                 self
             }
     };
-    ({$($all_fields:ident),*} { generic $opts:tt }
+    ({$($all_fields:ident),*} $metadata:tt
         $(#[$($fn_attr:tt)*])*
         $field_name:ident
         $([ $($builder_generics:tt)* ])?
@@ -56,32 +56,35 @@ macro_rules! __impl_props_types_builder_trait_item {
         fn $field_name
             $(< $($builder_generics)* >)?
             (self, $($field_builder_inputs)*) ->
-                $crate::builder::TakeAndRejoined<
-                    Self,
-                    Data<TypesNormalize<Self>>,
-                    Data<self::overwrite:: $field_name ::<Self, $field_builder_output>>,
+                $crate::builder::Joined<
+                    <Self as super::Inherit>::Left,
+                    super::Data<
+                        super::overwrite:: $field_name ::<<Self as super::Inherit>::InheritedTypeDefs, $field_builder_output>
+                    >
                 >
-            where <Self as $crate::builder::TakeData<Data<TypesNormalize<Self>>>>::Left : $crate::builder::JoinData<Data<
-                self::overwrite:: $field_name ::<Self, $field_builder_output>
-            >> {
+            where <Self as super::Inherit>::Left: $crate::builder::JoinData<
+                super::Data<
+                    super::overwrite:: $field_name ::<<Self as super::Inherit>::InheritedTypeDefs, $field_builder_output>
+                >
+            > {
                 let _builder_impl_field_new_value = $field_builder_impl;
                 let (
                     _builder_impl_field_left,
-                    Data {
+                    super::Data {
                         __phantom_type_defs: _,
                     $(
                         $all_fields,
                     )*
                     }
-                ) = <Self as $crate::builder::TakeData<Data<TypesNormalize<Self>>>>::take_data(self);
+                ) = <Self as super::Inherit>::take_inherited(self);
 
                 let $field_name = _builder_impl_field_new_value;
 
-                $crate::builder::JoinData::<Data<
-                    self::overwrite:: $field_name ::<Self, $field_builder_output>
+                $crate::builder::JoinData::<super::Data<
+                    super::overwrite:: $field_name ::<<Self as super::Inherit>::InheritedTypeDefs, $field_builder_output>
                 >>::join_data(
                     _builder_impl_field_left,
-                    Data {
+                    super::Data {
                         __phantom_type_defs: ::core::marker::PhantomData,
                         $(
                             $all_fields,
@@ -501,14 +504,6 @@ macro_rules! __impl_props_types_normalize {
                 $b
             };
         }
-
-        pub type TypesNormalize<TypeDefs> =
-            dyn Types <$(
-                $( $field_name = $crate::ignore_first_tt![ {$($initial_ty_mod)?} <TypeDefs as Types>::$field_name ] , )?
-                $( $field_name = $crate::ignore_first_tt![ {$generic_field_builder_output} <TypeDefs as Types>::$field_name ] , )?
-                $( $field_name = $crate::ignore_first_tt![ {$generic_field_ty    } <TypeDefs as Types>::$field_name ] , )?
-            )*>
-        ;
     };
 }
 
@@ -842,7 +837,7 @@ macro_rules! __impl_props_inherit_take_data {
     ) => {
         impl<
             NewInheritedTypeDefs: ?Sized + $($inherit_path)*::Types,
-            TypeDefs: ?Sized + super::Types,
+            TypeDefs: ?Sized + super::Types<$field_name = $crate::builder::UnspecifiedField<super::builder_impl_tag::$field_name>>,
         > $crate::builder::JoinData<$($inherit_path)*::Data<NewInheritedTypeDefs>> for super::Data<TypeDefs> {
             type Joined = super::Data<
                 super::overwrite:: $field_name ::<TypeDefs, $($inherit_path)*::Data<NewInheritedTypeDefs>>
@@ -870,14 +865,6 @@ macro_rules! __impl_props_inherit_take_data {
             TypeDefs: ?Sized + super::Types< $field_name = $($inherit_path)*::Data<InheritedTypeDefs> >,
         > $($inherit_path)*::Inherit for super::Data<TypeDefs> {
             type InheritedTypeDefs = InheritedTypeDefs;
-        }
-
-        impl<
-            InheritedTypeDefs: ?Sized + $($inherit_path)*::Types,
-            TypeDefs: ?Sized + super::Types< $field_name = $($inherit_path)*::Data<InheritedTypeDefs> >,
-        > $crate::builder::TakeData<
-            $($inherit_path)*::Data<InheritedTypeDefs>
-        > for super::Data<TypeDefs> {
             type Left = super::Data<
                 super::overwrite:: $field_name ::<
                     TypeDefs,
@@ -886,7 +873,7 @@ macro_rules! __impl_props_inherit_take_data {
             >;
 
             #[inline]
-            fn take_data(
+            fn take_inherited(
                 Self {
                     __phantom_type_defs,
                     $($all_fields),*
@@ -905,7 +892,7 @@ macro_rules! __impl_props_inherit_take_data {
             }
 
             #[inline]
-            fn as_mut_taken(this: &mut Self) -> &mut $($inherit_path)*::Data<InheritedTypeDefs> {
+            fn as_mut_inherited(this: &mut Self) -> &mut $($inherit_path)*::Data<InheritedTypeDefs> {
                 &mut this. $field_name
             }
         }
@@ -1050,31 +1037,37 @@ macro_rules! def_props {
                 }
             }
 
-            pub trait Builder: Sized + Types + $crate::builder::TakeData<Data<TypesNormalize<Self>>> {
-                $crate::__impl_props_field_declaration_normalize_iter! {
-                    [$crate::__impl_props_types_builder_trait_item]
-                    {$($field_name),*}
-                    $([
-                        $(#[$($fn_attr)*])*
-                        $field_name
+            mod builder_impl_builder_trait {
+                use super::super::*;
 
-                        $([ $($field_modifiers_or_builder_generics)* ])?
-                        $(
-                            ($($field_builder_inputs)*)
-                                -> $field_builder_output
-                                $(= $field_builder_default_output_value =>)?
-                                $field_builder_impl
-                        )?
+                pub trait $name: ::core::marker::Sized + super::Inherit {
+                    $crate::__impl_props_field_declaration_normalize_iter! {
+                        [$crate::__impl_props_types_builder_trait_item]
+                        {$($field_name),*}
+                        $([
+                            $(#[$($fn_attr)*])*
+                            $field_name
 
-                        $(
-                            : $field_ty $( = $field_default_value)?
-                        )?
-                    ])*
+                            $([ $($field_modifiers_or_builder_generics)* ])?
+                            $(
+                                ($($field_builder_inputs)*)
+                                    -> $field_builder_output
+                                    $(= $field_builder_default_output_value =>)?
+                                    $field_builder_impl
+                            )?
+
+                            $(
+                                : $field_ty $( = $field_default_value)?
+                            )?
+                        ])*
+                    }
                 }
+
+                impl<B> $name for B
+                    where B: ::core::marker::Sized + super::Inherit {}
             }
 
-            impl<B> Builder for B
-                where B: Sized + Types + $crate::builder::TakeData<Data<TypesNormalize<B>>> {}
+            pub use builder_impl_builder_trait::$name as Builder;
 
             pub mod builder_impl_data {
                 use super::super::*;
@@ -1143,38 +1136,24 @@ macro_rules! def_props {
             pub trait Inherit {
                 type InheritedTypeDefs: ?::core::marker::Sized + Types;
 
-                // fn take_inherited(this: Self, )
+                type Left;
+                fn take_inherited(this: Self) -> (Self::Left, Data<Self::InheritedTypeDefs>);
+                fn as_mut_inherited(this: &mut Self) -> &mut Data<Self::InheritedTypeDefs>;
             }
 
             impl<
                 TypeDefs: ?::core::marker::Sized + Types,
             > Inherit for Data<TypeDefs> {
                 type InheritedTypeDefs = TypeDefs;
-            }
 
-            impl<
-                TypeDefs: ?::core::marker::Sized + Types,
-                T: Inherit<InheritedTypeDefs = TypeDefs>,
-            > Types for T {
-                $crate::__impl_props_field_declaration_normalize_iter! {
-                    [$crate::__impl_props_types_impl_types_for_data_field]
-                    {TypeDefs as Types}
-                    $([
-                        $(#[$($fn_attr)*])*
-                        $field_name
-
-                        $([ $($field_modifiers_or_builder_generics)* ])?
-                        $(
-                            ($($field_builder_inputs)*)
-                                -> $field_builder_output
-                                $(= $field_builder_default_output_value =>)?
-                                $field_builder_impl
-                        )?
-
-                        $(
-                            : $field_ty $( = $field_default_value)?
-                        )?
-                    ])*
+                type Left = $crate::builder::NothingLeft;
+                #[inline]
+                fn take_inherited(this: Self) -> (Self::Left, Data<Self::InheritedTypeDefs>) {
+                    ($crate::builder::NothingLeft, this)
+                }
+                #[inline]
+                fn as_mut_inherited(this: &mut Self) -> &mut Data<Self::InheritedTypeDefs> {
+                    this
                 }
             }
 
