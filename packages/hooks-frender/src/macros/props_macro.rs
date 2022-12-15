@@ -631,7 +631,7 @@ macro_rules! __impl_props_types_valid_trait {
         impl<
             T: ?::core::marker::Sized,
             $(
-                $( #[allow(non_camel_case_types)] $field_name : ?::core::marker::Sized + $($field_modifier_ih)* :: ValidTypes )?
+                $( #[allow(non_camel_case_types)] $field_name : ?::core::marker::Sized + $($field_modifier_ih)* :: ValidTypes ,)?
             )*
         > ValidTypes for T where T: Types<
             $(
