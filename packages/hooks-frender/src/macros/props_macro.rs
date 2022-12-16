@@ -1308,7 +1308,7 @@ macro_rules! build {
                     $(: $field_value )?
                     ,
                 )*
-                .. ($($name)? $(:: $p)* ())
+                .. $($name)? $(:: $p)* ()
             }
         )
     };
