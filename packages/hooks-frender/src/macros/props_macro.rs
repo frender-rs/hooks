@@ -499,60 +499,18 @@ macro_rules! __impl_props_types_field_initial_ty_iter {
 #[macro_export]
 macro_rules! __impl_props_field_macro {
     (
-        {$([
-            $field_name:ident
-
-            $([ $($field_modifier_mod:tt)* ] $(: $(= $initial_v_mod:expr   )? , $initial_ty_mod:ty    )? ;)?
-            $(
-                = $field_builder_default_output_value:expr =>
-                ($($field_builder_inputs:tt)*)
-                    -> $field_builder_output:ty
-                    $field_builder_impl:block
-                $([ $($builder_generics:tt)* ])? ;
-            )?
-            $(
-                ($($generic_field_builder_inputs:tt)*)
-                    -> $generic_field_builder_output:ty
-                    $generic_field_builder_impl:block
-                $([ $($builder_generics_generic:tt)* ])? ;
-            )?
-            $(
-                : = $field_default_value:expr , $field_ty:ty;
-            )?
-            $(  : , $generic_field_ty:ty;  )?
-        ])*}
+        {$(
+            $field_name:ident $ignored:tt
+        )*}
     ) => {
         $(
-            $(
-                #[doc = ::core::stringify!($($initial_ty_mod)?)]
-                #[allow(unused_macros)]
-                macro_rules! $field_name {
-                    ($field_name) => { $field_name };
-                    ($f:ident) => {
-                        <TypeDefs as super::Types>::$f
-                    };
-                }
-            )?
-            $(
-                #[doc = ::core::stringify!($generic_field_builder_output)]
-                #[allow(unused_macros)]
-                macro_rules! $field_name {
-                    ($field_name) => { $field_name };
-                    ($f:ident) => {
-                        <TypeDefs as super::Types>::$f
-                    };
-                }
-            )?
-            $(
-                #[doc = ::core::stringify!($generic_field_ty)]
-                #[allow(unused_macros)]
-                macro_rules! $field_name {
-                    ($field_name) => { $field_name };
-                    ($f:ident) => {
-                        <TypeDefs as super::Types>::$f
-                    };
-                }
-            )?
+            #[allow(unused_macros)]
+            macro_rules! $field_name {
+                ($field_name) => { $field_name };
+                ($f:ident) => {
+                    <TypeDefs as super::Types>::$f
+                };
+            }
         )*
     };
 }
@@ -566,6 +524,46 @@ macro_rules! __impl_props_overwrite_field {
         $($other:tt)*
     ) => {};
     (
+        {$(
+            $field_name:ident $ignored:tt
+        )*}
+        $metadata:tt
+        $type_and_field_name:ident
+        $($other:tt)*
+    ) => {
+        #[allow(non_camel_case_types)]
+        pub type $type_and_field_name <TypeDefs, $type_and_field_name> =
+        <TypeDefs as $crate::builder::PhantomTypeParam<
+        dyn super::Types<$(
+            $field_name =
+                $type_and_field_name ![$field_name],
+        )*>
+        >>::Out;
+    };
+}
+
+#[macro_export]
+macro_rules! __impl_props_overwrite_fields_impl {
+    (
+        $common_data:tt
+        {$($field_declaration:tt)*}
+    ) => {
+        $crate::__impl_props_field_macro! {
+            $common_data
+        }
+
+        $(
+            $crate::__impl_props_field_declaration_normalize! {
+                [$crate::__impl_props_overwrite_field]
+                $common_data $field_declaration
+            }
+        )*
+    };
+}
+
+#[macro_export]
+macro_rules! __impl_props_overwrite_fields {
+    (
         {$([
             $field_name:ident
 
@@ -588,48 +586,18 @@ macro_rules! __impl_props_overwrite_field {
             )?
             $(  : , $generic_field_ty:ty;  )?
         ])*}
-        $metadata:tt
-        $type_and_field_name:ident
-        $($other:tt)*
+
+        $field_declarations:tt
     ) => {
-        #[allow(non_camel_case_types)]
-        pub type $type_and_field_name <TypeDefs, $type_and_field_name> =
-        <TypeDefs as $crate::builder::PhantomTypeParam<
-        dyn super::Types<$(
-            $(
-                $field_name = $crate::ignore_first_tt![
-                    { $($initial_ty_mod)? }
-                    $type_and_field_name ![$field_name]
-                ],
-            )?
-            $(
-                $field_name = $crate::ignore_first_tt![
-                    { $generic_field_builder_output }
-                    $type_and_field_name ![$field_name]
-                ],
-            )?
-            $(
-                $field_name = $crate::ignore_first_tt![
-                    { $generic_field_ty }
-                    $type_and_field_name ![$field_name]
-                ],
-            )?
-        )*>
-        >>::Out;
-    };
-}
-
-#[macro_export]
-macro_rules! __impl_props_overwrite_fields {
-    ($common_data:tt $($field_declaration:tt)*) => {
-        $crate::__impl_props_field_macro! {
-            $common_data
-        }
-
-        $crate::__impl_props_field_declaration_normalize_iter! {
-            [$crate::__impl_props_overwrite_field]
-            $common_data
-            $($field_declaration)*
+        $crate::__impl_props_overwrite_fields_impl! {
+            {
+                $(
+                    $($field_name ( $($($initial_v_mod)?)? ))?
+                    $($field_name ( $generic_field_builder_output ))?
+                    $($field_name ( $generic_field_ty ))?
+                )*
+            }
+            $field_declarations
         }
     };
 }
@@ -914,7 +882,7 @@ macro_rules! def_props {
                         )?
                         ;
                     ])*}
-                    $([
+                    {$([
                         // $(#[$($fn_attr)*])* // ignore attributes
                         $field_name
 
@@ -929,7 +897,7 @@ macro_rules! def_props {
                         $(
                             : $field_ty $( = $field_default_value)?
                         )?
-                    ])*
+                    ])*}
                 }
             }
 
