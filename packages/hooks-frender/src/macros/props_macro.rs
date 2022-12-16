@@ -1197,46 +1197,64 @@ macro_rules! Build {
 }
 
 #[macro_export]
+macro_rules! __impl_build_tolerant {
+    (
+        [$($path:tt)+] {
+            .. $base:expr
+        }
+    ) => {
+        $base
+    };
+    (
+        [$($path:tt)+] {
+            $(
+                $field_or_suggest:ident
+                $($real_field:ident)?
+                $(: $field_value:expr)?
+            ),*
+            $(
+                ,
+                $(.. $base:expr)?
+            )?
+        }
+    ) => {
+        $crate::expand_a_or_b!([$($($base)?)?][$($path)+ ()])
+            $(
+                . $field_or_suggest (
+                    $crate::expand_a_or_b!([$($field_value)?][$field_or_suggest])
+                )
+                $(. $real_field (_))?
+            )*
+    };
+}
+
+#[macro_export]
 macro_rules! build {
     (
         $($name:ident)? $(:: $p:ident)* {
-            $(
-                $field:ident
-                $(: $field_value:expr)?
-                ,
-            )*
-            .. $base:expr
+            $($field:tt)*
         }
     ) => {{
         #[allow(unused_imports)]
         use $($name)? $(:: $p)* ::prelude::*;
 
-        $base $(
-            . $field (
-                $crate::expand_a_or_b!([$($field_value)?][$field])
-            )
-        )*
-    }};
-    (
-        $($name:ident)? $(:: $p:ident)* {
-            $(
-                $field:ident
-                $(: $field_value:expr )?
-            ),*
-            $(,)?
-        }
-    ) => {
-        $crate::build! (
-            $($name)? $(:: $p)* {
-                $(
-                    $field
-                    $(: $field_value )?
-                    ,
-                )*
-                .. $($name)? $(:: $p)* ()
+        $crate::__impl_build_tolerant! (
+            [$($name)? $(:: $p)*] {
+                $($field)*
             }
         )
-    };
+    }};
+    (
+        $($name:ident)? $(:: $p:ident)* (
+            $($base:expr)?
+        ) $($call:tt)*
+    ) => {{
+        #[allow(unused_imports)]
+        use $($name)? $(:: $p)* ::prelude::*;
+
+        $crate::expand_a_or_b!([$($base)?][$($name)? $(:: $p)* ()])
+            $($call)*
+    }};
 }
 
 #[macro_export]
