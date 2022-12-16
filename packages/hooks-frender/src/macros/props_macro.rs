@@ -418,7 +418,7 @@ macro_rules! __impl_props_field_declaration_normalize {
                 $(#[$($fn_attr)*])*
                 $field_name
 
-                [ impl $($field_bound)* ]: $crate::builder::UnspecifiedField<builder_impl_tag::$field_name> = $crate::builder::UnspecifiedField
+                [ impl $($field_bound)* ]: $crate::builder::UnspecifiedField<field_tag::$field_name> = $crate::builder::UnspecifiedField
             ]
         }
     };
@@ -500,7 +500,7 @@ macro_rules! __impl_props_types_field_initial_ty_iter {
         $($full_prefix)*
         $(
             $( $field_name = $crate::expand_a_or_b![ [$($initial_ty_maybe)?] [$crate::builder::Unspecified<$($field_modifier_maybe)*>] ], )?
-            $( $field_name = $crate::expand_a_or_b![ [$($initial_ty_impl)? ] [$crate::builder::UnspecifiedField<builder_impl_tag::$field_name>]], )?
+            $( $field_name = $crate::expand_a_or_b![ [$($initial_ty_impl)? ] [$crate::builder::UnspecifiedField<field_tag::$field_name>]], )?
             $( $field_name = $crate::expand_a_or_b![ [$($initial_ty_bm  )? ] [$crate::builder::Unspecified<$($field_modifier_bm   )*>] ], )?
             $( $field_name = $crate::expand_a_or_b![ [$($initial_ty_ih  )? ] [$($field_modifier_ih)* :: DataInitial] ], )?
             $( $field_name = $crate::builder::Unspecified<$generic_field_builder_output>, )?
@@ -826,7 +826,7 @@ macro_rules! __impl_props_inherit_take_data {
     ) => {
         impl<
             NewInheritedTypeDefs: ?Sized + $($inherit_path)*::Types,
-            TypeDefs: ?Sized + super::Types<$field_name = $crate::builder::UnspecifiedField<super::builder_impl_tag::$field_name>>,
+            TypeDefs: ?Sized + super::Types<$field_name = $crate::builder::UnspecifiedField<super::field_tag::$field_name>>,
         > $crate::builder::JoinData<$($inherit_path)*::Data<NewInheritedTypeDefs>> for super::Data<TypeDefs> {
             type Joined = super::Data<
                 super::overwrite:: $field_name ::<TypeDefs, $($inherit_path)*::Data<NewInheritedTypeDefs>>
@@ -857,7 +857,7 @@ macro_rules! __impl_props_inherit_take_data {
             type Left = super::Data<
                 super::overwrite:: $field_name ::<
                     TypeDefs,
-                    $crate::builder::UnspecifiedField<super::builder_impl_tag:: $field_name>,
+                    $crate::builder::UnspecifiedField<super::field_tag:: $field_name>,
                 >
             >;
 
@@ -958,7 +958,7 @@ macro_rules! def_props {
                 }
             }
 
-            pub mod builder_impl_tag {
+            pub mod field_tag {
                 use super::super::*;
 
                 $crate::__impl_props_field_declaration_normalize_iter! {
