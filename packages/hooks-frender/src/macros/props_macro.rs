@@ -56,12 +56,17 @@ macro_rules! __impl_props_types_builder_trait_item {
         fn $field_name
             $(< $($builder_generics)* >)?
             (self, $($field_builder_inputs)*) ->
-                <Self as super::Inherit>::Replaced<
+                <Self as super::ReplaceInherited<
+                    super::overwrite:: $field_name ::<<Self as super::Inherit>::InheritedTypeDefs, $field_builder_output>
+                >>::Replaced
+            where Self: super::ReplaceInherited<
                     super::overwrite:: $field_name ::<<Self as super::Inherit>::InheritedTypeDefs, $field_builder_output>
                 >
             {
                 let _builder_impl_field_new_value = $field_builder_impl;
-                <Self as super::Inherit>::replace_inherited(
+                <Self as super::ReplaceInherited<
+                    super::overwrite:: $field_name ::<<Self as super::Inherit>::InheritedTypeDefs, $field_builder_output>
+                >>::replace_inherited(
                     self,
                     move |super::Data { __phantom_type_defs: _, $($all_fields,)* }| {
                         let _ = $field_name;
@@ -810,14 +815,25 @@ macro_rules! __impl_props_inherit_take_data {
             TypeDefs: ?Sized + super::Types< $field_name = $($inherit_path)*::Data<InheritedTypeDefs> >,
         > $($inherit_path)*::Inherit for $name<TypeDefs> {
             type InheritedTypeDefs = InheritedTypeDefs;
-            type Replaced<NewTypeDefs: ?::core::marker::Sized + $($inherit_path)* ::Types> =
+
+            #[inline]
+            fn as_mut_inherited(this: &mut Self) -> &mut $($inherit_path)*::Data<InheritedTypeDefs> {
+                &mut this. $field_name
+            }
+        }
+
+        impl<
+            InheritedTypeDefs: ?Sized + $($inherit_path)*::Types,
+            NewTypeDefs: ?Sized + $($inherit_path)*::Types,
+            TypeDefs: ?Sized + super::Types< $field_name = $($inherit_path)*::Data<InheritedTypeDefs> >,
+        > $($inherit_path)*::ReplaceInherited<NewTypeDefs> for $name<TypeDefs> {
+            type Replaced =
                 $name<
                     super::overwrite:: $field_name ::<TypeDefs, $($inherit_path)*::Data<NewTypeDefs>>
                 >
             ;
 
             fn replace_inherited<
-                NewTypeDefs: ?::core::marker::Sized + $($inherit_path)* ::Types,
                 F: FnOnce($($inherit_path)* ::Data<Self::InheritedTypeDefs>) -> $($inherit_path)* ::Data<NewTypeDefs>,
             >(
                 Self {
@@ -825,17 +841,12 @@ macro_rules! __impl_props_inherit_take_data {
                     $($all_fields),*
                 }: Self,
                 __bg_impl_v_replace: F,
-            ) -> Self::Replaced<NewTypeDefs> {
+            ) -> Self::Replaced {
                 let $field_name = __bg_impl_v_replace($field_name);
                 $name {
                     __phantom_type_defs: ::core::marker::PhantomData,
                     $($all_fields),*
                 }
-            }
-
-            #[inline]
-            fn as_mut_inherited(this: &mut Self) -> &mut $($inherit_path)*::Data<InheritedTypeDefs> {
-                &mut this. $field_name
             }
         }
     };
@@ -1082,12 +1093,15 @@ macro_rules! def_props {
             pub trait Inherit {
                 type InheritedTypeDefs: ?::core::marker::Sized + Types;
 
-                type Replaced<NewTypeDefs: ?::core::marker::Sized + Types>;
-                fn replace_inherited<
-                    NewTypeDefs: ?::core::marker::Sized + Types,
-                    F: FnOnce(Data<Self::InheritedTypeDefs>) -> Data<NewTypeDefs>,
-                >(this: Self, replace: F) -> Self::Replaced<NewTypeDefs>;
                 fn as_mut_inherited(this: &mut Self) -> &mut Data<Self::InheritedTypeDefs>;
+            }
+
+            pub trait ReplaceInherited<NewTypeDefs: ?::core::marker::Sized + Types>: Inherit {
+                type Replaced: Inherit<InheritedTypeDefs = NewTypeDefs>;
+
+                fn replace_inherited<
+                    F: FnOnce(Data<Self::InheritedTypeDefs>) -> Data<NewTypeDefs>,
+                >(this: Self, replace: F) -> Self::Replaced;
             }
 
             impl<
@@ -1095,19 +1109,23 @@ macro_rules! def_props {
             > Inherit for Data<TypeDefs> {
                 type InheritedTypeDefs = TypeDefs;
 
-                type Replaced<NewTypeDefs: ?Sized + Types> = Data<NewTypeDefs>;
-
-                #[inline]
-                fn replace_inherited<
-                    NewTypeDefs: ?::core::marker::Sized + Types,
-                    F: FnOnce(Data<Self::InheritedTypeDefs>) -> Data<NewTypeDefs>,
-                >(this: Self, replace: F) -> Self::Replaced<NewTypeDefs> {
-                    replace(this)
-                }
-
                 #[inline]
                 fn as_mut_inherited(this: &mut Self) -> &mut Data<Self::InheritedTypeDefs> {
                     this
+                }
+            }
+
+            impl<
+                TypeDefs: ?::core::marker::Sized + Types,
+                NewTypeDefs: ?::core::marker::Sized + Types,
+            > ReplaceInherited<NewTypeDefs> for Data<TypeDefs> {
+                type Replaced = Data<NewTypeDefs>;
+
+                #[inline]
+                fn replace_inherited<
+                    F: FnOnce(Data<Self::InheritedTypeDefs>) -> Data<NewTypeDefs>,
+                >(this: Self, replace: F) -> Self::Replaced {
+                    replace(this)
                 }
             }
 
