@@ -1271,6 +1271,33 @@ macro_rules! __impl_build_tolerant {
 }
 
 #[macro_export]
+macro_rules! __check_build_fields {
+    (($e:expr)
+        .. $base:expr
+    ) => {
+        $e
+    };
+    (($e:expr)
+        $(
+            $field_or_suggest:ident
+            $(: $field_value:expr)?
+        ),*
+        $(
+            ,
+            $(.. $base:expr)?
+        )?
+    ) => {
+        $e
+    };
+    (($e:expr) $($err:tt)*) => {
+        (
+            $e,
+            $crate::__report_wrong_tt!($($err)*)
+        ).0
+    };
+}
+
+#[macro_export]
 macro_rules! build {
     (
         $($name:ident)? $(:: $p:ident)* {
@@ -1280,11 +1307,16 @@ macro_rules! build {
         #[allow(unused_imports)]
         use $($name)? $(:: $p)* ::prelude::*;
 
-        $crate::__impl_build_tolerant! (
-            [$($name)? $(:: $p)*] {
-                $($field)*
-            }
-        )
+        $crate::__check_build_fields! {
+            (
+                $crate::__impl_build_tolerant! (
+                    [$($name)? $(:: $p)*] {
+                        $($field)*
+                    }
+                )
+            )
+            $($field)*
+        }
     }};
     (
         $($name:ident)? $(:: $p:ident)* (
