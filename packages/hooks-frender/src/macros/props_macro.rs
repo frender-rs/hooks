@@ -497,6 +497,67 @@ macro_rules! __impl_props_types_field_initial_ty_iter {
 }
 
 #[macro_export]
+macro_rules! __impl_props_field_macro {
+    (
+        {$([
+            $field_name:ident
+
+            $([ $($field_modifier_mod:tt)* ] $(: $(= $initial_v_mod:expr   )? , $initial_ty_mod:ty    )? ;)?
+            $(
+                = $field_builder_default_output_value:expr =>
+                ($($field_builder_inputs:tt)*)
+                    -> $field_builder_output:ty
+                    $field_builder_impl:block
+                $([ $($builder_generics:tt)* ])? ;
+            )?
+            $(
+                ($($generic_field_builder_inputs:tt)*)
+                    -> $generic_field_builder_output:ty
+                    $generic_field_builder_impl:block
+                $([ $($builder_generics_generic:tt)* ])? ;
+            )?
+            $(
+                : = $field_default_value:expr , $field_ty:ty;
+            )?
+            $(  : , $generic_field_ty:ty;  )?
+        ])*}
+    ) => {
+        $(
+            $(
+                #[doc = ::core::stringify!($($initial_ty_mod)?)]
+                #[allow(unused_macros)]
+                macro_rules! $field_name {
+                    ($field_name) => { $field_name };
+                    ($f:ident) => {
+                        <TypeDefs as super::Types>::$f
+                    };
+                }
+            )?
+            $(
+                #[doc = ::core::stringify!($generic_field_builder_output)]
+                #[allow(unused_macros)]
+                macro_rules! $field_name {
+                    ($field_name) => { $field_name };
+                    ($f:ident) => {
+                        <TypeDefs as super::Types>::$f
+                    };
+                }
+            )?
+            $(
+                #[doc = ::core::stringify!($generic_field_ty)]
+                #[allow(unused_macros)]
+                macro_rules! $field_name {
+                    ($field_name) => { $field_name };
+                    ($f:ident) => {
+                        <TypeDefs as super::Types>::$f
+                    };
+                }
+            )?
+        )*
+    };
+}
+
+#[macro_export]
 macro_rules! __impl_props_overwrite_field {
     (
         $common_data:tt
@@ -531,39 +592,6 @@ macro_rules! __impl_props_overwrite_field {
         $type_and_field_name:ident
         $($other:tt)*
     ) => {
-        $(
-            $(
-                #[doc = ::core::stringify!($($initial_ty_mod)?)]
-                #[allow(unused_macros)]
-                macro_rules! $field_name {
-                    ($type_and_field_name) => { $type_and_field_name };
-                    ($f:ident) => {
-                        <TypeDefs as super::Types>::$f
-                    };
-                }
-            )?
-            $(
-                #[doc = ::core::stringify!($generic_field_builder_output)]
-                #[allow(unused_macros)]
-                macro_rules! $field_name {
-                    ($type_and_field_name) => { $type_and_field_name };
-                    ($f:ident) => {
-                        <TypeDefs as super::Types>::$f
-                    };
-                }
-            )?
-            $(
-                #[doc = ::core::stringify!($generic_field_ty)]
-                #[allow(unused_macros)]
-                macro_rules! $field_name {
-                    ($type_and_field_name) => { $type_and_field_name };
-                    ($f:ident) => {
-                        <TypeDefs as super::Types>::$f
-                    };
-                }
-            )?
-        )*
-
         #[allow(non_camel_case_types)]
         pub type $type_and_field_name <TypeDefs, $type_and_field_name> =
         <TypeDefs as $crate::builder::PhantomTypeParam<
@@ -588,6 +616,21 @@ macro_rules! __impl_props_overwrite_field {
             )?
         )*>
         >>::Out;
+    };
+}
+
+#[macro_export]
+macro_rules! __impl_props_overwrite_fields {
+    ($common_data:tt $($field_declaration:tt)*) => {
+        $crate::__impl_props_field_macro! {
+            $common_data
+        }
+
+        $crate::__impl_props_field_declaration_normalize_iter! {
+            [$crate::__impl_props_overwrite_field]
+            $common_data
+            $($field_declaration)*
+        }
     };
 }
 
@@ -853,8 +896,7 @@ macro_rules! def_props {
         #[allow(non_snake_case)]
         $vis mod $name {
             pub mod overwrite {
-                $crate::__impl_props_field_declaration_normalize_iter! {
-                    [$crate::__impl_props_overwrite_field]
+                $crate::__impl_props_overwrite_fields! {
                     {$([
                         $field_name
 
