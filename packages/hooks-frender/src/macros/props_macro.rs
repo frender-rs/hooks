@@ -56,40 +56,21 @@ macro_rules! __impl_props_types_builder_trait_item {
         fn $field_name
             $(< $($builder_generics)* >)?
             (self, $($field_builder_inputs)*) ->
-                $crate::builder::Joined<
-                    <Self as super::Inherit>::Left,
-                    super::Data<
-                        super::overwrite:: $field_name ::<<Self as super::Inherit>::InheritedTypeDefs, $field_builder_output>
-                    >
-                >
-            where <Self as super::Inherit>::Left: $crate::builder::JoinData<
-                super::Data<
+                <Self as super::Inherit>::Replaced<
                     super::overwrite:: $field_name ::<<Self as super::Inherit>::InheritedTypeDefs, $field_builder_output>
                 >
-            > {
+            {
                 let _builder_impl_field_new_value = $field_builder_impl;
-                let (
-                    _builder_impl_field_left,
-                    super::Data {
-                        __phantom_type_defs: _,
-                    $(
-                        $all_fields,
-                    )*
+                <Self as super::Inherit>::replace_inherited(
+                    self,
+                    move |super::Data { __phantom_type_defs: _, $($all_fields,)* }| {
+                        let _ = $field_name;
+                        let $field_name = _builder_impl_field_new_value;
+                        super::Data {
+                            __phantom_type_defs: ::core::marker::PhantomData,
+                            $($all_fields,)*
+                        }
                     }
-                ) = <Self as super::Inherit>::take_inherited(self);
-
-                let $field_name = _builder_impl_field_new_value;
-
-                $crate::builder::JoinData::<super::Data<
-                    super::overwrite:: $field_name ::<<Self as super::Inherit>::InheritedTypeDefs, $field_builder_output>
-                >>::join_data(
-                    _builder_impl_field_left,
-                    super::Data {
-                        __phantom_type_defs: ::core::marker::PhantomData,
-                        $(
-                            $all_fields,
-                        )*
-                    },
                 )
             }
     };
@@ -825,59 +806,31 @@ macro_rules! __impl_props_inherit_take_data {
             $field_builder_impl:block
     ) => {
         impl<
-            NewInheritedTypeDefs: ?Sized + $($inherit_path)*::Types,
-            TypeDefs: ?Sized + super::Types<$field_name = $crate::builder::UnspecifiedField<super::field_tag::$field_name>>,
-        > $crate::builder::JoinData<$($inherit_path)*::Data<NewInheritedTypeDefs>> for $name<TypeDefs> {
-            type Joined = $name<
-                super::overwrite:: $field_name ::<TypeDefs, $($inherit_path)*::Data<NewInheritedTypeDefs>>
-            >;
-
-            #[inline]
-            fn join_data(
-                Self {
-                    __phantom_type_defs,
-                    $($all_fields),*
-                }: Self,
-                __builder_impl_v_data: $($inherit_path)*::Data<NewInheritedTypeDefs>
-            ) -> Self::Joined {
-                let _ = $field_name;
-                let $field_name = __builder_impl_v_data;
-                $name {
-                    __phantom_type_defs: ::core::marker::PhantomData,
-                    $($all_fields),*
-                }
-            }
-        }
-
-        impl<
             InheritedTypeDefs: ?Sized + $($inherit_path)*::Types,
             TypeDefs: ?Sized + super::Types< $field_name = $($inherit_path)*::Data<InheritedTypeDefs> >,
         > $($inherit_path)*::Inherit for $name<TypeDefs> {
             type InheritedTypeDefs = InheritedTypeDefs;
-            type Left = $name<
-                super::overwrite:: $field_name ::<
-                    TypeDefs,
-                    $crate::builder::UnspecifiedField<super::field_tag:: $field_name>,
+            type Replaced<NewTypeDefs: ?::core::marker::Sized + $($inherit_path)* ::Types> =
+                $name<
+                    super::overwrite:: $field_name ::<TypeDefs, $($inherit_path)*::Data<NewTypeDefs>>
                 >
-            >;
+            ;
 
-            #[inline]
-            fn take_inherited(
+            fn replace_inherited<
+                NewTypeDefs: ?::core::marker::Sized + $($inherit_path)* ::Types,
+                F: FnOnce($($inherit_path)* ::Data<Self::InheritedTypeDefs>) -> $($inherit_path)* ::Data<NewTypeDefs>,
+            >(
                 Self {
                     __phantom_type_defs,
                     $($all_fields),*
-                }: Self
-            ) -> (Self::Left, $($inherit_path)*::Data<InheritedTypeDefs>) {
-                let __builder_impl_v_taken = $field_name;
-                let $field_name = $crate::builder::UnspecifiedField;
-                (
-                    $name {
-                        __phantom_type_defs: ::core::marker::PhantomData,
-                        $($all_fields),*
-                    }
-                    ,
-                    __builder_impl_v_taken
-                )
+                }: Self,
+                __bg_impl_v_replace: F,
+            ) -> Self::Replaced<NewTypeDefs> {
+                let $field_name = __bg_impl_v_replace($field_name);
+                $name {
+                    __phantom_type_defs: ::core::marker::PhantomData,
+                    $($all_fields),*
+                }
             }
 
             #[inline]
@@ -1129,8 +1082,11 @@ macro_rules! def_props {
             pub trait Inherit {
                 type InheritedTypeDefs: ?::core::marker::Sized + Types;
 
-                type Left;
-                fn take_inherited(this: Self) -> (Self::Left, Data<Self::InheritedTypeDefs>);
+                type Replaced<NewTypeDefs: ?::core::marker::Sized + Types>;
+                fn replace_inherited<
+                    NewTypeDefs: ?::core::marker::Sized + Types,
+                    F: FnOnce(Data<Self::InheritedTypeDefs>) -> Data<NewTypeDefs>,
+                >(this: Self, replace: F) -> Self::Replaced<NewTypeDefs>;
                 fn as_mut_inherited(this: &mut Self) -> &mut Data<Self::InheritedTypeDefs>;
             }
 
@@ -1139,11 +1095,16 @@ macro_rules! def_props {
             > Inherit for Data<TypeDefs> {
                 type InheritedTypeDefs = TypeDefs;
 
-                type Left = $crate::builder::NothingLeft;
+                type Replaced<NewTypeDefs: ?Sized + Types> = Data<NewTypeDefs>;
+
                 #[inline]
-                fn take_inherited(this: Self) -> (Self::Left, Data<Self::InheritedTypeDefs>) {
-                    ($crate::builder::NothingLeft, this)
+                fn replace_inherited<
+                    NewTypeDefs: ?::core::marker::Sized + Types,
+                    F: FnOnce(Data<Self::InheritedTypeDefs>) -> Data<NewTypeDefs>,
+                >(this: Self, replace: F) -> Self::Replaced<NewTypeDefs> {
+                    replace(this)
                 }
+
                 #[inline]
                 fn as_mut_inherited(this: &mut Self) -> &mut Data<Self::InheritedTypeDefs> {
                     this

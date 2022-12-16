@@ -4,24 +4,6 @@ mod maybe_borrow;
 pub use maybe::*;
 pub use maybe_borrow::*;
 
-pub type Joined<Left, Data> = <Left as JoinData<Data>>::Joined;
-
-pub trait JoinData<Data> {
-    type Joined;
-    fn join_data(this: Self, data: Data) -> Self::Joined;
-}
-
-pub struct NothingLeft;
-
-impl<Data> JoinData<Data> for NothingLeft {
-    type Joined = Data;
-
-    #[inline]
-    fn join_data(_: Self, data: Data) -> Self::Joined {
-        data
-    }
-}
-
 /// Instead of defining a new struct,
 ///
 /// ```
