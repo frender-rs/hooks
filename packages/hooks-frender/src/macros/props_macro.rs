@@ -505,38 +505,6 @@ macro_rules! __impl_props_overwrite_field {
         $($other:tt)*
     ) => {};
     (
-        {[
-            $field_name:ident
-
-            $([ $($field_modifier_mod:tt)* ] $(: $(= $initial_v_mod:expr   )? , $initial_ty_mod:ty    )? ;)?
-            $(
-                = $field_builder_default_output_value:expr =>
-                ($($field_builder_inputs:tt)*)
-                    -> $field_builder_output:ty
-                    $field_builder_impl:block
-                $([ $($builder_generics:tt)* ])? ;
-            )?
-            $(
-                ($($generic_field_builder_inputs:tt)*)
-                    -> $generic_field_builder_output:ty
-                    $generic_field_builder_impl:block
-                $([ $($builder_generics_generic:tt)* ])? ;
-            )?
-            $(
-                : = $field_default_value:expr , $field_ty:ty;
-            )?
-            $(  : , $generic_field_ty:ty;  )?
-        ]}
-        $metadata:tt
-        $type_and_field_name:ident
-        $($other:tt)*
-    ) => {
-        #[allow(non_camel_case_types)]
-        pub type $type_and_field_name <TypeDefs, $type_and_field_name> = dyn super::Types<
-            $field_name = <TypeDefs as $crate::builder::PhantomTypeParam<$type_and_field_name>>::Out
-        >;
-    };
-    (
         {$([
             $field_name:ident
 
@@ -597,7 +565,9 @@ macro_rules! __impl_props_overwrite_field {
         )*
 
         #[allow(non_camel_case_types)]
-        pub type $type_and_field_name <TypeDefs, $type_and_field_name> = dyn super::Types<$(
+        pub type $type_and_field_name <TypeDefs, $type_and_field_name> =
+        <TypeDefs as $crate::builder::PhantomTypeParam<
+        dyn super::Types<$(
             $(
                 $field_name = $crate::ignore_first_tt![
                     { $($initial_ty_mod)? }
@@ -616,7 +586,8 @@ macro_rules! __impl_props_overwrite_field {
                     $type_and_field_name ![$field_name]
                 ],
             )?
-        )*>;
+        )*>
+        >>::Out;
     };
 }
 
