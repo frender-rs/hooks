@@ -468,46 +468,6 @@ macro_rules! __impl_props_field_declaration_normalize_iter {
 }
 
 #[macro_export]
-macro_rules! __impl_props_types_normalize {
-    (
-        $([
-            $field_name:ident
-
-            $([ $($field_modifier:tt)* ] $(: $(= $initial_v_mod:expr)? , $initial_ty_mod:ty )? ;)?
-            $(
-                = $field_builder_default_output_value:expr =>
-                ($($field_builder_inputs:tt)*)
-                    -> $field_builder_output:ty
-                    $field_builder_impl:block
-                $([ $($builder_generics:tt)* ])? ;
-            )?
-            $(
-                ($($generic_field_builder_inputs:tt)*)
-                    -> $generic_field_builder_output:ty
-                    $generic_field_builder_impl:block
-                $([ $($builder_generics_generic:tt)* ])? ;
-            )?
-            $(
-                : = $field_default_value:expr , $field_ty:ty;
-            )?
-            $(  : , $generic_field_ty:ty;  )?
-        ])*
-    ) => {
-        #[allow(unused_macros)]
-        macro_rules! use_a_if_field_name_match {
-            $(
-                $( ($ignore:tt $field_name $field_name [$a:ty][$b:ty]) => { $crate::ignore_first_tt!{ {$($initial_ty_mod)?} $a } }; )?
-                $( ($ignore:tt $field_name $field_name [$a:ty][$b:ty]) => { $crate::ignore_first_tt!{ {$generic_field_builder_output} $a } }; )?
-                $( ($ignore:tt $field_name $field_name [$a:ty][$b:ty]) => { $crate::ignore_first_tt!{ {$generic_field_ty} $a } }; )?
-            )*
-            ($ignore:tt $name1:ident $name2:ident [$a:ty][$b:ty]) => {
-                $b
-            };
-        }
-    };
-}
-
-#[macro_export]
 macro_rules! __impl_props_types_field_initial_ty_iter {
     (
         [$($full_prefix:tt)*][$($full_suffix:tt)*]
@@ -617,30 +577,57 @@ macro_rules! __impl_props_overwrite_field {
         $type_and_field_name:ident
         $($other:tt)*
     ) => {
+        $(
+            $(
+                #[doc = ::core::stringify!($($initial_ty_mod)?)]
+                #[allow(unused_macros)]
+                macro_rules! $field_name {
+                    ($type_and_field_name) => { $type_and_field_name };
+                    ($f:ident) => {
+                        <TypeDefs as super::Types>::$f
+                    };
+                }
+            )?
+            $(
+                #[doc = ::core::stringify!($generic_field_builder_output)]
+                #[allow(unused_macros)]
+                macro_rules! $field_name {
+                    ($type_and_field_name) => { $type_and_field_name };
+                    ($f:ident) => {
+                        <TypeDefs as super::Types>::$f
+                    };
+                }
+            )?
+            $(
+                #[doc = ::core::stringify!($generic_field_ty)]
+                #[allow(unused_macros)]
+                macro_rules! $field_name {
+                    ($type_and_field_name) => { $type_and_field_name };
+                    ($f:ident) => {
+                        <TypeDefs as super::Types>::$f
+                    };
+                }
+            )?
+        )*
+
         #[allow(non_camel_case_types)]
         pub type $type_and_field_name <TypeDefs, $type_and_field_name> = dyn super::Types<$(
             $(
-                $field_name = use_a_if_field_name_match![
+                $field_name = $crate::ignore_first_tt![
                     { $($initial_ty_mod)? }
-                    $type_and_field_name $field_name
-                    [$type_and_field_name]
-                    [<TypeDefs as super::Types>::$field_name]
+                    $type_and_field_name ![$field_name]
                 ],
             )?
             $(
-                $field_name = use_a_if_field_name_match![
+                $field_name = $crate::ignore_first_tt![
                     { $generic_field_builder_output }
-                    $type_and_field_name $field_name
-                    [$type_and_field_name]
-                    [<TypeDefs as super::Types>::$field_name]
+                    $type_and_field_name ![$field_name]
                 ],
             )?
             $(
-                $field_name = use_a_if_field_name_match![
+                $field_name = $crate::ignore_first_tt![
                     { $generic_field_ty }
-                    $type_and_field_name $field_name
-                    [$type_and_field_name]
-                    [<TypeDefs as super::Types>::$field_name]
+                    $type_and_field_name ![$field_name]
                 ],
             )?
         )*>;
@@ -818,6 +805,8 @@ macro_rules! __impl_props_prelude {
             $field_builder_impl:block
     ) => {
         pub use $($inherit_path)* ::prelude::*;
+        // pub use $($inherit_path)* ::Builder as _;
+        // pub use $($inherit_path)* ::Inherit as _;
     };
     ({} $($other:tt)*) => {
     };
@@ -929,26 +918,6 @@ macro_rules! def_props {
         #[allow(non_snake_case)]
         $vis mod $name {
             use super::*;
-
-            $crate::__impl_props_types_normalize! {
-                $([
-                    $field_name
-
-                    $(
-                        $(= $field_builder_default_output_value =>)?
-                        ($($field_builder_inputs)*)
-                            -> $field_builder_output
-                            $field_builder_impl
-                    )?
-
-                    $([ $($field_modifiers_or_builder_generics)* ])?
-
-                    $(
-                        : $( = $field_default_value)? , $field_ty
-                    )?
-                    ;
-                ])*
-            }
 
             pub mod overwrite {
                 $crate::__impl_props_field_declaration_normalize_iter! {
@@ -1225,8 +1194,10 @@ macro_rules! def_props {
                 }
             }
 
+            pub mod prelude {
+                pub use super::Builder as _;
 
-            mod inherited_prelude {
+                #[allow(unused_imports)]
                 use super::super::*;
 
                 $crate::__impl_props_field_declaration_normalize_iter! {
@@ -1249,11 +1220,6 @@ macro_rules! def_props {
                         )?
                     ])*
                 }
-            }
-
-            pub mod prelude {
-                pub use super::Builder as _;
-                pub use super::inherited_prelude::*;
             }
         }
 
