@@ -524,6 +524,23 @@ macro_rules! __impl_props_overwrite_field {
         $($other:tt)*
     ) => {};
     (
+        {
+            $field_name:ident $ignored:tt
+        }
+        $metadata:tt
+        $type_and_field_name:ident
+        $($other:tt)*
+    ) => {
+        #[allow(non_camel_case_types)]
+        pub type $type_and_field_name <TypeDefs, $type_and_field_name> =
+        <TypeDefs as $crate::builder::PhantomTypeParam<
+        dyn super::Types<
+            $field_name =
+                $type_and_field_name ![$field_name],
+        >
+        >>::Out;
+    };
+    (
         {$(
             $field_name:ident $ignored:tt
         )*}
@@ -533,12 +550,11 @@ macro_rules! __impl_props_overwrite_field {
     ) => {
         #[allow(non_camel_case_types)]
         pub type $type_and_field_name <TypeDefs, $type_and_field_name> =
-        <TypeDefs as $crate::builder::PhantomTypeParam<
-        dyn super::Types<$(
-            $field_name =
-                $type_and_field_name ![$field_name],
-        )*>
-        >>::Out;
+            dyn super::Types<$(
+                $field_name =
+                    $type_and_field_name ![$field_name],
+            )*>
+        ;
     };
 }
 
