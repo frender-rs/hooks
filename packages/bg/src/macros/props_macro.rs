@@ -352,7 +352,7 @@ macro_rules! __impl_props_field_declaration_normalize {
             (new_value: $($inherit_path)* :: Data<NewTypeDefs> )
                 -> $($inherit_path)* :: Data<NewTypeDefs>
                 = type($($inherit_path)* :: DataInitial)
-                 value($($inherit_path)* ())
+                 value($($inherit_path)*::build($($inherit_path)* ()))
                 { new_value }
         }
     };
@@ -811,12 +811,12 @@ macro_rules! __impl_props_inherit_take_data {
         impl<
             InheritedTypeDefs: ?Sized + $($inherit_path)*::Types,
             TypeDefs: ?Sized + super::Types< $field_name = $($inherit_path)*::Data<InheritedTypeDefs> >,
-        > $($inherit_path)*::Inherit for $name<TypeDefs> {
+        > $($inherit_path)*::Inherit for super::Building<TypeDefs> {
             type InheritedTypeDefs = InheritedTypeDefs;
 
             #[inline]
             fn as_mut_inherited(this: &mut Self) -> &mut $($inherit_path)*::Data<InheritedTypeDefs> {
-                &mut this. $field_name
+                &mut this.0. $field_name
             }
         }
 
@@ -824,9 +824,9 @@ macro_rules! __impl_props_inherit_take_data {
             InheritedTypeDefs: ?Sized + $($inherit_path)*::Types,
             NewTypeDefs: ?Sized + $($inherit_path)*::Types,
             TypeDefs: ?Sized + super::Types< $field_name = $($inherit_path)*::Data<InheritedTypeDefs> >,
-        > $($inherit_path)*::ReplaceInherited<NewTypeDefs> for $name<TypeDefs> {
+        > $($inherit_path)*::ReplaceInherited<NewTypeDefs> for super::Building<TypeDefs> {
             type Replaced =
-                $name<
+                super::Building<
                     super::overwrite:: $field_name ::<TypeDefs, $($inherit_path)*::Data<NewTypeDefs>>
                 >
             ;
@@ -834,17 +834,17 @@ macro_rules! __impl_props_inherit_take_data {
             fn replace_inherited<
                 F: FnOnce($($inherit_path)* ::Data<Self::InheritedTypeDefs>) -> $($inherit_path)* ::Data<NewTypeDefs>,
             >(
-                Self {
+                Self($name{
                     __phantom_type_defs,
                     $($all_fields),*
-                }: Self,
+                }): Self,
                 __bg_impl_v_replace: F,
             ) -> Self::Replaced {
                 let $field_name = __bg_impl_v_replace($field_name);
-                $name {
+                super::Building($name {
                     __phantom_type_defs: ::core::marker::PhantomData,
                     $($all_fields),*
-                }
+                })
             }
         }
     };
@@ -1058,13 +1058,13 @@ macro_rules! builder {
                 $(#[$($mod_and_fn_attr)*])*
                 #[inline]
                 #[allow(non_snake_case)]
-                pub fn $name() -> super::DataInitial {
-                    super::struct_data::$name {
+                pub fn $name() -> super::Building<super::TypesInitial> {
+                    super::Building(super::struct_data::$name {
                         __phantom_type_defs: ::core::marker::PhantomData,
                         $(
                         $field_name : $crate::__impl_props_field_declaration_normalize! {
                             [$crate::__impl_props_types_field_initial_value] {} [
-                                $(#[$($fn_attr)*])*
+                                // $(#[$($fn_attr)*])* // ignore attrs
                                 $field_name
 
                                 $([ $($field_modifiers_or_builder_generics)* ])?
@@ -1081,7 +1081,7 @@ macro_rules! builder {
                             ]
                         },
                         )*
-                    }
+                    })
                 }
             }
 
@@ -1103,26 +1103,26 @@ macro_rules! builder {
 
             impl<
                 TypeDefs: ?::core::marker::Sized + Types,
-            > Inherit for Data<TypeDefs> {
+            > Inherit for Building<TypeDefs> {
                 type InheritedTypeDefs = TypeDefs;
 
                 #[inline]
                 fn as_mut_inherited(this: &mut Self) -> &mut Data<Self::InheritedTypeDefs> {
-                    this
+                    &mut this.0
                 }
             }
 
             impl<
                 TypeDefs: ?::core::marker::Sized + Types,
                 NewTypeDefs: ?::core::marker::Sized + Types,
-            > ReplaceInherited<NewTypeDefs> for Data<TypeDefs> {
-                type Replaced = Data<NewTypeDefs>;
+            > ReplaceInherited<NewTypeDefs> for Building<TypeDefs> {
+                type Replaced = Building<NewTypeDefs>;
 
                 #[inline]
                 fn replace_inherited<
                     F: FnOnce(Data<Self::InheritedTypeDefs>) -> Data<NewTypeDefs>,
                 >(this: Self, replace: F) -> Self::Replaced {
-                    replace(this)
+                    Building(replace(this.0))
                 }
             }
 
@@ -1179,6 +1179,18 @@ macro_rules! builder {
 
             pub type DataInitial = Data<TypesInitial>;
 
+            pub struct Building<TypeDefs: ?Sized + Types>(pub Data<TypeDefs>);
+
+            #[inline]
+            pub fn build<TypeDefs: ?Sized + Types>(building: Building<TypeDefs>) -> Data<TypeDefs> {
+                building.0
+            }
+
+            #[inline]
+            pub fn valid<TypeDefs: ?Sized + ValidTypes>(building: Building<TypeDefs>) -> Data<TypeDefs> {
+                building.0
+            }
+
             pub mod prelude {
                 pub use super::Builder as _;
 
@@ -1230,24 +1242,4 @@ macro_rules! Valid {
     ) => {
         $($name)? $(:: $p)* ::Data:: < impl ?::core::marker::Sized + $($name)? $(:: $p)* ::ValidTypes $(< $($ty_field)*)? >
     };
-}
-
-#[macro_export]
-macro_rules! valid {
-    (
-        $($name:ident)? $(:: $p:ident)* {
-            $($field:tt)*
-        }
-    ) => {{
-        #[inline]
-        fn __assert_build_valid<TypeDefs: ?::core::marker::Sized + $($name)? $(:: $p)* ::ValidTypes>(
-            v: $($name)? $(:: $p)* ::Data<TypeDefs>
-        )   -> $($name)? $(:: $p)* ::Data<TypeDefs> {
-            v
-        }
-
-        __assert_build_valid($crate::build!(
-            $($name)? $(:: $p)* { $($field)* }
-        ))
-    }};
 }

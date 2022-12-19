@@ -26,13 +26,13 @@ pub fn struct_style() {
     let _ = build!(MyProps {
         //                  ^  SUGGEST HERE
         optional_field: "".into(),
-        ..MyProps()
+        ..build!(MyProps {})
     });
 
     // CURRENTLY NOT WORKING
     let _ = build!(MyProps {
         //                  ^  SUGGEST HERE (NOT WORKING)
-        ..MyProps()
+        ..build!(MyProps {})
     });
 
     let _ = build!(MyProps {
@@ -55,7 +55,7 @@ pub fn struct_style() {
     let _ = build!(MyProps {
         optional_field: "".into(),
         //                        ^  SUGGEST HERE (NOT WORKING)
-        ..MyProps()
+        ..build!(MyProps {})
     });
 }
 
@@ -68,11 +68,11 @@ pub fn fn_style() {
     let _ = build!(MyProps().optional_field("".into()));
     //                      ^  SUGGEST HERE
 
-    let _ = build!(MyProps(MyProps()).optional_field("".into()));
-    //                               ^  SUGGEST HERE
+    let _ = build!(MyProps(build!(MyProps())).optional_field("".into()));
+    //                                       ^  SUGGEST HERE
 
-    let _ = build!(MyProps(MyProps()));
-    //                               ^  SUGGEST HERE
+    let _ = build!(MyProps(build!(MyProps())));
+    //                                       ^  SUGGEST HERE
 
     let _ = build!(MyProps().optional_field("".into()));
     //                                                ^  SUGGEST HERE (NOT WORKING)
@@ -80,6 +80,6 @@ pub fn fn_style() {
     let _ = build!(MyProps().optional_field("".into()).required_field(1));
     //                                                ^  SUGGEST HERE
 
-    let _ = build!(MyProps(MyProps()).optional_field("".into()));
+    let _ = build!(MyProps(build!(MyProps())).optional_field("".into()));
     //                                                         ^  SUGGEST HERE
 }

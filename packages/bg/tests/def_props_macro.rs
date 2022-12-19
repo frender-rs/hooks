@@ -111,7 +111,8 @@ fn builder() {
             .required_field(vec![])
             .required_field_with_generic_input(None)
             .id("")
-    };
+    }
+    .0;
 
     let b = valid!(MyCompProps {
         generic_field: 2,

@@ -1,33 +1,29 @@
 #[macro_export]
-macro_rules! __check_build_fields {
-    (($e:expr)
-        .. $base:expr
-    ) => {
-        $e
+macro_rules! __impl_base_expr {
+    ([][$($path:tt)*]) => {
+        $($path)* ()
     };
-    (($e:expr)
-
-    ) => {
-        $e
-    };
-    (($e:expr) $($err:tt)*) => {
-        (
-            $e,
-            $crate::__report_wrong_tt!($($err)*)
-        ).0
+    ([$base:expr][$($path:tt)*]) => {
+        $($path)* ::Building($base)
     };
 }
 
 #[macro_export]
-macro_rules! build {
+macro_rules! __impl_build {
     (
+        [$finish:ident]
         $($name:ident)? $(:: $p:ident)* {
             .. $base:expr
         }
     ) => {
-        $base
+        $($name)? $(:: $p)* :: $finish (
+            $($name)? $(:: $p)* ::Building(
+                $base
+            )
+        )
     };
     (
+        [$finish:ident]
         $($name:ident)? $(:: $p:ident)* {
             $(
                 $field:ident
@@ -38,26 +34,34 @@ macro_rules! build {
                 $(.. $base:expr)?
             )?
         }
-    ) => {{
-        #[allow(unused_imports)]
-        use $($name)? $(:: $p)* ::prelude::*;
+    ) => {
+        $($name)? $(:: $p)* :: $finish ({
+            #[allow(unused_imports)]
+            use $($name)? $(:: $p)* ::prelude::*;
 
-        $crate::expand_a_or_b!([$($($base)?)?][$($name)? $(:: $p)* ()])
-        $(
-            . $field (
-                $crate::expand_a_or_b!([$($field_value)?][$field])
+            $crate::__impl_base_expr!(
+                [$($($base)?)?]
+                [$($name)? $(:: $p)*]
             )
-        )*
-    }};
+            $(
+                . $field (
+                    $crate::expand_a_or_b!([$($field_value)?][$field])
+                )
+            )*
+        })
+    };
     (
+        [$finish:ident]
         $($name:ident)? $(:: $p:ident)* (
             $($base:expr)?
         ) $($call:tt)*
-    ) => {{
-        #[allow(unused_imports)]
-        use $($name)? $(:: $p)* ::prelude::*;
+    ) => {
+        $($name)? $(:: $p)* :: $finish ({
+            #[allow(unused_imports)]
+            use $($name)? $(:: $p)* ::prelude::*;
 
-        $crate::expand_a_or_b!([$($base)?][$($name)? $(:: $p)* ()])
-            $($call)*
-    }};
+            $crate::__impl_base_expr!([$($base)?][$($name)? $(:: $p)*])
+                $($call)*
+        })
+    };
 }

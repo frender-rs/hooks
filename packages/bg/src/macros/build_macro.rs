@@ -58,35 +58,41 @@ macro_rules! __check_build_fields {
 }
 
 #[macro_export]
-macro_rules! build {
+macro_rules! __impl_build {
     (
+        [$finish:ident]
         $($name:ident)? $(:: $p:ident)* {
             $($field:tt)*
         }
-    ) => {{
-        #[allow(unused_imports)]
-        use $($name)? $(:: $p)* ::prelude::*;
+    ) => {
+        $($name)? $(:: $p)* :: $finish ({
+            #[allow(unused_imports)]
+            use $($name)? $(:: $p)* ::prelude::*;
 
-        $crate::__check_build_fields! {
-            (
-                $crate::__impl_build_tolerant! (
-                    [$($name)? $(:: $p)*] {
-                        $($field)*
-                    }
+            $crate::__check_build_fields! {
+                (
+                    $crate::__impl_build_tolerant! (
+                        [$($name)? $(:: $p)*] {
+                            $($field)*
+                        }
+                    )
                 )
-            )
-            $($field)*
-        }
-    }};
+                $($field)*
+            }
+        })
+    };
     (
+        [$finish:ident]
         $($name:ident)? $(:: $p:ident)* (
             $($base:expr)?
         ) $($call:tt)*
-    ) => {{
-        #[allow(unused_imports)]
-        use $($name)? $(:: $p)* ::prelude::*;
+    ) => {
+        $($name)? $(:: $p)* :: $finish ({
+            #[allow(unused_imports)]
+            use $($name)? $(:: $p)* ::prelude::*;
 
-        $crate::expand_a_or_b!([$($base)?][$($name)? $(:: $p)* ()])
-            $($call)*
-    }};
+            $crate::expand_a_or_b!([$($base)?][$($name)? $(:: $p)* ()])
+                $($call)*
+        })
+    };
 }
