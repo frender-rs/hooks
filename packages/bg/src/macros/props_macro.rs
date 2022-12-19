@@ -1223,23 +1223,3 @@ macro_rules! builder {
         $vis use $name::fn_uninitialized::$name;
     };
 }
-
-#[macro_export]
-macro_rules! Build {
-    (
-        $($name:ident)? $(:: p:ident)*
-        $(< $($ty_field:tt)*)?
-    ) => {
-        $($name)? $(:: p)* < impl ?::core::marker::Sized + $($name)? $(:: p)*::Types $(< $($ty_field)*)? >
-    };
-}
-
-#[macro_export]
-macro_rules! Valid {
-    (
-        $($name:ident)? $(:: $p:ident)*
-        $(< $($ty_field:tt)*)?
-    ) => {
-        $($name)? $(:: $p)* ::Data:: < impl ?::core::marker::Sized + $($name)? $(:: $p)* ::ValidTypes $(< $($ty_field)*)? >
-    };
-}
