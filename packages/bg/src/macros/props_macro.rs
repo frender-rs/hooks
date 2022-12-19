@@ -944,7 +944,7 @@ macro_rules! def_props {
 
             mod trait_types {
                 use super::super::*;
-                pub trait $name {
+                pub trait Types {
                     $crate::__impl_props_field_declaration_normalize_iter! {
                         [$crate::__impl_props_types_trait_item]
                         {}
@@ -968,7 +968,7 @@ macro_rules! def_props {
                 }
             }
 
-            pub use trait_types::$name as Types;
+            pub use trait_types::Types;
 
             mod builder_impl_builder_trait {
                 use super::super::*;
