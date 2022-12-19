@@ -93,10 +93,10 @@ macro_rules! __impl_props_types_builder_trait_item {
         fn $field_name
             $(< $($builder_generics)* >)?
             (self, $($field_builder_inputs)*) ->
-                <<Self as $crate::builder::TakeData<Data<TypesNormalize<Self>>>>::Left as $crate::builder::JoinData<Data<
+                <<Self as $crate::TakeData<Data<TypesNormalize<Self>>>>::Left as $crate::JoinData<Data<
                     self::overwrite:: $field_name ::<Self, $field_builder_output>
                 >>>::Joined
-            where <Self as $crate::builder::TakeData<Data<TypesNormalize<Self>>>>::Left : $crate::builder::JoinData<Data<
+            where <Self as $crate::TakeData<Data<TypesNormalize<Self>>>>::Left : $crate::JoinData<Data<
                 self::overwrite:: $field_name ::<Self, $field_builder_output>
             >> {
                 let _builder_impl_field_new_value = $field_builder_impl;
@@ -108,11 +108,11 @@ macro_rules! __impl_props_types_builder_trait_item {
                         $all_fields,
                     )*
                     }
-                ) = <Self as $crate::builder::TakeData<Data<TypesNormalize<Self>>>>::take_data(self);
+                ) = <Self as $crate::TakeData<Data<TypesNormalize<Self>>>>::take_data(self);
 
                 let $field_name = _builder_impl_field_new_value;
 
-                $crate::builder::JoinData::<Data<
+                $crate::JoinData::<Data<
                     self::overwrite:: $field_name ::<Self, $field_builder_output>
                 >>::join_data(
                     _builder_impl_field_left,
@@ -269,8 +269,8 @@ macro_rules! __impl_props_field_declaration_normalize {
             $([ $($field_modifiers_or_builder_generics)* ])?
             ($($field_builder_inputs)*)
                 -> $field_builder_output
-                = type($crate::builder::Unspecified::<$field_builder_output>)
-                  value($crate::builder::Unspecified)
+                = type($crate::Unspecified::<$field_builder_output>)
+                  value($crate::Unspecified)
                 $field_builder_impl
 
         }
@@ -313,8 +313,8 @@ macro_rules! __impl_props_field_declaration_normalize {
             $field_name
             (new_value: $field_ty)
                 -> $field_ty
-                = type($crate::builder::Unspecified<$field_ty>)
-                  value($crate::builder::Unspecified)
+                = type($crate::Unspecified<$field_ty>)
+                  value($crate::Unspecified)
                 { new_value }
         }
     };
@@ -369,7 +369,7 @@ macro_rules! __impl_props_field_declaration_normalize {
         $crate::__impl_props_field_declaration_normalize! { [$($macro_path)+] $common_data [
             $(#[$($fn_attr)*])*
             $field_name
-            [impl $crate::builder::MaybeBorrow<$for_ty>]
+            [impl $crate::MaybeBorrow<$for_ty>]
             $(: $field_ty = $field_default_value)?
         ]}
     };
@@ -386,7 +386,7 @@ macro_rules! __impl_props_field_declaration_normalize {
         $crate::__impl_props_field_declaration_normalize! { [$($macro_path)+] $common_data [
             $(#[$($fn_attr)*])*
             $field_name
-            [impl $crate::builder::Maybe<$for_ty>]
+            [impl $crate::Maybe<$for_ty>]
             $(: $field_ty = $field_default_value)?
         ]}
     };
@@ -404,7 +404,7 @@ macro_rules! __impl_props_field_declaration_normalize {
                 $(#[$($fn_attr)*])*
                 $field_name
 
-                [ impl $($field_bound)* ]: $crate::builder::UnspecifiedField<field_tag::$field_name> = $crate::builder::UnspecifiedField
+                [ impl $($field_bound)* ]: $crate::UnspecifiedField<field_tag::$field_name> = $crate::UnspecifiedField
             ]
         }
     };
@@ -485,12 +485,12 @@ macro_rules! __impl_props_types_field_initial_ty_iter {
     ) => {
         $($full_prefix)*
         $(
-            $( $field_name = $crate::expand_a_or_b![ [$($initial_ty_maybe)?] [$crate::builder::Unspecified<$($field_modifier_maybe)*>] ], )?
-            $( $field_name = $crate::expand_a_or_b![ [$($initial_ty_impl)? ] [$crate::builder::UnspecifiedField<super::field_tag::$field_name>]], )?
-            $( $field_name = $crate::expand_a_or_b![ [$($initial_ty_bm  )? ] [$crate::builder::Unspecified<$($field_modifier_bm   )*>] ], )?
+            $( $field_name = $crate::expand_a_or_b![ [$($initial_ty_maybe)?] [$crate::Unspecified<$($field_modifier_maybe)*>] ], )?
+            $( $field_name = $crate::expand_a_or_b![ [$($initial_ty_impl)? ] [$crate::UnspecifiedField<super::field_tag::$field_name>]], )?
+            $( $field_name = $crate::expand_a_or_b![ [$($initial_ty_bm  )? ] [$crate::Unspecified<$($field_modifier_bm   )*>] ], )?
             $( $field_name = $crate::expand_a_or_b![ [$($initial_ty_ih  )? ] [$($field_modifier_ih)* :: DataInitial] ], )?
-            $( $field_name = $crate::builder::Unspecified<$generic_field_builder_output>, )?
-            $( $field_name = $crate::builder::Unspecified<$generic_field_ty>, )?
+            $( $field_name = $crate::Unspecified<$generic_field_builder_output>, )?
+            $( $field_name = $crate::Unspecified<$generic_field_ty>, )?
         )*
         $($full_suffix)*
     };
@@ -533,7 +533,7 @@ macro_rules! __impl_props_overwrite_field {
     ) => {
         #[allow(non_camel_case_types)]
         pub type $type_and_field_name <TypeDefs, $type_and_field_name> =
-        <TypeDefs as $crate::builder::PhantomTypeParam<
+        <TypeDefs as $crate::__private::PhantomTypeParam<
         dyn super::Types<
             $field_name =
                 $type_and_field_name ![$field_name],
@@ -669,11 +669,11 @@ macro_rules! __impl_props_types_valid_trait {
             #![allow(non_camel_case_types)]
 
             $(
-                $( type $field_name : $crate::builder::Maybe<$($field_modifier_maybe)*>; )?
+                $( type $field_name : $crate::Maybe<$($field_modifier_maybe)*>; )?
 
                 $( type $field_name : $($field_modifier_impl)*; )?
 
-                $( type $field_name : $crate::builder::MaybeBorrow<$($field_modifier_bm)*>; )?
+                $( type $field_name : $crate::MaybeBorrow<$($field_modifier_bm)*>; )?
 
                 $( type $field_name : ?::core::marker::Sized + $($field_modifier_ih)* :: ValidTypes; )?
             )*
@@ -695,11 +695,11 @@ macro_rules! __impl_props_types_valid_trait {
         >,
         $(
             $(
-                <T as super::Types>::$field_name : $crate::builder::Maybe<$($field_modifier_maybe)*>,
+                <T as super::Types>::$field_name : $crate::Maybe<$($field_modifier_maybe)*>,
             )?
             $( <T as super::Types>::$field_name: $($field_modifier_impl)*, )?
             $(
-                <T as super::Types>::$field_name : $crate::builder::MaybeBorrow<$($field_modifier_bm)*>,
+                <T as super::Types>::$field_name : $crate::MaybeBorrow<$($field_modifier_bm)*>,
             )?
         )*
     {

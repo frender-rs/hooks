@@ -34,7 +34,7 @@ macro_rules! impl_borrow_some_for {
         ),* $(,)?
     ) => {
         $(
-            impl<$($($generics)+,)? ImplMaybeBorrowBorrowed: ?Sized> $crate::builder::MaybeBorrow<ImplMaybeBorrowBorrowed> for $for_ty
+            impl<$($($generics)+,)? ImplMaybeBorrowBorrowed: ?Sized> $crate::MaybeBorrow<ImplMaybeBorrowBorrowed> for $for_ty
             where
                 Self: ::core::borrow::Borrow<ImplMaybeBorrowBorrowed>,
                 $($($where_clause)*)?

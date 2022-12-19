@@ -24,6 +24,7 @@ macro_rules! tt_matches {
     };
 }
 
+#[macro_export]
 macro_rules! fn_path_matches {
     ([$fn1:path][$fn2:path]) => {
         const _: () = {

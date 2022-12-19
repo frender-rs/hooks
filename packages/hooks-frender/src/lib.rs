@@ -8,7 +8,8 @@ pub use macros::*;
 pub use props::*;
 pub use render::*;
 
-pub mod builder;
+pub use bg as builder;
+pub use bg::{build, def_props, valid, Build, Valid};
 
 mod utils;
 
