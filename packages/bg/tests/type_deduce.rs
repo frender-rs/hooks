@@ -1,4 +1,4 @@
-use hooks_frender::{build, def_props};
+use bg::{build, def_props};
 
 def_props! {
     pub struct MyBaseProps {

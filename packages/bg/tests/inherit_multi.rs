@@ -1,6 +1,6 @@
 use std::any::Any;
 
-use hooks_frender::{build, def_props};
+use bg::{build, def_props};
 
 pub trait MaybeEventListener {
     fn handle_event(&mut self, event: &dyn Any);

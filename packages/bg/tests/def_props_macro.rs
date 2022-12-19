@@ -1,7 +1,7 @@
-use hooks_frender::{builder::Maybe, def_props, valid, Valid};
+use bg::{def_props, valid, Maybe, Valid};
 
 mod html {
-    use hooks_frender::def_props;
+    use bg::def_props;
 
     def_props! {
         pub struct ElementProps {
