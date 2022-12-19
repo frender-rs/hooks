@@ -1,12 +1,12 @@
-use bg::{build, def_props};
+use bg::{build, builder};
 
-def_props! {
+builder! {
     pub struct MyBaseProps {
         id[borrow? str],
     }
 }
 
-def_props! {
+builder! {
     struct MyProps {
         required_field: Vec<u8>,
         field_with_default: std::borrow::Cow<'static,str> = "".into(),

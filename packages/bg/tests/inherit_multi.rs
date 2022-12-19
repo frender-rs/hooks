@@ -1,6 +1,6 @@
 use std::any::Any;
 
-use bg::{build, def_props};
+use bg::{build, builder};
 
 pub trait MaybeEventListener {
     fn handle_event(&mut self, event: &dyn Any);
@@ -19,21 +19,21 @@ where
     }
 }
 
-def_props! {
+builder! {
     pub struct EventTargetProps {
         on_change[impl MaybeEventListener]: () = (),
         on_click [impl MaybeEventListener]: () = (),
     }
 }
 
-def_props! {
+builder! {
     pub struct AriaProps {
         aria_hidden[? bool],
         aria_label [borrow? str],
     }
 }
 
-def_props! {
+builder! {
     pub struct ElementProps {
         event_listeners[inherit EventTargetProps],
         aria[inherit AriaProps],

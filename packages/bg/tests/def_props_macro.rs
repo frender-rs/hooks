@@ -1,16 +1,16 @@
-use bg::{def_props, valid, Maybe, Valid};
+use bg::{builder, valid, Maybe, Valid};
 
 mod html {
-    use bg::def_props;
+    use bg::builder;
 
-    def_props! {
+    builder! {
         pub struct ElementProps {
             id[borrow? str],
         }
     }
 }
 
-def_props! {
+builder! {
     //! The inner docs go to `struct`       [`MyCompProps`], which is often hidden to user.
     /// The outer docs go to `mod` and `fn` [`MyCompProps`].
     struct MyCompProps {

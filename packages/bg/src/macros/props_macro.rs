@@ -852,7 +852,7 @@ macro_rules! __impl_props_inherit_take_data {
 }
 
 #[macro_export]
-macro_rules! def_props {
+macro_rules! builder {
     (
         $(#![$($data_struct_attr:tt)*])*
         $(#[$($mod_and_fn_attr:tt)*])*

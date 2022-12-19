@@ -9,7 +9,7 @@ pub use props::*;
 pub use render::*;
 
 pub use bg as builder;
-pub use bg::{build, def_props, valid, Build, Valid};
+pub use bg::{build, builder, valid, Build, Valid};
 
 mod utils;
 

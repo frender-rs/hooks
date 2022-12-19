@@ -1,6 +1,6 @@
-use bg::{build, def_props};
+use bg::{build, builder};
 
-def_props! {
+builder! {
     struct MyProps {
         optional_field: String = Default::default(),
         required_field: i32,
