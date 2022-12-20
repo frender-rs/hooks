@@ -1,4 +1,5 @@
-use hooks_frender::{rsx, Counter, Dom};
+use bg::build;
+use hooks_frender::{rsx, Counter, CounterWithInitialValue, Dom};
 
 fn main() {
     wasm_bindgen_futures::spawn_local(async {
@@ -8,7 +9,10 @@ fn main() {
         let current_parent = document.get_element_by_id("main").unwrap();
 
         Dom::new(document, current_parent)
-            .render_element(Counter(), std::future::pending())
+            .render_get_element(
+                || build!(CounterWithInitialValue()).finish_builder(),
+                std::future::pending(),
+            )
             .await;
     })
 }
