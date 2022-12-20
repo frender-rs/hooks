@@ -12,20 +12,20 @@ builder! {
 #[test]
 pub fn struct_style() {
     let _ = build!(MyProps {});
-    //                      ^  SUGGEST HERE (NOT WORKING)
+    //                      ^  SUGGEST HERE
 
     let _ = build!(MyProps {
-        //                  ^  SUGGEST HERE
+        //                  ^  SUGGEST HERE (NOT WORKING)
         optional_field: "".into()
     });
 
     let _ = build!(MyProps {
-        //                  ^  SUGGEST HERE
+        //                  ^  SUGGEST HERE (NOT WORKING)
         optional_field: "".into(),
     });
 
     let _ = build!(MyProps {
-        //                  ^  SUGGEST HERE
+        //                  ^  SUGGEST HERE (NOT WORKING)
         optional_field: "".into(),
         ..build!(MyProps {})
     });
@@ -37,18 +37,18 @@ pub fn struct_style() {
 
     let _ = build!(MyProps {
         optional_field: "".into(),
-        //                        ^  SUGGEST HERE (NOT WORKING)
+        //                        ^  SUGGEST HERE
     });
 
     let _ = build!(MyProps {
         optional_field: "".into(),
-        //                        ^  SUGGEST HERE
+        //                        ^  SUGGEST HERE (NOT WORKING)
         required_field: 1
     });
 
     let _ = build!(MyProps {
         optional_field: "".into(),
-        //                        ^  SUGGEST HERE
+        //                        ^  SUGGEST HERE (NOT WORKING)
         required_field: 1,
     });
 
