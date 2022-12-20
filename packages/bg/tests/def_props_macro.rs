@@ -4,6 +4,7 @@ mod html {
     use bg::builder;
 
     builder! {
+        #![inheritable]
         pub struct ElementProps {
             id[borrow? str],
         }
@@ -11,7 +12,7 @@ mod html {
 }
 
 builder! {
-    //! The inner docs go to `struct`       [`MyCompProps`], which is often hidden to user.
+    #![inheritable]
     /// The outer docs go to `mod` and `fn` [`MyCompProps`].
     struct MyCompProps {
         /// This field is required because there is not a default value.

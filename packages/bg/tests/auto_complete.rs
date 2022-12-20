@@ -9,6 +9,7 @@ builder! {
 
 /// Please manually move the cursor up of `^  SUGGEST HERE`
 /// and type `Ctrl + Space` to auto suggest completion.
+#[test]
 pub fn struct_style() {
     let _ = build!(MyProps {});
     //                      ^  SUGGEST HERE (NOT WORKING)
@@ -29,7 +30,6 @@ pub fn struct_style() {
         ..build!(MyProps {})
     });
 
-    // CURRENTLY NOT WORKING
     let _ = build!(MyProps {
         //                  ^  SUGGEST HERE (NOT WORKING)
         ..build!(MyProps {})
@@ -63,7 +63,7 @@ pub fn struct_style() {
 /// and type `.` to auto suggest completion.
 pub fn fn_style() {
     let _ = build!(MyProps());
-    //                      ^  SUGGEST HERE (NOT WORKING)
+    //                      ^  SUGGEST HERE
 
     let _ = build!(MyProps().optional_field("".into()));
     //                      ^  SUGGEST HERE
@@ -81,5 +81,5 @@ pub fn fn_style() {
     //                                                ^  SUGGEST HERE
 
     let _ = build!(MyProps(build!(MyProps())).optional_field("".into()));
-    //                                                         ^  SUGGEST HERE
+    //                                                                 ^  SUGGEST HERE
 }

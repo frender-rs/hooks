@@ -1,14 +1,4 @@
 #[macro_export]
-macro_rules! __impl_base_expr {
-    ([][$($path:tt)*]) => {
-        $($path)* ()
-    };
-    ([$base:expr][$($path:tt)*]) => {
-        $($path)* ::Building($base)
-    };
-}
-
-#[macro_export]
 macro_rules! __impl_build {
     (
         [$finish:ident]

@@ -20,6 +20,7 @@ where
 }
 
 builder! {
+    #![inheritable]
     pub struct EventTargetProps {
         on_change[impl MaybeEventListener]: () = (),
         on_click [impl MaybeEventListener]: () = (),
@@ -27,6 +28,7 @@ builder! {
 }
 
 builder! {
+    #![inheritable]
     pub struct AriaProps {
         aria_hidden[? bool],
         aria_label [borrow? str],
@@ -34,6 +36,7 @@ builder! {
 }
 
 builder! {
+    #![inheritable]
     pub struct ElementProps {
         event_listeners[inherit EventTargetProps],
         aria[inherit AriaProps],

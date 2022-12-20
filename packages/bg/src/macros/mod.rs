@@ -1,3 +1,13 @@
+#[macro_export]
+macro_rules! __impl_base_expr {
+    ([][$($path:tt)*]) => {
+        $($path)* ()
+    };
+    ([$base:expr][$($path:tt)*]) => {
+        $($path)* ::Building($base)
+    };
+}
+
 #[cfg(all(test, debug_assertions))]
 mod build_macro;
 #[cfg(all(test, debug_assertions))]

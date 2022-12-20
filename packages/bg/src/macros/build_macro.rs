@@ -5,7 +5,7 @@ macro_rules! __impl_build_tolerant {
             .. $base:expr
         }
     ) => {
-        $base
+        $($path)+ ::Building($base)
     };
     (
         [$($path:tt)+] {
@@ -20,7 +20,7 @@ macro_rules! __impl_build_tolerant {
             )?
         }
     ) => {
-        $crate::expand_a_or_b!([$($($base)?)?][$($path)+ ()])
+        $crate::__impl_base_expr!([$($($base)?)?][$($path)+])
             $(
                 . $field_or_suggest (
                     $crate::expand_a_or_b!([$($field_value)?][$field_or_suggest])
@@ -91,7 +91,7 @@ macro_rules! __impl_build {
             #[allow(unused_imports)]
             use $($name)? $(:: $p)* ::prelude::*;
 
-            $crate::expand_a_or_b!([$($base)?][$($name)? $(:: $p)* ()])
+            $crate::__impl_base_expr!([$($base)?][$($name)? $(:: $p)*])
                 $($call)*
         })
     };

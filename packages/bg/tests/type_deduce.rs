@@ -1,12 +1,14 @@
 use bg::{build, builder};
 
 builder! {
+    #![inheritable]
     pub struct MyBaseProps {
         id[borrow? str],
     }
 }
 
 builder! {
+    // #![inheritable]
     struct MyProps {
         required_field: Vec<u8>,
         field_with_default: std::borrow::Cow<'static,str> = "".into(),
@@ -17,6 +19,7 @@ builder! {
 /// Test for ide support manually.
 /// Currently this works with rust-analyzer.
 /// The following variables should have fully deduced type.
+#[test]
 pub fn type_deduce() {
     let _v = build!(MyProps {});
     let v = build!(MyProps {

@@ -128,6 +128,100 @@ macro_rules! __impl_props_types_builder_trait_item {
 }
 
 #[macro_export]
+macro_rules! __impl_builder_associated_item {
+    ({$($all_fields:ident),*} { non_generic }
+        $(#[$($fn_attr:tt)*])*
+        $field_name:ident
+        $([ $($builder_generics:tt)* ])?
+        ($($field_builder_inputs:tt)*)
+            -> $field_builder_output:ty
+            = type($initial_ty:ty)
+             value($initial_value:expr)
+            $field_builder_impl:block
+    ) => {
+        $(#[$($fn_attr)*])*
+        pub fn $field_name
+            $(< $($builder_generics)* >)?
+            (mut self, $($field_builder_inputs)*) -> Self {
+                self.0.$field_name = $field_builder_impl;
+                self
+            }
+    };
+    ({$($all_fields:ident),*} $metadata:tt
+        $(#[$($fn_attr:tt)*])*
+        $field_name:ident
+        $([ $($builder_generics:tt)* ])?
+        ($($field_builder_inputs:tt)*)
+            -> $field_builder_output:ty
+            = type($initial_ty:ty)
+             value($initial_value:expr)
+            $field_builder_impl:block
+    ) => {
+        $(#[$($fn_attr)*])*
+        pub fn $field_name
+            $(< $($builder_generics)* >)?
+            (self, $($field_builder_inputs)*) ->
+                super::Building<
+                    super::overwrite:: $field_name ::<TypeDefs, $field_builder_output>
+                >
+            {
+                let _builder_impl_field_new_value = $field_builder_impl;
+                let super::Building(super::Data { __phantom_type_defs: _, $($all_fields,)* }) = self;
+                let _ = $field_name;
+                let $field_name = _builder_impl_field_new_value;
+                super::Building(super::Data {
+                    __phantom_type_defs: ::core::marker::PhantomData,
+                    $($all_fields,)*
+                })
+            }
+    };
+    ({$($all_fields:ident),*} { inherit { path($($inherit_path:tt)*) } }
+        $(#[$($fn_attr:tt)*])*
+        $field_name:ident
+        $([ $($builder_generics:tt)* ])?
+        ($($field_builder_inputs:tt)*)
+            -> $field_builder_output:ty
+            = type($initial_ty:ty)
+            value($initial_value:expr)
+            $field_builder_impl:block
+    ) => {
+        $(#[$($fn_attr)*])*
+        pub fn $field_name
+            $(< $($builder_generics)* >)?
+            (self, $($field_builder_inputs)*) ->
+                super::Building<
+                    super::overwrite:: $field_name ::<TypeDefs, $field_builder_output>
+                >
+            {
+                let _builder_impl_field_new_value = $field_builder_impl;
+                let (
+                    _builder_impl_field_left,
+                    Data {
+                        __phantom_type_defs: _,
+                    $(
+                        $all_fields,
+                    )*
+                    }
+                ) = <Self as $crate::TakeData<Data<TypesNormalize<Self>>>>::take_data(self);
+
+                let $field_name = _builder_impl_field_new_value;
+
+                $crate::JoinData::<Data<
+                    self::overwrite:: $field_name ::<Self, $field_builder_output>
+                >>::join_data(
+                    _builder_impl_field_left,
+                    Data {
+                        __phantom_type_defs: ::core::marker::PhantomData,
+                        $(
+                            $all_fields,
+                        )*
+                    },
+                )
+            }
+    };
+}
+
+#[macro_export]
 macro_rules! __impl_props_types_trait_item {
     ({$($all_fields:ident),*} { non_generic }
         $(#[$($fn_attr:tt)*])*
@@ -852,9 +946,90 @@ macro_rules! __impl_props_inherit_take_data {
 }
 
 #[macro_export]
+macro_rules! __impl_builder_fns {
+    (
+        [inheritable $($inheritable_nothing:tt)?]
+        [$name:ident]
+        $($data:tt)*
+    ) => {
+        pub trait $name: ::core::marker::Sized + super::Inherit {
+            $crate::__impl_props_field_declaration_normalize_iter! {
+                [$crate::__impl_props_types_builder_trait_item]
+                $($data)*
+            }
+        }
+
+        impl<B> $name for B
+            where B: ::core::marker::Sized + super::Inherit {}
+    };
+    (
+        []
+        [$name:ident]
+        $($data:tt)*
+    ) => {
+        pub type $name = ();
+
+        impl<TypeDefs: ?::core::marker::Sized + super::Types> super::Building<TypeDefs> {
+            $crate::__impl_props_field_declaration_normalize_iter! {
+                [$crate::__impl_builder_associated_item]
+                $($data)*
+            }
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! __impl_trait_inherit {
+    (
+        [inheritable $($inheritable_nothing:tt)?]
+    ) => {
+        pub trait Inherit {
+            type InheritedTypeDefs: ?::core::marker::Sized + Types;
+
+            fn as_mut_inherited(this: &mut Self) -> &mut Data<Self::InheritedTypeDefs>;
+        }
+
+        pub trait ReplaceInherited<NewTypeDefs: ?::core::marker::Sized + Types>: Inherit {
+            type Replaced: Inherit<InheritedTypeDefs = NewTypeDefs>;
+
+            fn replace_inherited<F: FnOnce(Data<Self::InheritedTypeDefs>) -> Data<NewTypeDefs>>(
+                this: Self,
+                replace: F,
+            ) -> Self::Replaced;
+        }
+
+        impl<TypeDefs: ?::core::marker::Sized + Types> Inherit for Building<TypeDefs> {
+            type InheritedTypeDefs = TypeDefs;
+
+            #[inline]
+            fn as_mut_inherited(this: &mut Self) -> &mut Data<Self::InheritedTypeDefs> {
+                &mut this.0
+            }
+        }
+
+        impl<
+                TypeDefs: ?::core::marker::Sized + Types,
+                NewTypeDefs: ?::core::marker::Sized + Types,
+            > ReplaceInherited<NewTypeDefs> for Building<TypeDefs>
+        {
+            type Replaced = Building<NewTypeDefs>;
+
+            #[inline]
+            fn replace_inherited<F: FnOnce(Data<Self::InheritedTypeDefs>) -> Data<NewTypeDefs>>(
+                this: Self,
+                replace: F,
+            ) -> Self::Replaced {
+                Building(replace(this.0))
+            }
+        }
+    };
+    ([]) => {};
+}
+
+#[macro_export]
 macro_rules! builder {
     (
-        $(#![$($data_struct_attr:tt)*])*
+        $(#![inheritable $($inheritable_nothing:tt)?])?
         $(#[$($mod_and_fn_attr:tt)*])*
         $vis:vis struct $name:ident
         {
@@ -879,6 +1054,8 @@ macro_rules! builder {
         $(#[$($mod_and_fn_attr)*])*
         #[allow(non_snake_case)]
         $vis mod $name {
+            $crate::__report_wrong_tt! { $($($inheritable_nothing)?)? }
+
             pub mod overwrite {
                 $crate::__impl_props_overwrite_fields! {
                     {$([
@@ -970,42 +1147,37 @@ macro_rules! builder {
 
             pub use trait_types::Types;
 
-            mod builder_impl_builder_trait {
+            mod builder {
                 use super::super::*;
 
-                pub trait $name: ::core::marker::Sized + super::Inherit {
-                    $crate::__impl_props_field_declaration_normalize_iter! {
-                        [$crate::__impl_props_types_builder_trait_item]
-                        {$($field_name),*}
-                        $([
-                            $(#[$($fn_attr)*])*
-                            $field_name
+                $crate::__impl_builder_fns! {
+                    [$(inheritable $($inheritable_nothing)?)?]
+                    [$name]
+                    {$($field_name),*}
+                    $([
+                        $(#[$($fn_attr)*])*
+                        $field_name
 
-                            $([ $($field_modifiers_or_builder_generics)* ])?
-                            $(
-                                ($($field_builder_inputs)*)
-                                    -> $field_builder_output
-                                    $(= $field_builder_default_output_value =>)?
-                                    $field_builder_impl
-                            )?
+                        $([ $($field_modifiers_or_builder_generics)* ])?
+                        $(
+                            ($($field_builder_inputs)*)
+                                -> $field_builder_output
+                                $(= $field_builder_default_output_value =>)?
+                                $field_builder_impl
+                        )?
 
-                            $(
-                                : $field_ty $( = $field_default_value)?
-                            )?
-                        ])*
-                    }
+                        $(
+                            : $field_ty $( = $field_default_value)?
+                        )?
+                    ])*
                 }
-
-                impl<B> $name for B
-                    where B: ::core::marker::Sized + super::Inherit {}
             }
 
-            pub use builder_impl_builder_trait::$name as Builder;
+            pub use builder::$name as Builder;
 
             pub mod struct_data {
                 use super::super::*;
 
-                $(#[$($data_struct_attr)*])*
                 pub struct $name <TypeDefs: ?::core::marker::Sized + super::Types> {
                     pub(super) __phantom_type_defs: ::core::marker::PhantomData<*const TypeDefs>,
                     $(
@@ -1087,43 +1259,8 @@ macro_rules! builder {
 
             pub use struct_data::$name as Data;
 
-            pub trait Inherit {
-                type InheritedTypeDefs: ?::core::marker::Sized + Types;
-
-                fn as_mut_inherited(this: &mut Self) -> &mut Data<Self::InheritedTypeDefs>;
-            }
-
-            pub trait ReplaceInherited<NewTypeDefs: ?::core::marker::Sized + Types>: Inherit {
-                type Replaced: Inherit<InheritedTypeDefs = NewTypeDefs>;
-
-                fn replace_inherited<
-                    F: FnOnce(Data<Self::InheritedTypeDefs>) -> Data<NewTypeDefs>,
-                >(this: Self, replace: F) -> Self::Replaced;
-            }
-
-            impl<
-                TypeDefs: ?::core::marker::Sized + Types,
-            > Inherit for Building<TypeDefs> {
-                type InheritedTypeDefs = TypeDefs;
-
-                #[inline]
-                fn as_mut_inherited(this: &mut Self) -> &mut Data<Self::InheritedTypeDefs> {
-                    &mut this.0
-                }
-            }
-
-            impl<
-                TypeDefs: ?::core::marker::Sized + Types,
-                NewTypeDefs: ?::core::marker::Sized + Types,
-            > ReplaceInherited<NewTypeDefs> for Building<TypeDefs> {
-                type Replaced = Building<NewTypeDefs>;
-
-                #[inline]
-                fn replace_inherited<
-                    F: FnOnce(Data<Self::InheritedTypeDefs>) -> Data<NewTypeDefs>,
-                >(this: Self, replace: F) -> Self::Replaced {
-                    Building(replace(this.0))
-                }
+            $crate::__impl_trait_inherit! {
+                [$(inheritable $($inheritable_nothing)?)?]
             }
 
             mod types_initial {
