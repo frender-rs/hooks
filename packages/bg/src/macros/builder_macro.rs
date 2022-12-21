@@ -1224,36 +1224,30 @@ macro_rules! builder {
                 }
             }
 
-            pub mod fn_uninitialized {
-                use super::super::*;
+            pub(super) fn data_initial() -> Data<TypesInitial> {
+                use super::*;
+                Data {
+                    __phantom_type_defs: ::core::marker::PhantomData,
+                    $(
+                    $field_name : $crate::__impl_props_field_declaration_normalize! {
+                        [$crate::__impl_props_types_field_initial_value] {} [
+                            // $(#[$($fn_attr)*])* // ignore attrs
+                            $field_name
 
-                $(#[$($mod_and_fn_attr)*])*
-                #[inline]
-                #[allow(non_snake_case)]
-                pub fn $name() -> super::Building<super::TypesInitial> {
-                    super::Building(super::struct_data::$name {
-                        __phantom_type_defs: ::core::marker::PhantomData,
-                        $(
-                        $field_name : $crate::__impl_props_field_declaration_normalize! {
-                            [$crate::__impl_props_types_field_initial_value] {} [
-                                // $(#[$($fn_attr)*])* // ignore attrs
-                                $field_name
+                            $([ $($field_modifiers_or_builder_generics)* ])?
+                            $(
+                                ($($field_builder_inputs)*)
+                                    -> $field_builder_output
+                                    $(= $field_builder_default_output_value =>)?
+                                    $field_builder_impl
+                            )?
 
-                                $([ $($field_modifiers_or_builder_generics)* ])?
-                                $(
-                                    ($($field_builder_inputs)*)
-                                        -> $field_builder_output
-                                        $(= $field_builder_default_output_value =>)?
-                                        $field_builder_impl
-                                )?
-
-                                $(
-                                    : $field_ty $( = $field_default_value)?
-                                )?
-                            ]
-                        },
-                        )*
-                    })
+                            $(
+                                : $field_ty $( = $field_default_value)?
+                            )?
+                        ]
+                    },
+                    )*
                 }
             }
 
@@ -1357,6 +1351,11 @@ macro_rules! builder {
             }
         }
 
-        $vis use $name::fn_uninitialized::$name;
+        $(#[$($mod_and_fn_attr)*])*
+        #[inline]
+        #[allow(non_snake_case)]
+        pub fn $name() -> $name::Building<$name::TypesInitial> {
+            $name::Building($name::data_initial())
+        }
     };
 }

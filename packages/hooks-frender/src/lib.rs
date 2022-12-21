@@ -54,17 +54,14 @@ pub mod CounterWithInitialValue {
     ) -> Data<TypeDefs> {
         build(building)
     }
-
-    pub mod fn_uninitialized {
-        #[inline]
-        pub fn CounterWithInitialValue() -> super::Building<super::TypesInitial> {
-            use super::super::*;
-            CounterWithInitialValueProps()
-        }
-    }
 }
 
-pub use CounterWithInitialValue::fn_uninitialized::CounterWithInitialValue;
+#[inline]
+#[allow(non_snake_case)]
+pub fn CounterWithInitialValue(
+) -> CounterWithInitialValue::Building<CounterWithInitialValue::TypesInitial> {
+    CounterWithInitialValueProps()
+}
 
 impl<TypesDef: 'static + ?Sized + CounterWithInitialValueProps::ValidTypes>
     CounterWithInitialValue::Data<TypesDef>
