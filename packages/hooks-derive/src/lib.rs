@@ -7,6 +7,32 @@ use hooks_derive_core::{
     syn::{parse_macro_input, AttributeArgs, ItemFn},
 };
 
+// TODO: move to a new crate
+#[proc_macro_attribute]
+pub fn component(args: TokenStream, input: TokenStream) -> TokenStream {
+    use hooks_derive_core::syn;
+    let attr_args = parse_macro_input!(args as AttributeArgs);
+
+    syn::Macro {
+        path: syn::Path {
+            leading_colon: None,
+            segments: syn::punctuated::Punctuated::from_iter([
+                // TODO: change to `::frender`
+                syn::PathSegment::from(<syn::Token![crate]>::default()),
+                syn::PathSegment::from(syn::Ident::new(
+                    "def_component",
+                    proc_macro2::Span::call_site(),
+                )),
+            ]),
+        },
+        bang_token: Default::default(),
+        delimiter: syn::MacroDelimiter::Brace(Default::default()),
+        tokens: input.into(),
+    }
+    .to_token_stream()
+    .into()
+}
+
 #[proc_macro_attribute]
 pub fn hook(args: TokenStream, input: TokenStream) -> TokenStream {
     let attr_args = parse_macro_input!(args as AttributeArgs);
