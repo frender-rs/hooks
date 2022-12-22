@@ -1354,7 +1354,7 @@ macro_rules! builder {
         $(#[$($mod_and_fn_attr)*])*
         #[inline]
         #[allow(non_snake_case)]
-        pub fn $name() -> $name::Building<$name::TypesInitial> {
+        $vis fn $name() -> $name::Building<$name::TypesInitial> {
             $name::Building($name::data_initial())
         }
     };
@@ -1366,7 +1366,7 @@ macro_rules! builder {
         $($other_items:tt)*
     ) => {
         #[allow(non_snake_case)]
-        pub mod $name {
+        $vis mod $name {
             mod reuse {
                 use super::super::*;
                 pub use $($base_builder)+ ::{
@@ -1407,10 +1407,9 @@ macro_rules! builder {
 
         #[inline]
         #[allow(non_snake_case)]
-        pub fn $name (
+        $vis fn $name (
         ) -> $name ::Building<$name ::TypesInitial> {
             $($base_builder)+ ()
         }
-
     };
 }
