@@ -89,3 +89,20 @@ where
         hook.use_hook((ContextAndState::new(ctx, state.render_state),));
     }
 }
+
+pub trait FnOnceOutputElementHook<Ctx>: FnOnce() -> Self::Hook {
+    type RenderState;
+    type Hook: for<'a> Hook<
+        (ContextAndState<'a, Dom, dyn Any>,),
+        Value = ContextAndState<'a, Dom, Self::RenderState>,
+    >;
+}
+
+impl<F, H, Ctx, S> FnOnceOutputElementHook<Ctx> for F
+where
+    F: FnOnce() -> H,
+    H: for<'a> Hook<(ContextAndState<'a, Dom, dyn Any>,), Value = ContextAndState<'a, Dom, S>>,
+{
+    type RenderState = S;
+    type Hook = H;
+}

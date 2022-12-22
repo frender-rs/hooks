@@ -12,7 +12,8 @@ fn main() {
                 || {
                     (
                         element!(CounterWithInitialValue().initial_value(8)),
-                        Counter(),
+                        element!(Counter()),
+                        element!(CounterWithInitialValue().initial_value(-8)),
                     )
                 },
                 std::future::pending(),
