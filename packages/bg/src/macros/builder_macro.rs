@@ -1033,6 +1033,7 @@ macro_rules! builder {
         $vis:vis struct $name:ident {}
         $($other_items:tt)*
     ) => {
+        $(#[$($mod_and_fn_attr)*])*
         #[allow(non_snake_case)]
         pub mod $name {
             pub trait Types {}
@@ -1072,6 +1073,7 @@ macro_rules! builder {
             $($other_items)*
         }
 
+        $(#[$($mod_and_fn_attr)*])*
         #[inline]
         #[allow(non_snake_case)]
         pub fn $name() -> $name::Building<$name::TypesInitial> {
@@ -1415,6 +1417,7 @@ macro_rules! builder {
 
         $($other_items:tt)*
     ) => {
+        $(#[$($mod_and_fn_attr)*])*
         #[allow(non_snake_case)]
         $vis mod $name {
             mod reuse {
@@ -1455,6 +1458,7 @@ macro_rules! builder {
             $($other_items)*
         }
 
+        $(#[$($mod_and_fn_attr)*])*
         #[inline]
         #[allow(non_snake_case)]
         $vis fn $name (
