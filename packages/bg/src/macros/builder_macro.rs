@@ -1029,6 +1029,56 @@ macro_rules! __impl_trait_inherit {
 #[macro_export]
 macro_rules! builder {
     (
+        $(#[$($mod_and_fn_attr:tt)*])*
+        $vis:vis struct $name:ident {}
+        $($other_items:tt)*
+    ) => {
+        #[allow(non_snake_case)]
+        pub mod $name {
+            pub trait Types {}
+            // pub type Builder = ();
+
+            pub struct $name<TypeDefs: ?::core::marker::Sized + Types> {
+                __phantom_type_defs: ::core::marker::PhantomData<*const TypeDefs>,
+            }
+
+            pub(super) fn data_initial() -> Data<TypesInitial> {
+                Data {
+                    __phantom_type_defs: ::core::marker::PhantomData,
+                }
+            }
+
+            pub use $name as Data;
+
+            pub type TypesInitial = dyn Types;
+
+            pub use Types as ValidTypes;
+
+            pub type DataInitial = Data<TypesInitial>;
+            pub struct Building<TypeDefs: ?Sized + Types>(pub Data<TypeDefs>);
+
+            #[inline]
+            pub fn build<TypeDefs: ?Sized + Types>(building: Building<TypeDefs>) -> Data<TypeDefs> {
+                building.0
+            }
+
+            #[inline]
+            pub fn valid<TypeDefs: ?Sized + ValidTypes>(building: Building<TypeDefs>) -> Data<TypeDefs> {
+                building.0
+            }
+
+            pub mod prelude {}
+
+            $($other_items)*
+        }
+
+        #[inline]
+        #[allow(non_snake_case)]
+        pub fn $name() -> $name::Building<$name::TypesInitial> {
+            $name::Building($name::data_initial())
+        }
+    };
+    (
         $(#![inheritable $($inheritable_nothing:tt)?])?
         $(#[$($mod_and_fn_attr:tt)*])*
         $vis:vis struct $name:ident
