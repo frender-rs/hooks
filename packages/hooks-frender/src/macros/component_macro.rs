@@ -9,7 +9,7 @@ macro_rules! component {
                 use $crate::hooks::core as __private_hooks_core;
 
                 #[$crate::hook(args_generics = "'render_ctx", hooks_core_path = "__private_hooks_core")]
-                fn use_impl_render<TypesDef: ?Sized + $($props_name)? $(:: $props_p)* ::ValidTypes>(
+                fn impl_render<TypesDef: ?Sized + $($props_name)? $(:: $props_p)* ::ValidTypes>(
                     $ctx_arg: $crate::ContextAndState<'render_ctx, Dom, dyn std::any::Any>,
                     $props_arg: &$($props_name)? $(:: $props_p)* ::Data<TypesDef>,
                 ) -> $crate::ContextAndState<'render_ctx, Dom, impl render::RenderState + 'static> {
@@ -29,7 +29,7 @@ macro_rules! component {
                         + 'static,
                         $($props_name)? $(:: $props_p)* ::Data<TypesDef>,
                 > {
-                    $crate::HookElementWithProps(use_impl_render, props)
+                    $crate::HookElementWithProps(impl_render, props)
                 }
             }
 
@@ -37,10 +37,3 @@ macro_rules! component {
         }
     };
 }
-
-// #[macro_export]
-// macro_rules! component {
-//     ($fn_item:item) => {
-//         $crate::__impl_component! {$fn_item}
-//     };
-// }

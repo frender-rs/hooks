@@ -1,4 +1,4 @@
-use hooks_frender::{element, CounterWithInitialValue, Dom};
+use hooks_frender::{element, Counter, CounterWithInitialValue, Dom};
 
 fn main() {
     wasm_bindgen_futures::spawn_local(async {
@@ -9,7 +9,12 @@ fn main() {
 
         Dom::new(document, current_parent)
             .render_get_element(
-                || element!(CounterWithInitialValue().initial_value(8)),
+                || {
+                    (
+                        element!(CounterWithInitialValue().initial_value(8)),
+                        Counter(),
+                    )
+                },
                 std::future::pending(),
             )
             .await;

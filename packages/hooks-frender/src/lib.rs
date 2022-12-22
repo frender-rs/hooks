@@ -52,15 +52,6 @@ component! {
                 None
             },
             " Last",
-            // Box::new(ElementFnOnce(Counter)),
-            // rsx!(<button
-            //         on_click={move |_: &_| {
-            //             web_sys::console::log_1(&"on_click".into());
-            //             updater.replace_with_fn_pointer(|v| *v + 1);
-            //         }}
-            //         children={format!("state = {}", state)}
-            // />
-            // ),
         ))
     }
 }
