@@ -1358,4 +1358,59 @@ macro_rules! builder {
             $name::Building($name::data_initial())
         }
     };
+    (
+        $(#[$($mod_and_fn_attr:tt)*])*
+        $vis:vis struct $name:ident
+        ($($base_builder:tt)+);
+
+        $($other_items:tt)*
+    ) => {
+        #[allow(non_snake_case)]
+        pub mod $name {
+            mod reuse {
+                use super::super::*;
+                pub use $($base_builder)+ ::{
+                    prelude, Building, Types, TypesInitial, ValidTypes,
+                };
+            }
+
+            pub use reuse::{prelude, Building, Types, TypesInitial, ValidTypes};
+
+            mod struct_data {
+                use super::super::*;
+                pub struct $name <
+                    TypeDefs: ?::core::marker::Sized + $($base_builder)+ ::Types,
+                >(pub $($base_builder)+ ::Data<TypeDefs>);
+            }
+
+            pub use struct_data::$name  as Data;
+
+            pub type DataInitial = Data<TypesInitial>;
+
+            #[inline]
+            pub fn build<TypeDefs: ?::core::marker::Sized + Types>(
+                building: Building<TypeDefs>,
+            ) -> Data<TypeDefs> {
+                use super::*;
+                self::Data($($base_builder)+ ::build(building))
+            }
+
+            #[inline]
+            pub fn valid<TypeDefs: ?::core::marker::Sized + ValidTypes>(
+                building: Building<TypeDefs>,
+            ) -> Data<TypeDefs> {
+                build(building)
+            }
+
+            $($other_items)*
+        }
+
+        #[inline]
+        #[allow(non_snake_case)]
+        pub fn $name (
+        ) -> $name ::Building<$name ::TypesInitial> {
+            $($base_builder)+ ()
+        }
+
+    };
 }

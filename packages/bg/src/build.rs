@@ -21,3 +21,16 @@ macro_rules! build {
         }
     };
 }
+
+#[macro_export]
+macro_rules! finish_builder_with {
+    (
+        [$($path:tt)+]
+        $($tt:tt)*
+    ) => {
+        $crate::__impl_build! {
+            [$($path)+]
+            $($tt)*
+        }
+    };
+}
