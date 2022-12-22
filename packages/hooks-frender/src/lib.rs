@@ -11,6 +11,8 @@ pub use render::*;
 mod utils;
 
 pub use bg;
+pub use hooks;
+pub use hooks::hook;
 
 use bg::{builder, Maybe};
 
@@ -20,41 +22,8 @@ builder! {
     }
 }
 
-builder! {
-    pub struct CounterWithInitialValue(CounterWithInitialValueProps);
-
-    mod build_element {
-        use super::super::*;
-
-        pub fn build_element<TypesDef: 'static + ?Sized + CounterWithInitialValueProps::ValidTypes>(
-            super::Building(props): super::Building<TypesDef>,
-        ) -> crate::HookElementWithProps<
-            impl crate::FnOnceOutputElementHookWithProps<
-                    crate::Dom,
-                    CounterWithInitialValueProps::Data<TypesDef>,
-                    RenderState = impl crate::RenderState + 'static,
-                > + Copy
-                + 'static,
-            CounterWithInitialValueProps::Data<TypesDef>,
-        > {
-            // impl UpdateRenderState<Dom>
-            {
-                crate::HookElementWithProps(super::DataInitial::use_impl_render, props)
-            }
-        }
-    }
-
-    pub use build_element::build_element;
-}
-
-impl CounterWithInitialValue::DataInitial {
-    #[hooks::hook(args_generics = "'render_ctx")]
-    fn use_impl_render<TypesDef: ?Sized + CounterWithInitialValueProps::ValidTypes>(
-        ctx: ContextAndState<'render_ctx, Dom, dyn std::any::Any>,
-        props: &CounterWithInitialValueProps::Data<TypesDef>,
-    ) -> ContextAndState<'render_ctx, Dom, impl render::RenderState + 'static> {
-        let ctx = ctx.downcast_state().unwrap();
-
+component! {
+    pub fn CounterWithInitialValue(ctx: (), props: &CounterWithInitialValueProps) {
         let (state, updater) =
             hooks::use_state_with(|| props.initial_value.as_some().copied().unwrap_or(4));
 
