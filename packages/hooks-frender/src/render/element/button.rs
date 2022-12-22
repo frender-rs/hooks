@@ -1,41 +1,38 @@
+#![allow(non_camel_case_types)]
+
+use bg::builder;
 use futures_io::AsyncWrite;
-use wasm_bindgen::JsCast;
 
 use crate::{
     props::{events, UpdateDomEventListener},
-    render::{Dom, EndBuilder, SsrContext, Unset, UpdateRenderState},
-    utils::{insert_element_and_update, map_or_insert_with_ctx},
+    render::{Dom, SsrContext, UpdateRenderState},
+    utils::insert_element_and_update,
 };
 
-pub trait PropsTypeDefs {
-    type Children;
-    type OnClick;
+builder! {
+    pub struct ButtonProps {
+        children[impl Sized],
+        on_click[impl Sized],
+    }
 }
 
 pub mod dom {
-    use super::PropsTypeDefs;
     use crate::render::RenderState;
 
     pin_project_lite::pin_project! {
-        pub struct State<PropsTypes: ?Sized>
-            where PropsTypes: PropsTypeDefs {
+        pub struct State<Children, OnClick> {
             pub mounted: bool,
             pub node: Option<web_sys::HtmlButtonElement>,
             #[pin]
-            pub children: PropsTypes::Children,
-            pub on_click: PropsTypes::OnClick,
+            pub children: Children,
+            pub on_click: OnClick,
         }
     }
 
-    impl<PropsTypes: ?Sized + super::PropsTypeDefs> State<PropsTypes> where
-        PropsTypes::Children: RenderState
-    {
-    }
-
-    impl<PropsTypes: ?Sized + super::PropsTypeDefs> RenderState for State<PropsTypes>
+    impl<Children, OnClick> RenderState for State<Children, OnClick>
     where
-        PropsTypes::Children: RenderState,
-        PropsTypes::OnClick: Default,
+        Children: RenderState,
+        OnClick: Default,
     {
         fn new_uninitialized() -> Self {
             Self {
@@ -156,65 +153,20 @@ pub mod ssr {
     }
 }
 
-#[non_exhaustive]
-pub struct ButtonProps<PropsTypes: ?Sized + PropsTypeDefs> {
-    pub children: PropsTypes::Children,
-    pub on_click: PropsTypes::OnClick,
+builder! {
+    pub struct button(ButtonProps);
+
+    pub use build as build_element;
 }
 
-impl<PropsTypes: ?Sized + PropsTypeDefs> EndBuilder for ButtonProps<PropsTypes> {
-    type Output = Button<PropsTypes>;
-
-    #[inline]
-    fn end_builder(self) -> Self::Output {
-        Button(self)
-    }
-}
-
-impl<PropsTypes: ?Sized + PropsTypeDefs> ButtonProps<PropsTypes> {
-    #[inline]
-    pub fn children<C>(
-        self,
-        children: C,
-    ) -> ButtonProps<dyn PropsTypeDefs<Children = C, OnClick = PropsTypes::OnClick>> {
-        ButtonProps {
-            children,
-            on_click: self.on_click,
-        }
-    }
-
-    #[inline]
-    pub fn on_click<OnClick>(
-        self,
-        on_click: OnClick,
-    ) -> ButtonProps<dyn PropsTypeDefs<Children = PropsTypes::Children, OnClick = OnClick>> {
-        ButtonProps {
-            children: self.children,
-            on_click,
-        }
-    }
-}
-
-#[inline]
-pub fn button() -> ButtonProps<dyn PropsTypeDefs<Children = Unset, OnClick = Unset>> {
-    ButtonProps {
-        children: Unset,
-        on_click: Unset,
-    }
-}
-
-pub struct Button<PropsTypes: ?Sized + PropsTypeDefs>(pub ButtonProps<PropsTypes>);
-
-impl<PropsTypes: ?Sized + PropsTypeDefs> UpdateRenderState<Dom> for Button<PropsTypes>
+impl<TypeDefs: ?Sized + button::Types> UpdateRenderState<Dom> for button::Data<TypeDefs>
 where
-    PropsTypes::Children: UpdateRenderState<Dom>,
-    PropsTypes::OnClick: UpdateDomEventListener<events::OnClick>,
+    TypeDefs::children: UpdateRenderState<Dom>,
+    TypeDefs::on_click: UpdateDomEventListener<events::OnClick>,
 {
     type State = dom::State<
-        dyn PropsTypeDefs<
-            Children = <PropsTypes::Children as UpdateRenderState<Dom>>::State,
-            OnClick = <PropsTypes::OnClick as UpdateDomEventListener<events::OnClick>>::State,
-        >,
+        <TypeDefs::children as UpdateRenderState<Dom>>::State,
+        <TypeDefs::on_click as UpdateDomEventListener<events::OnClick>>::State,
     >;
 
     #[inline]
@@ -234,8 +186,8 @@ where
     }
 }
 
-impl<'a, W: AsyncWrite + Unpin, PropsTypes: PropsTypeDefs> UpdateRenderState<SsrContext<'a, W>>
-    for Button<PropsTypes>
+impl<'a, W: AsyncWrite + Unpin, TypeDefs: ?Sized + button::Types>
+    UpdateRenderState<SsrContext<'a, W>> for button::Data<TypeDefs>
 {
     type State = ssr::State<'a, W>;
 

@@ -34,14 +34,12 @@ pub fn CounterWithInitialValue(ctx: _, props: &CounterWithInitialValueProps) {
 
     ctx.render((
         if *state % 3 == 0 { None } else { Some("help ") },
-        // "please",
-        render::button()
+        element!(render::button()
             .on_click(move |_: &_| {
                 web_sys::console::log_1(&"on_click".into());
                 updater.replace_with_fn_pointer(|v| *v + 1);
             })
-            .children(format!("state = {}", state))
-            .end_builder(),
+            .children(format!("state = {}", state))),
         if *state % 2 == 0 {
             Some("state is even")
         } else {
@@ -66,14 +64,12 @@ pub fn Counter(ctx: _) {
 
     ctx.render((
         if *state % 3 == 0 { None } else { Some("help ") },
-        // "please",
-        button()
+        element!(button()
             .on_click(move |_: &_| {
                 web_sys::console::log_1(&"on_click".into());
                 updater.replace_with_fn_pointer(|v| *v + 1);
             })
-            .children(format!("state = {}", state))
-            .end_builder(),
+            .children(format!("state = {}", state))),
         if *state % 2 == 0 {
             Some("state is even")
         } else {

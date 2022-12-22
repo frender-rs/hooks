@@ -2,18 +2,10 @@ use std::{any::Any, pin::Pin};
 
 use hooks::{Hook, HookBounds, HookLifetime, HookPollNextUpdate, LazyPinned, LazyPinnedHook};
 
-use super::{ContextAndState, Dom, EndBuilder, RenderState, UpdateRenderState};
+use super::{ContextAndState, Dom, RenderState, UpdateRenderState};
 
 #[derive(Clone, Copy, Debug)]
 pub struct HookElement<H>(pub H);
-
-impl<H> EndBuilder for HookElement<H> {
-    type Output = Self;
-
-    fn end_builder(self) -> Self::Output {
-        self
-    }
-}
 
 pin_project_lite::pin_project! {
     pub struct HookState<H: HookPollNextUpdate, S> {
