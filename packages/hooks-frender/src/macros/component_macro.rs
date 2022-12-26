@@ -1,6 +1,11 @@
 #[macro_export]
 macro_rules! def_component {
-    ($vis:vis fn $name:ident ($ctx_arg:ident : _ $(,)?) {$($impl_code:tt)*}) => {
+    ($vis:vis fn $name:ident () $body:tt ) => {
+        $crate::def_component! {
+            $vis fn $name (_ctx: _) $body
+        }
+    };
+    ($vis:vis fn $name:ident ($ctx_arg:tt : _ $(,)?) {$($impl_code:tt)*}) => {
         $crate::builder! {
             $vis struct $name($crate::bg::Empty);
 
