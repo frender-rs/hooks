@@ -34,13 +34,13 @@ macro_rules! def_component {
             #[inline]
             pub fn build_element<TypesDef: ?Sized + $crate::bg::Empty::ValidTypes>(
                 _: Building<TypesDef>,
-            ) -> $crate::HookElement<
-                impl $crate::FnOnceOutputElementHook<
+            ) -> $crate::HookElementWithNoProps<
+                impl $crate::FnOnceOutputElementHookWithNoProps<
                     $crate::Dom,
                     RenderState = impl $crate::RenderState + 'static,
                 > + ::core::marker::Copy + 'static
             > {
-                $crate::HookElement(impl_render::$name)
+                $crate::HookElementWithNoProps(impl_render::$name)
             }
         }
     };
@@ -71,8 +71,8 @@ macro_rules! def_component {
                 use super::super::*;
                 pub fn build_element<TypesDef: 'static + ?Sized + $($props_name)? $(:: $props_p)* ::ValidTypes>(
                     super::Building(props): super::Building<TypesDef>,
-                ) -> $crate::HookElementWithProps<
-                    impl $crate::FnOnceOutputElementHookWithProps<
+                ) -> $crate::HookElementWithRefProps<
+                    impl $crate::FnOnceOutputElementHookWithRefProps<
                             $crate::Dom,
                             $($props_name)? $(:: $props_p)* ::Data<TypesDef>,
                             RenderState = impl $crate::RenderState + 'static,
@@ -80,7 +80,7 @@ macro_rules! def_component {
                         + 'static,
                         $($props_name)? $(:: $props_p)* ::Data<TypesDef>,
                 > {
-                    $crate::HookElementWithProps(super::impl_render::$name, props)
+                    $crate::HookElementWithRefProps(super::impl_render::$name, props)
                 }
             }
 

@@ -1,14 +1,17 @@
 use std::{any::Any, pin::Pin};
 
-use hooks::{Hook, HookBounds, HookLifetime, HookPollNextUpdate, LazyPinned, LazyPinnedHook};
+use hooks::{Hook, HookPollNextUpdate, LazyPinnedHook};
 
 use super::{ContextAndState, Dom, RenderState, UpdateRenderState};
 
 #[derive(Clone, Copy, Debug)]
-pub struct HookElementWithProps<H, Props>(pub H, pub Props);
+pub struct HookElementWithRefProps<H, Props>(pub H, pub Props);
+
+#[derive(Clone, Copy, Debug)]
+pub struct HookElementPollTillEnd<E>(E);
 
 pin_project_lite::pin_project! {
-    pub struct HookStateWithProps<H: HookPollNextUpdate, S, Props> {
+    pub struct HookStateWithRefProps<H: HookPollNextUpdate, S, Props> {
         #[pin]
         hook: LazyPinnedHook<H>,
         #[pin]
@@ -17,7 +20,16 @@ pin_project_lite::pin_project! {
     }
 }
 
-impl<H, S: RenderState + 'static, Props> RenderState for HookStateWithProps<H, S, Props>
+pin_project_lite::pin_project! {
+    pub struct HookStatePollOnce<H: HookPollNextUpdate, S> {
+        #[pin]
+        hook: LazyPinnedHook<H>,
+        #[pin]
+        render_state: S,
+    }
+}
+
+impl<H, S: RenderState + 'static, Props> RenderState for HookStateWithRefProps<H, S, Props>
 where
     H: for<'a, 'props> Hook<
         (ContextAndState<'a, Dom, dyn Any>, &'props Props),
@@ -70,8 +82,45 @@ where
     }
 }
 
+impl<H, S: RenderState + 'static> RenderState for HookStatePollOnce<H, S>
+where
+    H: HookPollNextUpdate,
+{
+    fn new_uninitialized() -> Self {
+        Self {
+            hook: Default::default(),
+            render_state: S::new_uninitialized(),
+        }
+    }
+
+    fn unmount(self: Pin<&mut Self>) {
+        self.project().render_state.unmount()
+    }
+
+    fn poll_reactive(
+        self: Pin<&mut Self>,
+        cx: &mut std::task::Context<'_>,
+    ) -> std::task::Poll<bool> {
+        let mut this = self.project();
+
+        let res = this.hook.as_mut().poll_next_update(cx);
+        let r = this.render_state.as_mut().poll_reactive(cx);
+
+        match (res, r) {
+            (std::task::Poll::Ready(false), std::task::Poll::Ready(false)) => {
+                std::task::Poll::Ready(false)
+            }
+            (
+                std::task::Poll::Ready(false) | std::task::Poll::Pending,
+                std::task::Poll::Ready(false) | std::task::Poll::Pending,
+            ) => std::task::Poll::Pending,
+            _ => std::task::Poll::Ready(true),
+        }
+    }
+}
+
 impl<F, H, S: RenderState + 'static, Props> UpdateRenderState<Dom>
-    for HookElementWithProps<F, Props>
+    for HookElementPollTillEnd<HookElementWithRefProps<F, Props>>
 where
     F: FnOnce() -> H,
     H: for<'a, 'props> Hook<
@@ -79,17 +128,35 @@ where
         Value = ContextAndState<'a, Dom, S>,
     >,
 {
-    type State = HookStateWithProps<H, S, Props>;
+    type State = HookStateWithRefProps<H, S, Props>;
 
     fn update_render_state(self, ctx: &mut Dom, state: Pin<&mut Self::State>) {
         let state = state.project();
-        let (dom, props) = state.dom_and_props.insert((ctx.clone(), self.1));
-        let hook = state.hook.use_hook((self.0,));
+        let (_, props) = state.dom_and_props.insert((ctx.clone(), self.0 .1));
+        let hook = state.hook.use_hook((self.0 .0,));
         hook.use_hook((ContextAndState::new(ctx, state.render_state), props));
     }
 }
 
-pub trait FnOnceOutputElementHookWithProps<Ctx, Props>: FnOnce() -> Self::Hook {
+impl<F, H, S: RenderState + 'static, Props> UpdateRenderState<Dom>
+    for HookElementWithRefProps<F, Props>
+where
+    F: FnOnce() -> H,
+    H: for<'a, 'props> Hook<
+        (ContextAndState<'a, Dom, dyn Any>, &'props Props),
+        Value = ContextAndState<'a, Dom, S>,
+    >,
+{
+    type State = HookStatePollOnce<H, S>;
+
+    fn update_render_state(self, ctx: &mut Dom, state: Pin<&mut Self::State>) {
+        let state = state.project();
+        let hook = state.hook.use_hook((self.0,));
+        hook.use_hook((ContextAndState::new(ctx, state.render_state), &self.1));
+    }
+}
+
+pub trait FnOnceOutputElementHookWithRefProps<Ctx, Props>: FnOnce() -> Self::Hook {
     type RenderState;
     type Hook: for<'a, 'props> Hook<
         (ContextAndState<'a, Ctx, dyn Any>, &'props Props),
@@ -97,7 +164,7 @@ pub trait FnOnceOutputElementHookWithProps<Ctx, Props>: FnOnce() -> Self::Hook {
     >;
 }
 
-impl<F, H, Ctx, S, Props> FnOnceOutputElementHookWithProps<Ctx, Props> for F
+impl<F, H, Ctx, S, Props> FnOnceOutputElementHookWithRefProps<Ctx, Props> for F
 where
     F: FnOnce() -> H,
     H: for<'a, 'props> Hook<

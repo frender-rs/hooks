@@ -1,14 +1,14 @@
 use std::{any::Any, pin::Pin};
 
-use hooks::{Hook, HookBounds, HookLifetime, HookPollNextUpdate, LazyPinned, LazyPinnedHook};
+use hooks::{Hook, HookPollNextUpdate, LazyPinnedHook};
 
 use super::{ContextAndState, Dom, RenderState, UpdateRenderState};
 
 #[derive(Clone, Copy, Debug)]
-pub struct HookElement<H>(pub H);
+pub struct HookElementWithNoProps<H>(pub H);
 
 pin_project_lite::pin_project! {
-    pub struct HookState<H: HookPollNextUpdate, S> {
+    pub struct HookStateWithNoProps<H: HookPollNextUpdate, S> {
         #[pin]
         hook: LazyPinnedHook<H>,
         #[pin]
@@ -17,7 +17,7 @@ pin_project_lite::pin_project! {
     }
 }
 
-impl<H, S: RenderState + 'static> RenderState for HookState<H, S>
+impl<H, S: RenderState + 'static> RenderState for HookStateWithNoProps<H, S>
 where
     H: for<'a> Hook<(ContextAndState<'a, Dom, dyn Any>,), Value = ContextAndState<'a, Dom, S>>,
 {
@@ -67,12 +67,12 @@ where
     }
 }
 
-impl<F, H, S: RenderState + 'static> UpdateRenderState<Dom> for HookElement<F>
+impl<F, H, S: RenderState + 'static> UpdateRenderState<Dom> for HookElementWithNoProps<F>
 where
     F: FnOnce() -> H,
     H: for<'a> Hook<(ContextAndState<'a, Dom, dyn Any>,), Value = ContextAndState<'a, Dom, S>>,
 {
-    type State = HookState<H, S>;
+    type State = HookStateWithNoProps<H, S>;
 
     fn update_render_state(self, ctx: &mut Dom, state: Pin<&mut Self::State>) {
         let state = state.project();
@@ -82,7 +82,7 @@ where
     }
 }
 
-pub trait FnOnceOutputElementHook<Ctx>: FnOnce() -> Self::Hook {
+pub trait FnOnceOutputElementHookWithNoProps<Ctx>: FnOnce() -> Self::Hook {
     type RenderState;
     type Hook: for<'a> Hook<
         (ContextAndState<'a, Dom, dyn Any>,),
@@ -90,7 +90,7 @@ pub trait FnOnceOutputElementHook<Ctx>: FnOnce() -> Self::Hook {
     >;
 }
 
-impl<F, H, Ctx, S> FnOnceOutputElementHook<Ctx> for F
+impl<F, H, Ctx, S> FnOnceOutputElementHookWithNoProps<Ctx> for F
 where
     F: FnOnce() -> H,
     H: for<'a> Hook<(ContextAndState<'a, Dom, dyn Any>,), Value = ContextAndState<'a, Dom, S>>,
