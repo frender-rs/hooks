@@ -10,27 +10,21 @@ use hooks_derive_core::{
 // TODO: move to a new crate
 #[proc_macro_attribute]
 pub fn component(args: TokenStream, input: TokenStream) -> TokenStream {
-    use hooks_derive_core::syn;
+    use proc_macro::{Delimiter, Group, Ident, Punct, Spacing, Span, TokenTree};
+
     let attr_args = parse_macro_input!(args as AttributeArgs);
 
-    syn::Macro {
-        path: syn::Path {
-            leading_colon: None,
-            segments: syn::punctuated::Punctuated::from_iter([
-                // TODO: change to `::frender`
-                syn::PathSegment::from(<syn::Token![crate]>::default()),
-                syn::PathSegment::from(syn::Ident::new(
-                    "def_component",
-                    proc_macro2::Span::call_site(),
-                )),
-            ]),
-        },
-        bang_token: Default::default(),
-        delimiter: syn::MacroDelimiter::Brace(Default::default()),
-        tokens: input.into(),
-    }
-    .to_token_stream()
-    .into()
+    let mut out = TokenStream::default();
+    out.extend([
+        TokenTree::from(Ident::new("crate", Span::call_site())),
+        Punct::new(':', Spacing::Joint).into(),
+        Punct::new(':', Spacing::Alone).into(),
+        Ident::new("def_component", Span::call_site()).into(),
+        Punct::new('!', Spacing::Alone).into(),
+        Group::new(Delimiter::Brace, input).into(),
+    ]);
+
+    out
 }
 
 #[proc_macro_attribute]
