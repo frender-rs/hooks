@@ -23,9 +23,9 @@ pin_project_lite::pin_project! {
 pin_project_lite::pin_project! {
     pub struct HookStatePollOnce<H: HookPollNextUpdate, S> {
         #[pin]
-        hook: LazyPinnedHook<H>,
+        pub(crate) hook: LazyPinnedHook<H>,
         #[pin]
-        render_state: S,
+        pub(crate) render_state: S,
     }
 }
 

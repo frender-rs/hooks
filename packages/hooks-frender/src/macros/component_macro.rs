@@ -69,6 +69,8 @@ macro_rules! def_component {
 
             mod build_element {
                 use super::super::*;
+
+                #[inline]
                 pub fn build_element<TypesDef: 'static + ?Sized + $($props_name)? $(:: $props_p)* ::ValidTypes>(
                     super::Building(props): super::Building<TypesDef>,
                 ) -> $crate::HookElementWithRefProps<
@@ -81,6 +83,50 @@ macro_rules! def_component {
                         $($props_name)? $(:: $props_p)* ::Data<TypesDef>,
                 > {
                     $crate::HookElementWithRefProps(super::impl_render::$name, props)
+                }
+            }
+
+            pub use build_element::build_element;
+        }
+    };
+    (
+        $(#$attr:tt)*
+        $vis:vis fn $name:ident ($ctx_arg:ident : _, $props_arg:ident : $($props_name:ident)? $(:: $props_p:ident)* $(,)?) {$($impl_code:tt)*}
+    ) => {
+        $crate::builder! {
+            $(#$attr)*
+            $vis struct $name($($props_name)? $(:: $props_p)*);
+
+            mod impl_render {
+                use super::super::*;
+                use $crate::hooks::core as __private_hooks_core;
+
+                #[$crate::hook(args_generics = "'render_ctx", hooks_core_path = "__private_hooks_core")]
+                pub fn $name<TypesDef: ?Sized + $($props_name)? $(:: $props_p)* ::ValidTypes>(
+                    $ctx_arg: $crate::ContextAndState<'render_ctx, Dom, dyn std::any::Any>,
+                    $props_arg: $($props_name)? $(:: $props_p)* ::Data<TypesDef>,
+                ) -> $crate::ContextAndState<'render_ctx, Dom, impl $crate::RenderState + 'static> {
+                    let $ctx_arg = $ctx_arg.downcast_state().unwrap();
+
+                    $($impl_code)*
+                }
+            }
+
+            mod build_element {
+                use super::super::*;
+                #[inline]
+                pub fn build_element<TypesDef: 'static + ?Sized + $($props_name)? $(:: $props_p)* ::ValidTypes>(
+                    super::Building(props): super::Building<TypesDef>,
+                ) -> $crate::HookElementWithOwnedProps<
+                    impl $crate::FnOnceOutputElementHookWithOwnedProps<
+                            $crate::Dom,
+                            $($props_name)? $(:: $props_p)* ::Data<TypesDef>,
+                            RenderState = impl $crate::RenderState + 'static,
+                        > + Copy
+                        + 'static,
+                        $($props_name)? $(:: $props_p)* ::Data<TypesDef>,
+                > {
+                    $crate::HookElementWithOwnedProps(super::impl_render::$name, props)
                 }
             }
 
