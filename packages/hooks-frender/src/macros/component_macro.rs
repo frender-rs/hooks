@@ -1,12 +1,20 @@
 #[macro_export]
 macro_rules! def_component {
-    ($vis:vis fn $name:ident () $body:tt ) => {
+    (
+        $(#$attr:tt)*
+        $vis:vis fn $name:ident () $body:tt
+    ) => {
         $crate::def_component! {
+            $(#$attr)*
             $vis fn $name (_ctx: _) $body
         }
     };
-    ($vis:vis fn $name:ident ($ctx_arg:tt : _ $(,)?) {$($impl_code:tt)*}) => {
+    (
+        $(#$attr:tt)*
+        $vis:vis fn $name:ident ($ctx_arg:tt : _ $(,)?) {$($impl_code:tt)*}
+    ) => {
         $crate::builder! {
+            $(#$attr)*
             $vis struct $name($crate::bg::Empty);
 
             mod impl_render {
@@ -36,8 +44,12 @@ macro_rules! def_component {
             }
         }
     };
-    ($vis:vis fn $name:ident ($ctx_arg:ident : _, $props_arg:ident : & $($props_name:ident)? $(:: $props_p:ident)* $(,)?) {$($impl_code:tt)*}) => {
+    (
+        $(#$attr:tt)*
+        $vis:vis fn $name:ident ($ctx_arg:ident : _, $props_arg:ident : & $($props_name:ident)? $(:: $props_p:ident)* $(,)?) {$($impl_code:tt)*}
+    ) => {
         $crate::builder! {
+            $(#$attr)*
             $vis struct $name($($props_name)? $(:: $props_p)*);
 
             mod impl_render {
