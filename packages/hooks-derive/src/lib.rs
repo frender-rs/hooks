@@ -16,7 +16,7 @@ pub fn component(args: TokenStream, input: TokenStream) -> TokenStream {
 
     let mut out = TokenStream::default();
     out.extend([
-        TokenTree::from(Ident::new("crate", Span::call_site())),
+        TokenTree::from(Ident::new("hooks_frender", Span::call_site())),
         Punct::new(':', Spacing::Joint).into(),
         Punct::new(':', Spacing::Alone).into(),
         Ident::new("def_component", Span::call_site()).into(),

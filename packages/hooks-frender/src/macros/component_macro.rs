@@ -24,7 +24,7 @@ macro_rules! def_component {
                 #[$crate::hook(args_generics = "'render_ctx", hooks_core_path = "__private_hooks_core")]
                 pub fn $name(
                     $ctx_arg: $crate::ContextAndState<'render_ctx, Dom, dyn std::any::Any>,
-                ) -> $crate::ContextAndState<'render_ctx, Dom, impl render::RenderState + 'static> {
+                ) -> $crate::ContextAndState<'render_ctx, Dom, impl $crate::RenderState + 'static> {
                     let $ctx_arg = $ctx_arg.downcast_state().unwrap();
 
                     $($impl_code)*
@@ -60,7 +60,7 @@ macro_rules! def_component {
                 pub fn $name<TypesDef: ?Sized + $($props_name)? $(:: $props_p)* ::ValidTypes>(
                     $ctx_arg: $crate::ContextAndState<'render_ctx, Dom, dyn std::any::Any>,
                     $props_arg: &$($props_name)? $(:: $props_p)* ::Data<TypesDef>,
-                ) -> $crate::ContextAndState<'render_ctx, Dom, impl render::RenderState + 'static> {
+                ) -> $crate::ContextAndState<'render_ctx, Dom, impl $crate::RenderState + 'static> {
                     let $ctx_arg = $ctx_arg.downcast_state().unwrap();
 
                     $($impl_code)*
