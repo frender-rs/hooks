@@ -14,6 +14,7 @@ wasm-bindgen = "0.2.83"
 wasm-bindgen-futures = "0.4.33"
 pin-project-lite = "0.2.9"
 futures-io = "0.3.25"
+html-escape = "0.2.13"
 
 [dependencies.futures-lite]
 version = "1.12.0"

@@ -111,23 +111,29 @@ pub mod ssr {
 
     use crate::render::{RenderState, SsrWriter};
 
-    struct StateInner<'a, W: AsyncWrite + Unpin> {
-        writer: SsrWriter<'a, W>,
+    struct StateInner<W: AsyncWrite + Unpin> {
+        writer: SsrWriter<W>,
         owned_buf: Cow<'static, [u8]>,
         written: usize,
     }
 
-    pub struct State<'a, W: AsyncWrite + Unpin>(Option<StateInner<'a, W>>);
+    pub struct State<W: AsyncWrite + Unpin>(Option<StateInner<W>>);
 
-    impl<'a, W: AsyncWrite + Unpin> State<'a, W> {
+    impl<W: AsyncWrite + Unpin> State<W> {
         #[inline]
         pub(super) fn update_render_state_with_str(
             &mut self,
             buf: impl Into<Cow<'static, str>>,
-            ctx: &mut crate::render::SsrContext<'a, W>,
+            ctx: &mut crate::render::SsrContext<W>,
         ) {
             self.0 = ctx.writer.take().map(|writer| {
                 let buf: Cow<str> = buf.into();
+                let escaped = html_escape::encode_safe(&buf);
+
+                let buf = match escaped {
+                    Cow::Borrowed(_) => buf,
+                    Cow::Owned(escaped) => Cow::Owned(escaped),
+                };
 
                 let owned_buf = match buf {
                     Cow::Borrowed(s) => Cow::Borrowed(s.as_bytes()),
@@ -163,7 +169,7 @@ pub mod ssr {
         Poll::Ready(Ok(()))
     }
 
-    impl<'a, W: AsyncWrite + Unpin> RenderState for State<'a, W> {
+    impl<W: AsyncWrite + Unpin> RenderState for State<W> {
         fn new_uninitialized() -> Self {
             Self(None)
         }
@@ -186,12 +192,12 @@ pub mod ssr {
             {
                 if writer.error.is_none() {
                     if let Err(err) = futures_lite::ready!(poll_write_all(
-                        Pin::new(writer.writer),
+                        Pin::new(&mut writer.writer),
                         cx,
                         owned_buf,
                         written
                     )) {
-                        *writer.error = Some(err)
+                        writer.error = Some(err)
                     }
                 }
             }
@@ -241,14 +247,10 @@ impl<S: Into<Cow<'static, str>>> UpdateRenderState<Dom> for StaticText<S> {
     }
 }
 
-impl<'a, W: AsyncWrite + Unpin> UpdateRenderState<SsrContext<'a, W>> for Cow<'_, str> {
-    type State = ssr::State<'a, W>;
+impl<W: AsyncWrite + Unpin> UpdateRenderState<SsrContext<W>> for Cow<'_, str> {
+    type State = ssr::State<W>;
 
-    fn update_render_state(
-        self,
-        ctx: &mut SsrContext<'a, W>,
-        state: std::pin::Pin<&mut Self::State>,
-    ) {
+    fn update_render_state(self, ctx: &mut SsrContext<W>, state: std::pin::Pin<&mut Self::State>) {
         match self {
             Cow::Borrowed(data) => data.update_render_state(ctx, state),
             Cow::Owned(data) => data.update_render_state(ctx, state),
@@ -256,45 +258,37 @@ impl<'a, W: AsyncWrite + Unpin> UpdateRenderState<SsrContext<'a, W>> for Cow<'_,
     }
 }
 
-impl<'a, W: AsyncWrite + Unpin> UpdateRenderState<SsrContext<'a, W>> for &str {
-    type State = ssr::State<'a, W>;
+impl<W: AsyncWrite + Unpin> UpdateRenderState<SsrContext<W>> for &str {
+    type State = ssr::State<W>;
 
     #[inline]
-    fn update_render_state(
-        self,
-        ctx: &mut SsrContext<'a, W>,
-        state: std::pin::Pin<&mut Self::State>,
-    ) {
+    fn update_render_state(self, ctx: &mut SsrContext<W>, state: std::pin::Pin<&mut Self::State>) {
         state
             .get_mut()
             .update_render_state_with_str(self.to_owned(), ctx)
     }
 }
 
-impl<'a, W: AsyncWrite + Unpin> UpdateRenderState<SsrContext<'a, W>> for String {
-    type State = ssr::State<'a, W>;
+impl<W: AsyncWrite + Unpin> UpdateRenderState<SsrContext<W>> for String {
+    type State = ssr::State<W>;
 
     #[inline]
-    fn update_render_state(
-        self,
-        ctx: &mut SsrContext<'a, W>,
-        state: std::pin::Pin<&mut Self::State>,
-    ) {
+    fn update_render_state(self, ctx: &mut SsrContext<W>, state: std::pin::Pin<&mut Self::State>) {
         state.get_mut().update_render_state_with_str(self, ctx)
     }
 }
 
-impl<'a, S: Into<Cow<'static, str>>, W: AsyncWrite + Unpin> UpdateRenderState<SsrContext<'a, W>>
+impl<S: Into<Cow<'static, str>>, W: AsyncWrite + Unpin> UpdateRenderState<SsrContext<W>>
     for StaticText<S>
 {
-    type State = ssr::State<'a, W>;
+    type State = ssr::State<W>;
 
     #[inline]
-    fn update_render_state(
-        self,
-        ctx: &mut SsrContext<'a, W>,
-        state: std::pin::Pin<&mut Self::State>,
-    ) {
+    fn update_render_state(self, ctx: &mut SsrContext<W>, state: std::pin::Pin<&mut Self::State>) {
         state.get_mut().update_render_state_with_str(self.0, ctx);
     }
+}
+
+crate::impl_render_dom_or_ssr! {
+    [S: Into<Cow<'static, str>>] for StaticText<S>
 }

@@ -1,5 +1,4 @@
 mod either;
-mod fn_once;
 mod option;
 mod wrappers;
 

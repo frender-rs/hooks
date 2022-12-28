@@ -1,22 +1,29 @@
 use std::{any::Any, pin::Pin};
 
+use futures_io::AsyncWrite;
 use hooks::{Hook, HookPollNextUpdate, LazyPinnedHook};
+
+use crate::{HookContext, SsrContext};
 
 use super::{ContextAndState, Dom, RenderState, UpdateRenderState};
 
 #[derive(Clone, Copy, Debug)]
-pub struct HookElementWithRefProps<H, Props>(pub H, pub Props);
+pub struct HookElementWithRefProps<HDom, HSsr, Props> {
+    pub with_dom: HDom,
+    pub with_ssr: HSsr,
+    pub props: Props,
+}
 
 #[derive(Clone, Copy, Debug)]
 pub struct HookElementPollTillEnd<E>(E);
 
 pin_project_lite::pin_project! {
-    pub struct HookStateWithRefProps<H: HookPollNextUpdate, S, Props> {
+    pub struct HookStateWithRefProps<H: HookPollNextUpdate, Ctx, S, Props> {
         #[pin]
         hook: LazyPinnedHook<H>,
         #[pin]
         render_state: S,
-        dom_and_props: Option<(Dom, Props)>,
+        ctx_and_props: Option<(Ctx, Props)>,
     }
 }
 
@@ -29,18 +36,19 @@ pin_project_lite::pin_project! {
     }
 }
 
-impl<H, S: RenderState + 'static, Props> RenderState for HookStateWithRefProps<H, S, Props>
+impl<H, Ctx: HookContext, S: RenderState + 'static, Props> RenderState
+    for HookStateWithRefProps<H, Ctx, S, Props>
 where
     H: for<'a, 'props> Hook<
-        (ContextAndState<'a, Dom, dyn Any>, &'props Props),
-        Value = ContextAndState<'a, Dom, S>,
+        (ContextAndState<'a, Ctx, dyn Any>, &'props Props),
+        Value = ContextAndState<'a, Ctx, S>,
     >,
 {
     fn new_uninitialized() -> Self {
         Self {
             hook: Default::default(),
             render_state: S::new_uninitialized(),
-            dom_and_props: None,
+            ctx_and_props: None,
         }
     }
 
@@ -67,9 +75,9 @@ where
             ) => std::task::Poll::Pending,
             _ => {
                 if let (Some(hook), Some((context, props))) =
-                    (this.hook.pin_project_hook(), this.dom_and_props.as_mut())
+                    (this.hook.pin_project_hook(), this.ctx_and_props.as_mut())
                 {
-                    context.with_position(|context| {
+                    Ctx::with_context(context, |context| {
                         hook.use_hook((ContextAndState::new(context, this.render_state), props));
                     });
                     cx.waker().wake_by_ref();
@@ -119,8 +127,8 @@ where
     }
 }
 
-impl<F, H, S: RenderState + 'static, Props> UpdateRenderState<Dom>
-    for HookElementPollTillEnd<HookElementWithRefProps<F, Props>>
+impl<F, HSsr, H, S: RenderState + 'static, Props> UpdateRenderState<Dom>
+    for HookElementPollTillEnd<HookElementWithRefProps<F, HSsr, Props>>
 where
     F: FnOnce() -> H,
     H: for<'a, 'props> Hook<
@@ -128,18 +136,18 @@ where
         Value = ContextAndState<'a, Dom, S>,
     >,
 {
-    type State = HookStateWithRefProps<H, S, Props>;
+    type State = HookStateWithRefProps<H, Dom, S, Props>;
 
     fn update_render_state(self, ctx: &mut Dom, state: Pin<&mut Self::State>) {
         let state = state.project();
-        let (_, props) = state.dom_and_props.insert((ctx.clone(), self.0 .1));
-        let hook = state.hook.use_hook((self.0 .0,));
+        let (_, props) = state.ctx_and_props.insert((ctx.clone(), self.0.props));
+        let hook = state.hook.use_hook((self.0.with_dom,));
         hook.use_hook((ContextAndState::new(ctx, state.render_state), props));
     }
 }
 
-impl<F, H, S: RenderState + 'static, Props> UpdateRenderState<Dom>
-    for HookElementWithRefProps<F, Props>
+impl<F, FSsr, H, S: RenderState + 'static, Props> UpdateRenderState<Dom>
+    for HookElementWithRefProps<F, FSsr, Props>
 where
     F: FnOnce() -> H,
     H: for<'a, 'props> Hook<
@@ -151,8 +159,46 @@ where
 
     fn update_render_state(self, ctx: &mut Dom, state: Pin<&mut Self::State>) {
         let state = state.project();
-        let hook = state.hook.use_hook((self.0,));
-        hook.use_hook((ContextAndState::new(ctx, state.render_state), &self.1));
+        let hook = state.hook.use_hook((self.with_dom,));
+        hook.use_hook((ContextAndState::new(ctx, state.render_state), &self.props));
+    }
+}
+
+impl<F, HDom, H, S: RenderState + 'static, Props, W: AsyncWrite + Unpin>
+    UpdateRenderState<SsrContext<W>>
+    for HookElementPollTillEnd<HookElementWithRefProps<HDom, F, Props>>
+where
+    F: FnOnce() -> H,
+    H: for<'a, 'props> Hook<
+        (ContextAndState<'a, SsrContext<W>, dyn Any>, &'props Props),
+        Value = ContextAndState<'a, SsrContext<W>, S>,
+    >,
+{
+    type State = HookStateWithRefProps<H, SsrContext<W>, S, Props>;
+
+    fn update_render_state(self, ctx: &mut SsrContext<W>, state: Pin<&mut Self::State>) {
+        let state = state.project();
+        let (_, props) = state.ctx_and_props.insert((ctx.take(), self.0.props));
+        let hook = state.hook.use_hook((self.0.with_ssr,));
+        hook.use_hook((ContextAndState::new(ctx, state.render_state), props));
+    }
+}
+
+impl<F, FSsr, H, S: RenderState + 'static, Props, W: AsyncWrite + Unpin>
+    UpdateRenderState<SsrContext<W>> for HookElementWithRefProps<F, FSsr, Props>
+where
+    F: FnOnce() -> H,
+    H: for<'a, 'props> Hook<
+        (ContextAndState<'a, SsrContext<W>, dyn Any>, &'props Props),
+        Value = ContextAndState<'a, SsrContext<W>, S>,
+    >,
+{
+    type State = HookStatePollOnce<H, S>;
+
+    fn update_render_state(self, ctx: &mut SsrContext<W>, state: Pin<&mut Self::State>) {
+        let state = state.project();
+        let hook = state.hook.use_hook((self.with_dom,));
+        hook.use_hook((ContextAndState::new(ctx, state.render_state), &self.props));
     }
 }
 

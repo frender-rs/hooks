@@ -11,16 +11,20 @@ impl<'a, Ctx, State: ?Sized> ContextAndState<'a, Ctx, State> {
     pub fn new(context: &'a mut Ctx, state: Pin<&'a mut State>) -> Self {
         Self { context, state }
     }
-
-    #[inline]
-    pub fn render<E: UpdateRenderState<Ctx, State = State>>(mut self, element: E) -> Self {
-        element.update_render_state(self.context, self.state.as_mut());
-
-        self
-    }
 }
 
 impl<'a, Ctx> ContextAndState<'a, Ctx, dyn Any> {
+    #[inline]
+    pub fn render<E: UpdateRenderState<Ctx>>(self, element: E) -> ContextAndState<'a, Ctx, E::State>
+    where
+        E::State: 'static,
+    {
+        let mut this = self.downcast_state::<E::State>().unwrap();
+        element.update_render_state(this.context, this.state.as_mut());
+
+        this
+    }
+
     pub fn downcast_state<S: Any>(self) -> Option<ContextAndState<'a, Ctx, S>> {
         let Self { context, state } = self;
 

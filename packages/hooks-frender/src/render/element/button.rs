@@ -63,20 +63,20 @@ pub mod ssr {
 
     use crate::render::{RenderState, SsrWriter};
 
-    struct StateInner<'a, W: AsyncWrite + Unpin> {
-        writer: SsrWriter<'a, W>,
+    struct StateInner<W: AsyncWrite + Unpin> {
+        writer: SsrWriter<W>,
         owned_buf: Cow<'static, [u8]>,
         written: usize,
     }
 
-    pub struct State<'a, W: AsyncWrite + Unpin>(Option<StateInner<'a, W>>);
+    pub struct State<W: AsyncWrite + Unpin>(Option<StateInner<W>>);
 
-    impl<'a, W: AsyncWrite + Unpin> State<'a, W> {
+    impl<W: AsyncWrite + Unpin> State<W> {
         #[inline]
         pub(super) fn update_render_state_with_str(
             &mut self,
             buf: impl Into<Cow<'static, str>>,
-            ctx: &mut crate::render::SsrContext<'a, W>,
+            ctx: &mut crate::render::SsrContext<W>,
         ) {
             self.0 = ctx.writer.take().map(|writer| {
                 let buf: Cow<str> = buf.into();
@@ -115,7 +115,7 @@ pub mod ssr {
         Poll::Ready(Ok(()))
     }
 
-    impl<'a, W: AsyncWrite + Unpin> RenderState for State<'a, W> {
+    impl<W: AsyncWrite + Unpin> RenderState for State<W> {
         fn new_uninitialized() -> Self {
             Self(None)
         }
@@ -138,12 +138,12 @@ pub mod ssr {
             {
                 if writer.error.is_none() {
                     if let Err(err) = futures_lite::ready!(poll_write_all(
-                        Pin::new(writer.writer),
+                        Pin::new(&mut writer.writer),
                         cx,
                         owned_buf,
                         written
                     )) {
-                        *writer.error = Some(err)
+                        writer.error = Some(err)
                     }
                 }
             }
@@ -186,17 +186,24 @@ where
     }
 }
 
-impl<'a, W: AsyncWrite + Unpin, TypeDefs: ?Sized + button::Types>
-    UpdateRenderState<SsrContext<'a, W>> for button::Data<TypeDefs>
+impl<W: AsyncWrite + Unpin, TypeDefs: ?Sized + button::Types> UpdateRenderState<SsrContext<W>>
+    for button::Data<TypeDefs>
+where
+    TypeDefs::children: UpdateRenderState<SsrContext<W>>,
+    TypeDefs::on_click: UpdateDomEventListener<events::OnClick>,
 {
-    type State = ssr::State<'a, W>;
+    type State = ssr::State<W>;
 
     #[inline]
-    fn update_render_state(
-        self,
-        ctx: &mut SsrContext<'a, W>,
-        state: std::pin::Pin<&mut Self::State>,
-    ) {
+    fn update_render_state(self, ctx: &mut SsrContext<W>, state: std::pin::Pin<&mut Self::State>) {
         // state.get_mut().update_render_state_with_str(self.0, ctx);
+        // todo!()
     }
 }
+
+// crate::impl_render_dom_or_ssr! {
+//     [TypeDefs: ?Sized + button::Types] for button::Data<TypeDefs>
+//     where
+//         TypeDefs::children: UpdateRenderState<Dom>,
+//         TypeDefs::on_click: UpdateDomEventListener<events::OnClick>,
+// }

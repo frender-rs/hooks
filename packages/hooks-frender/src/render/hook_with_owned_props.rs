@@ -1,14 +1,21 @@
 use std::{any::Any, pin::Pin};
 
+use futures_io::AsyncWrite;
 use hooks::Hook;
+
+use crate::SsrContext;
 
 use super::{ContextAndState, Dom, HookStatePollOnce, RenderState, UpdateRenderState};
 
 #[derive(Clone, Copy, Debug)]
-pub struct HookElementWithOwnedProps<H, Props>(pub H, pub Props);
+pub struct HookElementWithOwnedProps<HDom, HSsr, Props> {
+    pub with_dom: HDom,
+    pub with_ssr: HSsr,
+    pub props: Props,
+}
 
-impl<F, H, S: RenderState + 'static, Props> UpdateRenderState<Dom>
-    for HookElementWithOwnedProps<F, Props>
+impl<F, F2, H, S: RenderState + 'static, Props> UpdateRenderState<Dom>
+    for HookElementWithOwnedProps<F, F2, Props>
 where
     F: FnOnce() -> H,
     H: for<'a> Hook<
@@ -20,8 +27,26 @@ where
 
     fn update_render_state(self, ctx: &mut Dom, state: Pin<&mut Self::State>) {
         let state = state.project();
-        let hook = state.hook.use_hook((self.0,));
-        hook.use_hook((ContextAndState::new(ctx, state.render_state), self.1));
+        let hook = state.hook.use_hook((self.with_dom,));
+        hook.use_hook((ContextAndState::new(ctx, state.render_state), self.props));
+    }
+}
+
+impl<F, F1, H, S: RenderState + 'static, Props, W: AsyncWrite + Unpin>
+    UpdateRenderState<SsrContext<W>> for HookElementWithOwnedProps<F1, F, Props>
+where
+    F: FnOnce() -> H,
+    H: for<'a> Hook<
+        (ContextAndState<'a, SsrContext<W>, dyn Any>, Props),
+        Value = ContextAndState<'a, SsrContext<W>, S>,
+    >,
+{
+    type State = HookStatePollOnce<H, S>;
+
+    fn update_render_state(self, ctx: &mut SsrContext<W>, state: Pin<&mut Self::State>) {
+        let state = state.project();
+        let hook = state.hook.use_hook((self.with_ssr,));
+        hook.use_hook((ContextAndState::new(ctx, state.render_state), self.props));
     }
 }
 

@@ -9,6 +9,11 @@ builder! {
 }
 
 #[component]
+pub fn MyComp(ctx: _, props: CounterWithInitialValueProps) {
+    ctx.render(props.initial_value.as_some().map(ToString::to_string))
+}
+
+#[component]
 pub fn CounterWithInitialValue(ctx: _, props: &CounterWithInitialValueProps) {
     let (state, updater) =
         hooks::use_state_with(|| props.initial_value.as_some().copied().unwrap_or(4));
