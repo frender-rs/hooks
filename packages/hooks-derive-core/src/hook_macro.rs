@@ -11,6 +11,7 @@ use crate::utils::{
     empty_or_trailing::AutoEmptyOrTrailing,
     group::{angled, parened},
     map::map_to_tokens,
+    path_or_lit::PathOrLit,
     phantom::{make_phantom_or_ref, PhantomOfTy},
     repeat::Repeat,
     type_generics::TypeGenericsWithoutBraces,
@@ -24,7 +25,7 @@ pub type GenericParams = syn::punctuated::Punctuated<syn::GenericParam, syn::Tok
 #[darling(default)]
 pub struct HookArgs {
     /// Defaults to `::hooks::core`
-    pub hooks_core_path: Option<syn::Path>,
+    pub hooks_core_path: Option<PathOrLit<syn::Path>>,
 
     /// Defaults to tuple of all lifetime generics except `'hook`
     /// and all type generics.
@@ -72,13 +73,16 @@ impl HookArgs {
     ) -> Option<darling::Error> {
         let mut errors = darling::error::Accumulator::default();
 
-        let hooks_core_path = self.hooks_core_path.unwrap_or_else(|| syn::Path {
-            leading_colon: Some(Default::default()),
-            segments: syn::punctuated::Punctuated::from_iter([
-                syn::PathSegment::from(syn::Ident::new("hooks", Span::call_site())),
-                syn::PathSegment::from(syn::Ident::new("core", Span::call_site())),
-            ]),
-        });
+        let hooks_core_path = self.hooks_core_path.map_or_else(
+            || syn::Path {
+                leading_colon: Some(Default::default()),
+                segments: syn::punctuated::Punctuated::from_iter([
+                    syn::PathSegment::from(syn::Ident::new("hooks", Span::call_site())),
+                    syn::PathSegment::from(syn::Ident::new("core", Span::call_site())),
+                ]),
+            },
+            PathOrLit::unwrap,
+        );
 
         let sig = &mut item_fn.sig;
 
