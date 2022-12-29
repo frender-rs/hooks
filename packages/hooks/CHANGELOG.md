@@ -1,3 +1,16 @@
+# [1.0.0-alpha.19](https://github.com/frender-rs/hooks/compare/hooks-v1.0.0-alpha.18...hooks-v1.0.0-alpha.19) (2022-12-29)
+
+
+### Bug Fixes
+
+* hooks disabling derive feature not working ([3bd9465](https://github.com/frender-rs/hooks/commit/3bd94653f8b92e449703e74edb7ae3a3320f34da))
+
+
+### Features
+
+* export impl_hook macro ([444477d](https://github.com/frender-rs/hooks/commit/444477deee1fdb23dabe169055fde6d4586a9aa6))
+* use_mut_default ([c4097b3](https://github.com/frender-rs/hooks/commit/c4097b323b10c38d1fecd22504fda0500533c6f7))
+
 # [1.0.0-alpha.18](https://github.com/frender-rs/hooks/compare/hooks-v1.0.0-alpha.17...hooks-v1.0.0-alpha.18) (2022-11-23)
 
 
