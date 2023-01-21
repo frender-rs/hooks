@@ -1,3 +1,10 @@
+# [1.0.0-alpha.20](https://github.com/frender-rs/hooks/compare/hooks-v1.0.0-alpha.19...hooks-v1.0.0-alpha.20) (2023-01-21)
+
+
+### Features
+
+* allow nested meta in hooks_core_path of hook attribute ([ed8b926](https://github.com/frender-rs/hooks/commit/ed8b92645d03517dcd765dd2e582991b5565ec07))
+
 # [1.0.0-alpha.19](https://github.com/frender-rs/hooks/compare/hooks-v1.0.0-alpha.18...hooks-v1.0.0-alpha.19) (2022-12-29)
 
 
