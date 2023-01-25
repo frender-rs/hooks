@@ -774,7 +774,33 @@ fn replace_impl_trait_in_type(
                 *ty = new_ty;
             }
         }
-        syn::Type::Path(_) => {
+        syn::Type::Path(tp) => {
+            if let Some(qself) = &mut tp.qself {
+                replace_impl_trait_in_type(&mut qself.ty, f);
+            }
+            for seg in tp.path.segments.iter_mut() {
+                match &mut seg.arguments {
+                    syn::PathArguments::None => {}
+                    syn::PathArguments::AngleBracketed(a) => {
+                        for arg in a.args.iter_mut() {
+                            match arg {
+                                syn::GenericArgument::Lifetime(_) => {}
+                                syn::GenericArgument::Type(ty) => {
+                                    replace_impl_trait_in_type(ty, f);
+                                }
+                                syn::GenericArgument::Const(_) => {}
+                                syn::GenericArgument::Binding(b) => {
+                                    replace_impl_trait_in_type(&mut b.ty, f);
+                                }
+                                syn::GenericArgument::Constraint(_) => {}
+                            }
+                        }
+                    }
+                    syn::PathArguments::Parenthesized(_) => {
+                        // TODO: resolve `impl Trait` in path like `Fn(impl Trait) -> impl Trait`
+                    }
+                }
+            }
             // TODO: resolve `impl Trait` in path like `Struct<impl Trait>`
         }
         syn::Type::Ptr(ptr) => replace_impl_trait_in_type(&mut ptr.elem, f),
