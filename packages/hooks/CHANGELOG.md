@@ -1,3 +1,11 @@
+# [1.0.0-alpha.21](https://github.com/frender-rs/hooks/compare/hooks-v1.0.0-alpha.20...hooks-v1.0.0-alpha.21) (2023-01-25)
+
+
+### Features
+
+* hook macro now allows impl Trait in return type path ([26894d2](https://github.com/frender-rs/hooks/commit/26894d2697ad267b3fa8c959c81b99ae6e69377f))
+* impl_hook macro now allows lifetimes for args ([3130f3b](https://github.com/frender-rs/hooks/commit/3130f3be491345dd82363a23c0cf2ea9b182cb7c))
+
 # [1.0.0-alpha.20](https://github.com/frender-rs/hooks/compare/hooks-v1.0.0-alpha.19...hooks-v1.0.0-alpha.20) (2023-01-21)
 
 
