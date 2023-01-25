@@ -27,6 +27,6 @@ pub use hooks_core::{
     HookLifetime, HookPollNextUpdate, HookPollNextUpdateExt,
 };
 
-pub use hooks_derive::{component, hook};
+pub use hooks_derive::hook;
 
 pub(crate) mod utils;

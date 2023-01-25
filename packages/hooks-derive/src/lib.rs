@@ -7,26 +7,6 @@ use hooks_derive_core::{
     syn::{parse_macro_input, AttributeArgs, ItemFn},
 };
 
-// TODO: move to a new crate
-#[proc_macro_attribute]
-pub fn component(args: TokenStream, input: TokenStream) -> TokenStream {
-    use proc_macro::{Delimiter, Group, Ident, Punct, Spacing, Span, TokenTree};
-
-    let attr_args = parse_macro_input!(args as AttributeArgs);
-
-    let mut out = TokenStream::default();
-    out.extend([
-        TokenTree::from(Ident::new("hooks_frender", Span::call_site())),
-        Punct::new(':', Spacing::Joint).into(),
-        Punct::new(':', Spacing::Alone).into(),
-        Ident::new("def_component", Span::call_site()).into(),
-        Punct::new('!', Spacing::Alone).into(),
-        Group::new(Delimiter::Brace, input).into(),
-    ]);
-
-    out
-}
-
 #[proc_macro_attribute]
 pub fn hook(args: TokenStream, input: TokenStream) -> TokenStream {
     let attr_args = parse_macro_input!(args as AttributeArgs);
