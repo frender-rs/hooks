@@ -43,6 +43,7 @@ jobs:
         run: |
           cargo fmt --all --check
           cargo check --locked --all-targets
+          cargo check -p hooks --no-default-features --locked
           cargo clippy --locked --all-targets -- --deny warnings
           cargo test
 

@@ -27,6 +27,7 @@ pub use hooks_core::{
     HookLifetime, HookPollNextUpdate, HookPollNextUpdateExt,
 };
 
+#[cfg(feature = "derive")]
 pub use hooks_derive::hook;
 
 pub(crate) mod utils;

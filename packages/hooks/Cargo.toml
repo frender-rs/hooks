@@ -1,6 +1,6 @@
 [package]
 name = "hooks"
-version = "1.0.0-alpha.18"
+version = "1.0.0-alpha.20"
 edition = "2021"
 description = "Compile-time, async hooks"
 license = "MIT"
@@ -10,8 +10,8 @@ repository = "https://github.com/frender-rs/hooks"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-hooks-derive = { path = "../hooks-derive", version = "1.0.0-alpha.6", optional = true }
-hooks-core = { path = "../hooks-core", version = "1.0.0-alpha.8", default-features = false }
+hooks-derive = { path = "../hooks-derive", version = "1.0.0-alpha.7", optional = true }
+hooks-core = { path = "../hooks-core", version = "1.0.0-alpha.9", default-features = false }
 pin-project-lite = "0.2.9"
 smallvec = { version = "1.10.0", features = ["const_generics"] }
 

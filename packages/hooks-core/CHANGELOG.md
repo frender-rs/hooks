@@ -1,3 +1,10 @@
+# [1.0.0-alpha.9](https://github.com/frender-rs/hooks/compare/hooks-core-v1.0.0-alpha.8...hooks-core-v1.0.0-alpha.9) (2022-12-29)
+
+
+### Features
+
+* export impl_hook macro ([444477d](https://github.com/frender-rs/hooks/commit/444477deee1fdb23dabe169055fde6d4586a9aa6))
+
 # [1.0.0-alpha.8](https://github.com/frender-rs/hooks/compare/hooks-core-v1.0.0-alpha.7...hooks-core-v1.0.0-alpha.8) (2022-11-23)
 
 
