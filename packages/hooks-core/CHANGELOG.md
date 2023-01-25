@@ -1,3 +1,10 @@
+# [1.0.0-alpha.10](https://github.com/frender-rs/hooks/compare/hooks-core-v1.0.0-alpha.9...hooks-core-v1.0.0-alpha.10) (2023-01-25)
+
+
+### Features
+
+* impl_hook macro now allows lifetimes for args ([3130f3b](https://github.com/frender-rs/hooks/commit/3130f3be491345dd82363a23c0cf2ea9b182cb7c))
+
 # [1.0.0-alpha.9](https://github.com/frender-rs/hooks/compare/hooks-core-v1.0.0-alpha.8...hooks-core-v1.0.0-alpha.9) (2022-12-29)
 
 
