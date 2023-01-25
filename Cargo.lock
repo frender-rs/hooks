@@ -300,7 +300,7 @@ dependencies = [
 
 [[package]]
 name = "hooks-derive"
-version = "1.0.0-alpha.7"
+version = "1.0.0-alpha.8"
 dependencies = [
  "hooks-derive-core",
 ]
