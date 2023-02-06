@@ -1,6 +1,10 @@
 [workspace]
 members = [
-    "packages/*"
+    "packages/hooks-core",
+    "packages/hooks-derive-core",
+    "packages/hooks-derive",
+    "packages/hooks",
+    "packages/hooks-test",
 ]
 
 [profile.dev.package.insta]
