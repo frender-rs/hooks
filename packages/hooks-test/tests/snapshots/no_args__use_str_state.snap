@@ -32,7 +32,7 @@ fn use_str_state() -> impl ::hooks::core::Hook<
             >::use_hook(__hooks_hook_0, (String::new,));
             updater
                 .replace_maybe_with_fn_pointer(|old| {
-                    if old.len() < 2 { Some(format!("{} ", old)) } else { None }
+                    if old.len() < 2 { Some(format!("{old} ")) } else { None }
                 });
             state
         },
