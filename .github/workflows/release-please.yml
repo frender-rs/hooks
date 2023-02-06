@@ -30,10 +30,12 @@ jobs:
           default-branch: alpha
       - name: Publish
         run: |
-          cargo publish -p hooks-core
-          cargo publish -p hooks-derive-core
-          cargo publish -p hooks-derive
-          cargo publish -p hooks
+          echo $PATHS_RELEASED | while read -r $dir_path
+          do
+            echo "publish $dir_path/Cargo.toml"
+            cargo publish --manifest-path "$dir_path/Cargo.toml"
+          done
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+          PATHS_RELEASED: ${{ fromJSON(steps.release.outputs.paths_released).join('\n') }}
         if: ${{ steps.release.outputs.releases_created }}
