@@ -32,6 +32,9 @@ jobs:
         run: |
           echo $PATHS_RELEASED | while read -r $dir_path
           do
+            if [[ $dir_path -ef packages/hooks-test ]]; then
+              continue
+            fi
             echo "publish $dir_path/Cargo.toml"
             cargo publish --manifest-path "$dir_path/Cargo.toml"
           done
