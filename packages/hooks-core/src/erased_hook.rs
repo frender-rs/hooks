@@ -86,6 +86,7 @@ impl<Args, V: ?Sized + for<'hook> ValueGat<'hook>> Hook<Args>
 /// Use this macro to write [`dyn ErasedHook`](ErasedHook) easily.
 ///
 /// ```
+/// # extern crate hooks_dev as hooks;
 /// # use hooks_core::{ dyn_hook, DynNonLendingHook };
 /// # use hooks::{hook, SharedStateData, use_shared_state, use_effect, use_state};
 /// let _: Box<dyn_hook![(i32) -> &'hook SharedStateData<i32>]> = Box::new(use_shared_state());

@@ -14,7 +14,7 @@ pin-project-lite = "0.2.9"
 futures-core = { version = "0.3.25", optional = true }
 
 [dev-dependencies]
-hooks = { path = "../hooks" }
+hooks_dev = { path = "../hooks", package = "hooks" }
 
 [features]
 default = ["futures-core"]

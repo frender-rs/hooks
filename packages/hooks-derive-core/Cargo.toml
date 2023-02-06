@@ -16,7 +16,7 @@ syn = "1.0.102"
 darling = "0.14.1"
 
 [dev-dependencies]
-hooks = { path = "../hooks" }
+hooks_dev = { path = "../hooks", package = "hooks" }
 
 [features]
 extra-traits = []

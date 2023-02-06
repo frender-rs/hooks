@@ -77,6 +77,7 @@ pub trait HookPollNextUpdate {
 /// With `hook` macro, we can do this easily.
 ///
 /// ```
+/// # extern crate hooks_dev as hooks;
 /// # use hooks::{use_effect, hook};
 ///
 /// /// Print debug on `value` change.

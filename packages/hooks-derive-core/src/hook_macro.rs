@@ -38,6 +38,7 @@ pub struct HookArgs {
     /// `(&'a (), &'b (), PhantomData<T>)`
     ///
     /// ```
+    /// # extern crate hooks_dev as hooks;
     /// # use std::marker::PhantomData;
     /// # use hooks::{hook, HookBounds};
     ///
