@@ -12,16 +12,21 @@ pub struct DetectedHookCall {
     pub expr_call: syn::ExprCall,
 }
 
+/// `ty_no_data` defaults to `_`
 pub fn detected_hooks_to_tokens(
     mut used_hooks: Vec<DetectedHookCall>,
     hooks_core_path: impl ToTokens,
     expr_no_data: TokenStream,
+    ty_no_data: Option<TokenStream>,
     span: Span,
 ) -> DetectedHooksTokens {
     match used_hooks.len() {
         0 => DetectedHooksTokens {
             data_expr: expr_no_data,
-            fn_arg_data_pat: quote! {_: ::core::pin::Pin<&mut _>},
+            fn_arg_data_pat: {
+                let ty_no_data = ty_no_data.unwrap_or_else(|| quote!(_));
+                quote! {_: ::core::pin::Pin<&mut #ty_no_data>}
+            },
             fn_stmts_extract_data: None,
         },
         1 => {

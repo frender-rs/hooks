@@ -372,7 +372,13 @@ impl HookArgs {
             data_expr: expr_hooks_data,
             fn_arg_data_pat: arg_hooks_data,
             fn_stmts_extract_data: impl_extract_hooks_data,
-        } = detected_hooks_to_tokens(used_hooks, &hooks_core_path, quote!(()), sig.fn_token.span);
+        } = detected_hooks_to_tokens(
+            used_hooks,
+            &hooks_core_path,
+            quote!(()),
+            Some(quote!(())),
+            sig.fn_token.span,
+        );
 
         let (args_generics_for_hook_lifetime_eot, stmt_ret) = if args_lifetimes_empty {
             let stmt_ret: syn::Expr = parse_quote_spanned! { span_fn_name =>
