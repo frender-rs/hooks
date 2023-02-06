@@ -1,0 +1,38 @@
+on:
+  push:
+    branches:
+      - alpha
+name: release-please
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - name: Test
+        run: |
+          cargo fmt --all --check
+          cargo check --locked --all-targets
+          cargo check -p hooks --no-default-features --locked
+          cargo clippy --locked --all-targets -- --deny warnings
+          cargo test
+      - uses: google-github-actions/release-please-action@v3
+        with:
+          command: manifest
+      - name: Publish
+        run: |
+          cargo publish -p hooks-core
+          cargo publish -p hooks-derive-core
+          cargo publish -p hooks-derive
+          cargo publish -p hooks
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        if: ${{ steps.release.outputs.release_created }}

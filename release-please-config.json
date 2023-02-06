@@ -1,0 +1,5 @@
+{
+  "plugins": ["cargo-workspace"],
+  "release-type": "rust",
+  "prerelease": true
+}
