@@ -1,4 +1,10 @@
 {
+  "packages": {
+    "packages/hooks-core": {},
+    "packages/hooks-derive-core": {},
+    "packages/hooks-derive": {},
+    "packages/hooks": {}
+  },
   "plugins": ["cargo-workspace"],
   "release-type": "rust",
   "prerelease": true
