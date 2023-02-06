@@ -27,6 +27,7 @@ jobs:
       - uses: google-github-actions/release-please-action@v3
         with:
           command: manifest
+          default-branch: alpha
       - name: Publish
         run: |
           cargo publish -p hooks-core
