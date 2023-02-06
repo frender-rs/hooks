@@ -37,5 +37,5 @@ jobs:
           done
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
-          PATHS_RELEASED: ${{ join(fromJSON(steps.release.outputs.paths_released), '\n') }}
+          PATHS_RELEASED: ${{ join(fromJSON(steps.release.outputs.paths_released || '[]'), '\n') }}
         if: ${{ steps.release.outputs.releases_created }}
