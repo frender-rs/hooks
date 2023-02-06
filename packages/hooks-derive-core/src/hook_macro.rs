@@ -358,7 +358,7 @@ impl HookArgs {
                 let paren_token = *e.paren_token;
 
                 let idx = used_hooks_idents.len();
-                let ident = syn::Ident::new(&format!("__hooks_hook_{}", idx), e.func_path.span());
+                let ident = syn::Ident::new(&format!("__hooks_hook_{idx}"), e.func_path.span());
 
                 used_hooks_idents.push(ident.clone());
 

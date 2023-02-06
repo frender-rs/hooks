@@ -207,7 +207,7 @@ fn one_state() {
 
             updater.replace_maybe_with_fn_pointer(|old| {
                 if old.len() < 2 {
-                    Some(format!("{} ", old))
+                    Some(format!("{old} "))
                 } else {
                     None
                 }

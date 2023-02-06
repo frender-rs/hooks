@@ -22,7 +22,7 @@ pub fn auto_fill_lifetimes(
     for ty in args_types.iter_mut() {
         process_top_level_ref(ty, |tr| {
             if tr.lifetime.is_none() {
-                let lt = format!("'hooks_auto_lifetime_{}", index);
+                let lt = format!("'hooks_auto_lifetime_{index}");
                 index += 1;
 
                 let lt = syn::Lifetime::new(&lt, tr.and_token.span);
