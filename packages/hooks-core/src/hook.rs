@@ -387,7 +387,7 @@ pub mod v2 {
     pub trait UpdateHookUninitialized: UpdateHook {
         type Uninitialized: HookPollNextUpdate + Default;
 
-        fn hook(self, hook: Pin<&mut Self::Uninitialized>) -> <Self::Hook as Hook>::Value<'_>;
+        fn h(self, hook: Pin<&mut Self::Uninitialized>) -> <Self::Hook as Hook>::Value<'_>;
     }
 
     pub trait HookExt: Hook {
@@ -517,7 +517,7 @@ pub mod v2 {
         {
             type Uninitialized = FnHook<InnerHook, Option<U>>;
 
-            fn hook(self, hook: Pin<&mut Self::Uninitialized>) -> <Self::Hook as Hook>::Value<'_> {
+            fn h(self, hook: Pin<&mut Self::Uninitialized>) -> <Self::Hook as Hook>::Value<'_> {
                 let hook = hook.project();
                 let use_hook = hook.use_hook.insert(self.0);
                 use_hook.call_mut_with_one_arg(hook.inner_hook)

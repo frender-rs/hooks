@@ -151,7 +151,7 @@ mod tests {
 
     #[test]
     fn state_2_v2() {
-        use hooks_core::hook;
+        use hooks_core::h;
 
         struct StateUninitialized<'a, T, const N: usize = STAGING_STATES_DEFAULT_STACK_COUNT> {
             current_state: Option<T>,
@@ -212,7 +212,7 @@ mod tests {
         impl<T, const N: usize> UpdateHookUninitialized for UseState<T, N> {
             type Uninitialized = StateUninitialized<'static, T, N>;
 
-            fn hook(
+            fn h(
                 self,
                 hook: std::pin::Pin<&mut Self::Uninitialized>,
             ) -> <Self::Hook as Hook>::Value<'_> {
@@ -225,7 +225,7 @@ mod tests {
         impl<T, F: FnOnce() -> T, const N: usize> UpdateHookUninitialized for UseStateWith<F, N> {
             type Uninitialized = StateUninitialized<'static, T, N>;
 
-            fn hook(
+            fn h(
                 self,
                 hook: std::pin::Pin<&mut Self::Uninitialized>,
             ) -> <Self::Hook as Hook>::Value<'_> {
@@ -249,14 +249,14 @@ mod tests {
 
         fn_hook!(
             fn use_state_2() -> (i32, i32) {
-                let (state_1, updater_1) = hook!(use_state(1));
-                let (state_2, updater_2) = hook!(use_state_with(|| *state_1 + 1));
+                let (state_1, updater_1) = h!(use_state(1));
+                let (state_2, updater_2) = h!(use_state_with(|| *state_1 + 1));
 
                 let ret = (*state_1, *state_2);
 
                 let updater_1 = updater_1.clone();
                 let updater_2 = updater_2.clone();
-                hook![crate::effect::v2::use_effect(
+                h![crate::effect::v2::use_effect(
                     move |(v1, v2): &_| {
                         if *v2 > 10 {
                             return;

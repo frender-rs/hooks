@@ -9,7 +9,7 @@ macro_rules! __expand_or {
 }
 
 #[macro_export]
-macro_rules! hook {
+macro_rules! h {
     (must_be_used_in_fn_hook $method:ident $hook_id:ident $e:expr) => {
         $crate::v2::UpdateHookUninitialized::$method(
             $e,
@@ -166,7 +166,7 @@ macro_rules! __impl_fn_hook_body {
     };
     (
         $state:tt $used_ids:tt $transformed_code:tt
-        [hook ! $e:tt $($code:tt)*] [ $hook_ident:ident ! $_e:tt $($_code:tt)* ] // code
+        [h ! $e:tt $($code:tt)*] [ $hook_ident:ident ! $_e:tt $($_code:tt)* ] // code
     ) => {
         $crate::__impl_fn_hook_body_hook_resolved! {
             $e

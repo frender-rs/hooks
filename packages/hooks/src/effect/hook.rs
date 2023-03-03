@@ -394,7 +394,7 @@ pub mod v2 {
     impl<Dep: PartialEq, E: EffectFor<Dep>> UpdateHookUninitialized for UseEffect<Dep, E> {
         type Uninitialized = Effect<Dep, E>;
 
-        fn hook(
+        fn h(
             self,
             hook: std::pin::Pin<&mut Self::Uninitialized>,
         ) -> <Self::Hook as hooks_core::v2::Hook>::Value<'_> {
