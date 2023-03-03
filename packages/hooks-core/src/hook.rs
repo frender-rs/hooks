@@ -313,10 +313,78 @@ pub mod v2 {
         fn use_value(self: Pin<&mut Self>) -> Self::Value<'_>;
     }
 
-    pub trait HookUninitialized: Hook {
+    pub trait UpdateHook {
+        type Hook: Hook;
+
+        fn into_hook(self) -> Self::Hook;
+        fn update_hook(self, hook: Pin<&mut Self::Hook>);
+
+        fn into_iter(self) -> HookIntoIter<Self::Hook>
+        where
+            Self: Sized,
+        {
+            HookIntoIter {
+                hook: self.into_hook(),
+            }
+        }
+    }
+
+    pin_project_lite::pin_project!(
+        pub struct HookIntoIter<H> {
+            #[pin]
+            hook: H,
+        }
+    );
+
+    pub trait Identity {
+        type This: ?Sized;
+
+        fn identity(this: Self) -> Self::This
+        where
+            Self: Sized,
+            Self::This: Sized;
+    }
+
+    impl<T: ?Sized> Identity for T {
+        type This = T;
+
+        #[inline(always)]
+        fn identity(this: Self) -> Self::This
+        where
+            Self: Sized,
+            Self::This: Sized,
+        {
+            this
+        }
+    }
+
+    impl<H, V> Stream for HookIntoIter<H>
+    where
+        H: Hook,
+        for<'a> H::Value<'a>: Identity<This = V>,
+    {
+        type Item = V;
+
+        fn poll_next(
+            self: Pin<&mut Self>,
+            cx: &mut std::task::Context<'_>,
+        ) -> std::task::Poll<Option<Self::Item>> {
+            let mut hook = self.project().hook;
+            <H as crate::HookPollNextUpdate>::poll_next_update(hook.as_mut(), cx).map(|dynamic| {
+                if dynamic {
+                    let value = hook.use_value();
+                    Some(Identity::identity(value))
+                } else {
+                    None
+                }
+            })
+        }
+    }
+
+    pub trait UpdateHookUninitialized: UpdateHook {
         type Uninitialized: HookPollNextUpdate + Default;
 
-        fn hook(self, hook: Pin<&mut Self::Uninitialized>) -> <Self as Hook>::Value<'_>;
+        fn hook(self, hook: Pin<&mut Self::Uninitialized>) -> <Self::Hook as Hook>::Value<'_>;
     }
 
     pub trait HookExt: Hook {
@@ -378,10 +446,36 @@ pub mod v2 {
         impl_tuple!(T9, T8, T7, T6, T5, T4, T3, T2, T1, T0,);
     }
 
+    use futures_core::Stream;
     pub use tuple::*;
 
     pub mod fn_hook {
+        use std::marker::PhantomData;
+
         use super::*;
+
+        pub struct UpdateFnHook<
+            InnerHook: Default + HookPollNextUpdate,
+            U: for<'hook> FnMutOneArg<Pin<&'hook mut InnerHook>>,
+        >(U, PhantomData<InnerHook>);
+
+        impl<InnerHook: Default + HookPollNextUpdate, U> UpdateHook for UpdateFnHook<InnerHook, U>
+        where
+            U: for<'hook> FnMutOneArg<Pin<&'hook mut InnerHook>>,
+        {
+            type Hook = FnHook<InnerHook, U>;
+
+            fn into_hook(self) -> Self::Hook {
+                FnHook {
+                    inner_hook: Default::default(),
+                    use_hook: self.0,
+                }
+            }
+
+            fn update_hook(self, hook: Pin<&mut Self::Hook>) {
+                *hook.project().use_hook = self.0;
+            }
+        }
 
         pin_project_lite::pin_project! {
             #[derive(Default)]
@@ -395,26 +489,29 @@ pub mod v2 {
         impl<
                 InnerHook: Default + HookPollNextUpdate,
                 U: for<'hook> FnMutOneArg<Pin<&'hook mut InnerHook>>,
-            > FnHook<InnerHook, U>
+            > UpdateFnHook<InnerHook, U>
         {
             #[allow(non_snake_case)]
-            pub fn FnMut(inner_hook: InnerHook, use_hook: U) -> Self {
-                Self {
-                    inner_hook,
-                    use_hook,
-                }
+            pub fn FnMut(use_hook: U) -> Self {
+                Self(use_hook, PhantomData)
+            }
+
+            #[allow(non_snake_case)]
+            pub fn FnOnce(use_hook: U) -> Self {
+                Self(use_hook, PhantomData)
             }
         }
 
-        impl<InnerHook: Default + HookPollNextUpdate, U> HookUninitialized for FnHook<InnerHook, U>
+        impl<InnerHook: Default + HookPollNextUpdate, U> UpdateHookUninitialized
+            for UpdateFnHook<InnerHook, U>
         where
             U: for<'hook> FnMutOneArg<Pin<&'hook mut InnerHook>>,
         {
             type Uninitialized = FnHook<InnerHook, Option<U>>;
 
-            fn hook(self, hook: Pin<&mut Self::Uninitialized>) -> <Self as Hook>::Value<'_> {
+            fn hook(self, hook: Pin<&mut Self::Uninitialized>) -> <Self::Hook as Hook>::Value<'_> {
                 let hook = hook.project();
-                let use_hook = hook.use_hook.insert(self.use_hook);
+                let use_hook = hook.use_hook.insert(self.0);
                 use_hook.call_mut_with_one_arg(hook.inner_hook)
             }
         }

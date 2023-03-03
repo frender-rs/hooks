@@ -132,10 +132,17 @@ pub mod v2 {
 #[cfg(test)]
 mod tests {
     use futures_lite::StreamExt;
-    use hooks_core::{fn_hook, v2::Hook, AsyncIterableHook, HookPollNextUpdateExt};
+    use hooks_core::{
+        fn_hook,
+        v2::{Hook, UpdateHook, UpdateHookUninitialized},
+        AsyncIterableHook, HookPollNextUpdateExt,
+    };
     use hooks_derive::hook;
 
-    use crate::{state::hook::StateInner, use_effect, use_state, use_state_with};
+    use crate::{
+        state::hook::StateInner, use_effect, use_state, use_state_with,
+        STAGING_STATES_DEFAULT_STACK_COUNT,
+    };
 
     #[test]
     fn v2() {
@@ -162,33 +169,119 @@ mod tests {
     fn state_2_v2() {
         use hooks_core::hook;
 
-        fn use_state<'a, T>(initial_value: T) -> StateInner<'a, T> {
-            StateInner::new(initial_value)
+        struct StateUninitialized<'a, T, const N: usize = STAGING_STATES_DEFAULT_STACK_COUNT> {
+            current_state: Option<T>,
+            state_updater: crate::StateUpdater<'a, T, N>,
         }
 
-        fn_hook! {
-            fn use_state_2() -> (i32, i32) {
-                let (state_1, updater_1) = hook!(use_state(1));
-                // let (state_2, updater_2) = hook!(use_state_with(|| *state_1 + 1));
+        impl<'a, T, const N: usize> Unpin for StateUninitialized<'a, T, N> {}
 
-                // let ret = (*state_1, *state_2);
-
-                // let updater_1 = updater_1.clone();
-                // let updater_2 = updater_2.clone();
-                // use_effect(
-                //     move |(v1, v2): &_| {
-                //         if *v2 > 10 {
-                //             return;
-                //         }
-                //         updater_1.set(*v2);
-                //         updater_2.set(*v1 + *v2);
-                //     },
-                //     ret,
-                // );
-
-                // ret
+        impl<'a, T, const N: usize> Default for StateUninitialized<'a, T, N> {
+            fn default() -> Self {
+                Self {
+                    current_state: None,
+                    state_updater: Default::default(),
+                }
             }
         }
+
+        hooks_core::v2_impl_hook!(
+            const _: StateUninitialized<'a, T, N> = Generics!['a, T, const N: usize];
+            fn poll_next_update(self, cx: _) {
+                let this = self.get_mut();
+                if let Some(current_state) = &mut this.current_state {
+                    this.state_updater
+                        .poll_next_update_always_not_equal(current_state, cx)
+                } else {
+                    false.into()
+                }
+            }
+        );
+
+        struct UseState<T, const N: usize = STAGING_STATES_DEFAULT_STACK_COUNT>(pub T);
+        struct UseStateWith<F, const N: usize = STAGING_STATES_DEFAULT_STACK_COUNT>(pub F);
+
+        impl<T, const N: usize> UpdateHook for UseState<T, N> {
+            type Hook = StateInner<'static, T, N>;
+
+            fn into_hook(self) -> Self::Hook {
+                StateInner::new(self.0)
+            }
+
+            fn update_hook(self, _: std::pin::Pin<&mut Self::Hook>) {}
+        }
+
+        impl<T, F: FnOnce() -> T, const N: usize> UpdateHook for UseStateWith<F, N> {
+            type Hook = StateInner<'static, T, N>;
+
+            fn into_hook(self) -> Self::Hook {
+                StateInner::new(self.0())
+            }
+
+            fn update_hook(self, _: std::pin::Pin<&mut Self::Hook>) {}
+        }
+
+        impl<T, const N: usize> UpdateHookUninitialized for UseState<T, N> {
+            type Uninitialized = StateUninitialized<'static, T, N>;
+
+            fn hook(
+                self,
+                hook: std::pin::Pin<&mut Self::Uninitialized>,
+            ) -> <Self::Hook as Hook>::Value<'_> {
+                let hook = hook.get_mut();
+                let current_state = hook.current_state.get_or_insert(self.0);
+                (current_state, &mut hook.state_updater)
+            }
+        }
+
+        impl<T, F: FnOnce() -> T, const N: usize> UpdateHookUninitialized for UseStateWith<F, N> {
+            type Uninitialized = StateUninitialized<'static, T, N>;
+
+            fn hook(
+                self,
+                hook: std::pin::Pin<&mut Self::Uninitialized>,
+            ) -> <Self::Hook as Hook>::Value<'_> {
+                let hook = hook.get_mut();
+                let current_state = hook.current_state.get_or_insert_with(self.0);
+                (current_state, &mut hook.state_updater)
+            }
+        }
+
+        #[inline(always)]
+        fn use_state<T>(initial_value: T) -> UseState<T> {
+            UseState(initial_value)
+        }
+
+        #[inline(always)]
+        fn use_state_with<T>(
+            get_initial_value: impl FnOnce() -> T,
+        ) -> UseStateWith<impl FnOnce() -> T> {
+            UseStateWith(get_initial_value)
+        }
+
+        fn_hook!(
+            fn use_state_2() -> (i32, i32) {
+                let (state_1, updater_1) = hook!(use_state(1));
+                let (state_2, updater_2) = hook!(use_state_with(|| *state_1 + 1));
+
+                let ret = (*state_1, *state_2);
+
+                let updater_1 = updater_1.clone();
+                let updater_2 = updater_2.clone();
+                hook![crate::effect::v2::use_effect(
+                    move |(v1, v2): &_| {
+                        if *v2 > 10 {
+                            return;
+                        }
+                        updater_1.set(*v2);
+                        updater_2.set(*v1 + *v2);
+                    },
+                    ret,
+                )];
+
+                ret
+            }
+        );
 
         futures_lite::future::block_on(async {
             let values = use_state_2().into_iter().collect::<Vec<_>>().await;

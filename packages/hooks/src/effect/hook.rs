@@ -384,3 +384,46 @@ pub fn get_new_dep_and_effect<
 pub fn effect_fn<Dep, C: EffectCleanup, F: FnOnce(&Dep) -> C>(f: F) -> F {
     f
 }
+
+pub mod v2 {
+    use super::*;
+    use hooks_core::{
+        hook,
+        v2::{UpdateHook, UpdateHookUninitialized},
+    };
+
+    pub struct UseEffect<Dep: PartialEq, E: EffectFor<Dep>>(pub E, pub Dep);
+
+    impl<Dep: PartialEq, E: EffectFor<Dep>> UpdateHookUninitialized for UseEffect<Dep, E> {
+        type Uninitialized = Effect<Dep, E>;
+
+        fn hook(
+            self,
+            hook: std::pin::Pin<&mut Self::Uninitialized>,
+        ) -> <Self::Hook as hooks_core::v2::Hook>::Value<'_> {
+            self.update_hook(hook)
+        }
+    }
+
+    hooks_core::v2_impl_hook!(
+        const _: super::Effect<Dep, E> = Generics![Dep: PartialEq, E: EffectFor<Dep>];
+        #[inline(always)]
+        fn use_value(self) {}
+    );
+
+    impl<Dep: PartialEq, E: EffectFor<Dep>> UpdateHook for UseEffect<Dep, E> {
+        type Hook = super::Effect<Dep, E>;
+
+        fn into_hook(self) -> Self::Hook {
+            let mut h = super::Effect::default();
+            std::pin::Pin::new(&mut h).use_hook_eq(self.0, self.1);
+            h
+        }
+
+        fn update_hook(self, hook: std::pin::Pin<&mut Self::Hook>) {
+            hook.use_hook_eq(self.0, self.1)
+        }
+    }
+
+    pub use UseEffect as use_effect;
+}
