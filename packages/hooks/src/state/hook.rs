@@ -134,7 +134,7 @@ mod tests {
     use futures_lite::StreamExt;
     use hooks_core::{
         fn_hook,
-        v2::{Hook, UpdateHook, UpdateHookUninitialized},
+        v2::{Hook, IntoHook, UpdateHook, UpdateHookUninitialized},
         AsyncIterableHook, HookPollNextUpdateExt,
     };
     use hooks_derive::hook;
@@ -201,23 +201,27 @@ mod tests {
         struct UseState<T, const N: usize = STAGING_STATES_DEFAULT_STACK_COUNT>(pub T);
         struct UseStateWith<F, const N: usize = STAGING_STATES_DEFAULT_STACK_COUNT>(pub F);
 
-        impl<T, const N: usize> UpdateHook for UseState<T, N> {
+        impl<T, const N: usize> IntoHook for UseState<T, N> {
             type Hook = StateInner<'static, T, N>;
 
             fn into_hook(self) -> Self::Hook {
                 StateInner::new(self.0)
             }
+        }
 
+        impl<T, const N: usize> UpdateHook for UseState<T, N> {
             fn update_hook(self, _: std::pin::Pin<&mut Self::Hook>) {}
         }
 
-        impl<T, F: FnOnce() -> T, const N: usize> UpdateHook for UseStateWith<F, N> {
+        impl<T, F: FnOnce() -> T, const N: usize> IntoHook for UseStateWith<F, N> {
             type Hook = StateInner<'static, T, N>;
 
             fn into_hook(self) -> Self::Hook {
                 StateInner::new(self.0())
             }
+        }
 
+        impl<T, F: FnOnce() -> T, const N: usize> UpdateHook for UseStateWith<F, N> {
             fn update_hook(self, _: std::pin::Pin<&mut Self::Hook>) {}
         }
 

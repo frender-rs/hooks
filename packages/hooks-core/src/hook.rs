@@ -313,11 +313,10 @@ pub mod v2 {
         fn use_value(self: Pin<&mut Self>) -> Self::Value<'_>;
     }
 
-    pub trait UpdateHook {
+    pub trait IntoHook {
         type Hook: Hook;
 
         fn into_hook(self) -> Self::Hook;
-        fn update_hook(self, hook: Pin<&mut Self::Hook>);
 
         fn into_iter(self) -> HookIntoIter<Self::Hook>
         where
@@ -327,6 +326,10 @@ pub mod v2 {
                 hook: self.into_hook(),
             }
         }
+    }
+
+    pub trait UpdateHook: IntoHook {
+        fn update_hook(self, hook: Pin<&mut Self::Hook>);
     }
 
     pin_project_lite::pin_project!(
@@ -459,7 +462,7 @@ pub mod v2 {
             U: for<'hook> FnMutOneArg<Pin<&'hook mut InnerHook>>,
         >(U, PhantomData<InnerHook>);
 
-        impl<InnerHook: Default + HookPollNextUpdate, U> UpdateHook for UpdateFnHook<InnerHook, U>
+        impl<InnerHook: Default + HookPollNextUpdate, U> IntoHook for UpdateFnHook<InnerHook, U>
         where
             U: for<'hook> FnMutOneArg<Pin<&'hook mut InnerHook>>,
         {
@@ -471,7 +474,12 @@ pub mod v2 {
                     use_hook: self.0,
                 }
             }
+        }
 
+        impl<InnerHook: Default + HookPollNextUpdate, U> UpdateHook for UpdateFnHook<InnerHook, U>
+        where
+            U: for<'hook> FnMutOneArg<Pin<&'hook mut InnerHook>>,
+        {
             fn update_hook(self, hook: Pin<&mut Self::Hook>) {
                 *hook.project().use_hook = self.0;
             }
