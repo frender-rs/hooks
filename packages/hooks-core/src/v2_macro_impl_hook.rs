@@ -81,10 +81,10 @@ macro_rules! __impl_fn_hook_body_finish {
         //     ),
         // )+)) // TODO: remove
         $crate::v2::fn_hook::UpdateFnHook::$method(
-            move |__frender_hook_data: ::core::pin::Pin<&mut _>| {
+            move |__hooks_hook_data: ::core::pin::Pin<&mut _>| {
                 // SAFETY: pin projection
                 let ($($used_id,)+) = unsafe {
-                    let $crate::v2::HookTuple(($($used_id,)+)) = ::core::pin::Pin::get_unchecked_mut(__frender_hook_data);
+                    let $crate::v2::HookTuple(($($used_id,)+)) = ::core::pin::Pin::get_unchecked_mut(__hooks_hook_data);
                     ($(
                         ::core::pin::Pin::new_unchecked($used_id),
                     )+)
@@ -198,16 +198,16 @@ macro_rules! __impl_fn_hook_body_start {
             [
                 $options
                 [
-                    __frender_hook_0
-                    __frender_hook_1
-                    __frender_hook_2
-                    __frender_hook_3
-                    __frender_hook_4
-                    __frender_hook_5
-                    __frender_hook_6
-                    __frender_hook_7
-                    __frender_hook_8
-                    __frender_hook_9
+                    __hooks_hook_0
+                    __hooks_hook_1
+                    __hooks_hook_2
+                    __hooks_hook_3
+                    __hooks_hook_4
+                    __hooks_hook_5
+                    __hooks_hook_6
+                    __hooks_hook_7
+                    __hooks_hook_8
+                    __hooks_hook_9
                 ]
             ]
             [] // used_ids
