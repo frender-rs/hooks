@@ -267,6 +267,8 @@ macro_rules! fn_hook {
         {
             $(#!$inner_attr)*
 
+            use $crate::prelude_h::*;
+
             $crate::__impl_fn_hook_body_start!(
                 [$($options)?]
                 [$($code)*]

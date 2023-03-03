@@ -18,3 +18,8 @@ pub(crate) mod utils;
 
 mod v2_macro_impl_hook;
 pub use v2_macro_impl_hook::*;
+
+#[doc(hidden)]
+pub mod prelude_h {
+    pub use crate::h;
+}

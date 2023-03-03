@@ -151,8 +151,6 @@ mod tests {
 
     #[test]
     fn state_2_v2() {
-        use hooks_core::h;
-
         struct StateUninitialized<'a, T, const N: usize = STAGING_STATES_DEFAULT_STACK_COUNT> {
             current_state: Option<T>,
             state_updater: crate::StateUpdater<'a, T, N>,
