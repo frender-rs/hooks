@@ -297,3 +297,168 @@ where
         <P::Target as Hook<Args>>::use_hook(crate::utils::pin_as_deref_mut(self), args)
     }
 }
+
+pub mod v2 {
+    pub use crate::v2_impl_hook;
+
+    use std::pin::Pin;
+
+    use crate::HookPollNextUpdate;
+
+    pub trait Hook: HookPollNextUpdate {
+        type Value<'hook>
+        where
+            Self: 'hook;
+
+        fn use_value(self: Pin<&mut Self>) -> Self::Value<'_>;
+    }
+
+    pub trait HookUninitialized: Hook {
+        type Uninitialized: HookPollNextUpdate + Default;
+
+        fn hook(self, hook: Pin<&mut Self::Uninitialized>) -> <Self as Hook>::Value<'_>;
+    }
+
+    pub trait HookExt: Hook {
+        fn run_hook() {}
+    }
+
+    mod tuple {
+        use super::*;
+
+        #[derive(Default)]
+        pub struct HookTuple<T>(pub T);
+
+        macro_rules! impl_tuple {
+            // ignore zero length
+            () => {};
+            ($($v:ident ,)+) => {
+                impl_tuple! {
+                    - $($v ,)+
+                }
+                impl<$($v : HookPollNextUpdate ,)+> HookPollNextUpdate for HookTuple<($($v,)+)> {
+                    #[inline(always)]
+                    fn poll_next_update(
+                        self: std::pin::Pin<&mut Self>,
+                        cx: &mut std::task::Context<'_>,
+                    ) -> std::task::Poll<bool> {
+                        #[allow(non_snake_case)]
+                        // SAFETY: pin projection
+                        let ($($v,)+) = unsafe {
+                            #[allow(non_snake_case)]
+                            let HookTuple(($($v,)+)) = self.get_unchecked_mut();
+                            ($(
+                                ::core::pin::Pin::new_unchecked($v)
+                            ,)+)
+                        };
+
+                        #[allow(non_snake_case)]
+                        #[allow(unused_variables)]
+                        match ($(
+                            $v.poll_next_update(cx)
+                        ,)+) {
+                            ($($v @ std::task::Poll::Ready(false),)+) => std::task::Poll::Ready(false),
+                            #[allow(unreachable_patterns)]
+                            ($($v @ (std::task::Poll::Ready(false) | std::task::Poll::Pending),)+) => std::task::Poll::Pending,
+                            _ => std::task::Poll::Ready(true),
+                        }
+                    }
+                }
+            };
+            (
+                - $v0:ident,
+                $($v:ident ,)*
+            ) => {
+                impl_tuple! {
+                    $($v ,)*
+                }
+            };
+        }
+
+        impl_tuple!(T9, T8, T7, T6, T5, T4, T3, T2, T1, T0,);
+    }
+
+    pub use tuple::*;
+
+    pub mod fn_hook {
+        use super::*;
+
+        pin_project_lite::pin_project! {
+            #[derive(Default)]
+            pub struct FnHook<InnerHook: Default, U> {
+                #[pin]
+                pub inner_hook: InnerHook,
+                pub use_hook: U,
+            }
+        }
+
+        impl<
+                InnerHook: Default + HookPollNextUpdate,
+                U: for<'hook> FnMutOneArg<Pin<&'hook mut InnerHook>>,
+            > FnHook<InnerHook, U>
+        {
+            #[allow(non_snake_case)]
+            pub fn FnMut(inner_hook: InnerHook, use_hook: U) -> Self {
+                Self {
+                    inner_hook,
+                    use_hook,
+                }
+            }
+        }
+
+        impl<InnerHook: Default + HookPollNextUpdate, U> HookUninitialized for FnHook<InnerHook, U>
+        where
+            U: for<'hook> FnMutOneArg<Pin<&'hook mut InnerHook>>,
+        {
+            type Uninitialized = FnHook<InnerHook, Option<U>>;
+
+            fn hook(self, hook: Pin<&mut Self::Uninitialized>) -> <Self as Hook>::Value<'_> {
+                let hook = hook.project();
+                let use_hook = hook.use_hook.insert(self.use_hook);
+                use_hook.call_mut_with_one_arg(hook.inner_hook)
+            }
+        }
+
+        impl<InnerHook: Default + HookPollNextUpdate, U> HookPollNextUpdate for FnHook<InnerHook, U> {
+            #[inline(always)]
+            fn poll_next_update(
+                self: std::pin::Pin<&mut Self>,
+                cx: &mut std::task::Context<'_>,
+            ) -> std::task::Poll<bool> {
+                InnerHook::poll_next_update(self.project().inner_hook, cx)
+            }
+        }
+
+        pub trait FnMutOneArg<Arg> {
+            type FnOutput;
+            fn call_mut_with_one_arg(&mut self, arg: Arg) -> Self::FnOutput;
+        }
+
+        impl<F, Arg, R> FnMutOneArg<Arg> for F
+        where
+            F: FnMut(Arg) -> R,
+        {
+            type FnOutput = R;
+
+            #[inline(always)]
+            fn call_mut_with_one_arg(&mut self, arg: Arg) -> Self::FnOutput {
+                self(arg)
+            }
+        }
+
+        impl<InnerHook: Default + HookPollNextUpdate, U> Hook for FnHook<InnerHook, U>
+        where
+            U: for<'hook> FnMutOneArg<Pin<&'hook mut InnerHook>>,
+        {
+            type Value<'hook> = <U as FnMutOneArg<std::pin::Pin<&'hook mut InnerHook>>>::FnOutput
+            where
+                Self: 'hook;
+
+            #[inline(always)]
+            fn use_value(self: Pin<&mut Self>) -> Self::Value<'_> {
+                let this = self.project();
+                this.use_hook.call_mut_with_one_arg(this.inner_hook)
+            }
+        }
+    }
+}

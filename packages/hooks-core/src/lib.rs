@@ -15,3 +15,6 @@ pub mod erased_hook;
 pub use erased_hook::DynNonLendingHook;
 
 pub(crate) mod utils;
+
+mod v2_macro_impl_hook;
+pub use v2_macro_impl_hook::*;

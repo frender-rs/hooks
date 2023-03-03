@@ -1,4 +1,4 @@
-use std::{cell::RefCell, rc::Rc};
+use std::{cell::RefCell, rc::Rc, task::Poll};
 
 use crate::utils::{
     debug_pointer::{
@@ -368,6 +368,66 @@ impl<'a, T, const N: usize> StateUpdater<'a, T, N> {
         f: F,
     ) -> R {
         crate::utils::rc_ref_cell_borrow_mut(&mut self.waker_and_staging_states, f)
+    }
+
+    /// If `compare` returns true,
+    /// which indicates the old and new values are equal,
+    /// the polling will keep pending.
+    pub fn poll_next_update_if_not_equal(
+        &mut self,
+        current_state: &mut T,
+        compare: impl FnMut(&T, &T) -> bool,
+        cx: &mut std::task::Context<'_>,
+    ) -> Poll<bool> {
+        self.map_mut(|(waker, staging_states), rc_status| {
+            if staging_states.is_empty() {
+                match rc_status {
+                    crate::utils::RcStatus::Shared => {
+                        // further updates are possible
+                        *waker = Some(cx.waker().clone());
+                        Poll::Pending
+                    }
+                    crate::utils::RcStatus::Owned => {
+                        // no further updates
+                        Poll::Ready(false)
+                    }
+                }
+            } else {
+                let is_equal = staging_states.drain_into_and_compare(current_state, compare);
+
+                if is_equal {
+                    Poll::Pending
+                } else {
+                    Poll::Ready(true)
+                }
+            }
+        })
+    }
+
+    pub fn poll_next_update_always_not_equal(
+        &mut self,
+        current_state: &mut T,
+        cx: &mut std::task::Context<'_>,
+    ) -> Poll<bool> {
+        self.map_mut(|(waker, staging_states), rc_status| {
+            let not_changed = staging_states.drain_into(current_state);
+
+            if not_changed {
+                match rc_status {
+                    crate::utils::RcStatus::Shared => {
+                        // further updates are possible
+                        *waker = Some(cx.waker().clone());
+                        Poll::Pending
+                    }
+                    crate::utils::RcStatus::Owned => {
+                        // no further updates
+                        Poll::Ready(false)
+                    }
+                }
+            } else {
+                Poll::Ready(true)
+            }
+        })
     }
 }
 
