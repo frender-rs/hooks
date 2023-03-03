@@ -310,7 +310,7 @@ pub mod v2 {
         where
             Self: 'hook;
 
-        fn use_value(self: Pin<&mut Self>) -> Self::Value<'_>;
+        fn use_hook(self: Pin<&mut Self>) -> Self::Value<'_>;
     }
 
     pub trait IntoHook {
@@ -375,7 +375,7 @@ pub mod v2 {
             let mut hook = self.project().hook;
             <H as crate::HookPollNextUpdate>::poll_next_update(hook.as_mut(), cx).map(|dynamic| {
                 if dynamic {
-                    let value = hook.use_value();
+                    let value = hook.use_hook();
                     Some(Identity::identity(value))
                 } else {
                     None
@@ -560,7 +560,7 @@ pub mod v2 {
                 Self: 'hook;
 
             #[inline(always)]
-            fn use_value(self: Pin<&mut Self>) -> Self::Value<'_> {
+            fn use_hook(self: Pin<&mut Self>) -> Self::Value<'_> {
                 let this = self.project();
                 this.use_hook.call_mut_with_one_arg(this.inner_hook)
             }

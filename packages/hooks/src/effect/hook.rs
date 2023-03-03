@@ -405,7 +405,7 @@ pub mod v2 {
     hooks_core::v2_impl_hook!(
         const _: super::Effect<Dep, E> = Generics![Dep: PartialEq, E: EffectFor<Dep>];
         #[inline(always)]
-        fn use_value(self) {}
+        fn use_hook(self) {}
     );
 
     impl<Dep: PartialEq, E: EffectFor<Dep>> IntoHook for UseEffect<Dep, E> {

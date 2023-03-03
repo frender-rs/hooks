@@ -99,22 +99,6 @@ pub mod v2 {
 
     impl<'a, T, const N: usize> Unpin for StateInner<'a, T, N> {}
 
-    // hooks_core::v2::v2_impl_hook!(
-    //     const _: for<'a> StateInner<T>;
-    //     // fn this<> ()-> ;
-    //     fn aaa(self) {
-    //         let a = 1;
-    //     }
-    // );
-    // fn poll_next_update(mut self, cx) {
-    //                 // true.into()
-    //             }
-
-    //    fn use_value(self) -> (&'hook mut T, &'hook crate::StateUpdater<'a,T,N>) {
-    //                 // let this = self.get_mut();
-    //                 // (&mut  this.current_state, &this.state_updater)
-    //             }
-    // for<'a, T, const N: usize>
     hooks_core::v2::v2_impl_hook!(
         const _: StateInner<'a, T, N> = Generics!['a, T, const N: usize];
         fn poll_next_update(self, cx: _) {
@@ -122,7 +106,7 @@ pub mod v2 {
             this.state_updater
                 .poll_next_update_always_not_equal(&mut this.current_state, cx)
         }
-        fn use_value(self) -> (&'hook mut T, &'hook crate::StateUpdater<'a, T, N>) {
+        fn use_hook(self) -> (&'hook mut T, &'hook crate::StateUpdater<'a, T, N>) {
             let this = self.get_mut();
             (&mut this.current_state, &this.state_updater)
         }
@@ -152,13 +136,13 @@ mod tests {
 
             assert!(!std::future::poll_fn(|cx| hook.poll_next_update(cx)).await);
 
-            let (state, updater) = hook.as_mut().use_value();
+            let (state, updater) = hook.as_mut().use_hook();
             assert_eq!(*state, 1);
             updater.set(2);
             assert_eq!(*state, 1);
 
             assert!(std::future::poll_fn(|cx| hook.poll_next_update(cx)).await);
-            let (state, _updater) = hook.as_mut().use_value();
+            let (state, _updater) = hook.as_mut().use_hook();
             assert_eq!(*state, 2);
 
             assert!(!std::future::poll_fn(|cx| hook.poll_next_update(cx)).await);

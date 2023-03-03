@@ -325,7 +325,7 @@ macro_rules! __impl_hook_with_method {
         }
     };
     (
-        use_value([$($generics:tt)*][$ty:ty][$( $($where_clause:tt)+ )?])[
+        use_hook([$($generics:tt)*][$ty:ty][$( $($where_clause:tt)+ )?])[
             $(#$fn_attr:tt)*
             $fn_name:ident
             ($self0:ident $($self1:ident)?)
