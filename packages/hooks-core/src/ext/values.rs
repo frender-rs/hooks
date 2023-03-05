@@ -1,15 +1,15 @@
 use std::pin::Pin;
 
-use crate::NextValue;
+use super::NextValue;
 
 pin_project_lite::pin_project! {
-    pub struct IterHook<H> {
+    pub struct Values<H> {
         #[pin]
         hook: H,
     }
 }
 
-impl<H> IterHook<H> {
+impl<H> Values<H> {
     #[inline]
     pub fn new(hook: H) -> Self {
         Self { hook }
@@ -26,18 +26,15 @@ impl<H> IterHook<H> {
     }
 
     #[inline]
-    pub fn next_value(&mut self) -> NextValue<H, ()>
-    where
-        Self: Unpin,
-    {
-        NextValue::new(Pin::new(self).pin_project_hook(), ())
+    pub fn next_value(self: Pin<&mut Self>) -> NextValue<H> {
+        NextValue::new(self.pin_project_hook())
     }
 }
 
 #[cfg(feature = "futures-core")]
-impl<H> futures_core::Stream for IterHook<H>
+impl<H> futures_core::Stream for Values<H>
 where
-    H: crate::NonLendingHook<()>,
+    H: crate::NonLendingHook,
 {
     type Item = H::NonGenericValue;
 
@@ -49,7 +46,7 @@ where
         let mut hook = self.pin_project_hook();
         <H as crate::HookPollNextUpdate>::poll_next_update(hook.as_mut(), cx).map(|dynamic| {
             if dynamic {
-                let value = <H as crate::Hook<()>>::use_hook(hook, ());
+                let value = <H as crate::NonLendingHook>::use_non_lending_hook(hook);
                 Some(value)
             } else {
                 None

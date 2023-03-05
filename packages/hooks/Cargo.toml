@@ -19,6 +19,8 @@ smallvec = { version = "1.10.0", features = ["const_generics"] }
 futures-lite = "1.12.0"
 
 [features]
-default = ["derive", "futures-core"]
+default = ["derive", "futures-core", "all"]
 derive = ["hooks-derive"]
 futures-core = ["hooks-core/futures-core"]
+all = ["use_effect"]
+use_effect = []

@@ -1,12 +1,12 @@
 use std::pin::Pin;
 
-use super::{EffectCleanup, EffectForNoneDependency};
+use super::{inner::Cleanup, EffectCleanup, EffectForNoneDependency};
 
 pub struct EffectOnce<E: EffectForNoneDependency> {
-    /// - `None` means uninitialized
-    /// - `Some(Err(effect))` means ready to effect
-    /// - `Some(Ok(cleanup))` means effected and ready to cleanup
-    inner: Option<Result<E::Cleanup, E>>,
+    /// - `Ok(Cleanup(None))` means uninitialized
+    /// - `Err(effect)` means ready to effect
+    /// - `Ok(Cleanup(Some(cleanup)))` means effected and ready to cleanup
+    inner: Result<Cleanup<E::Cleanup>, E>,
 }
 
 impl<E: EffectForNoneDependency> Unpin for EffectOnce<E> {}
@@ -14,7 +14,9 @@ impl<E: EffectForNoneDependency> Unpin for EffectOnce<E> {}
 impl<E: EffectForNoneDependency> Default for EffectOnce<E> {
     #[inline]
     fn default() -> Self {
-        Self { inner: None }
+        Self {
+            inner: Ok(Cleanup(None)),
+        }
     }
 }
 
@@ -22,107 +24,104 @@ impl<E: EffectForNoneDependency> std::fmt::Debug for EffectOnce<E> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_tuple("EffectOnce")
             .field(&match &self.inner {
-                Some(Err(_)) => "effect",
-                Some(Ok(_)) => "effected",
-                None => "uninitialized",
+                Err(_) => "effect",
+                Ok(Cleanup(Some(_))) => "effected",
+                Ok(Cleanup(None)) => "uninitialized",
             })
             .finish()
     }
 }
 
-impl<E: EffectForNoneDependency> Drop for EffectOnce<E> {
-    fn drop(&mut self) {
-        if let Some(Ok(cleanup)) = self.inner.take() {
-            cleanup.cleanup()
-        }
-    }
-}
-
 impl<E: EffectForNoneDependency> EffectOnce<E> {
-    #[inline]
-    pub fn use_hook_with(self: Pin<&mut Self>, get_effect: impl FnOnce() -> E) {
-        let this = self.get_mut();
-        if this.inner.is_none() {
-            this.inner = Some(Err(get_effect()))
+    pub fn register_effect_with(&mut self, get_effect: impl FnOnce() -> E) {
+        let inner = &mut self.inner;
+        if let Ok(Cleanup(None)) = &inner {
+            *inner = Err(get_effect())
         }
     }
 
     #[inline]
     fn impl_poll(&mut self) -> std::task::Poll<bool> {
-        if self.inner.is_none() {
-            return std::task::Poll::Ready(true);
-        }
-
-        if let Some(Err(_)) = &self.inner {
-            let effect = match self.inner.take().unwrap() {
+        let inner = &mut self.inner;
+        if let Err(_) = &inner {
+            let effect = match std::mem::replace(inner, Ok(Cleanup(None))) {
                 Err(effect) => effect,
                 _ => unreachable!(),
             };
             let cleanup = effect.effect_for_none_dep();
-            self.inner = Some(Ok(cleanup));
+            *inner = Ok(Cleanup(Some(cleanup)));
         }
         std::task::Poll::Ready(false)
     }
 }
 
-crate::utils::impl_hook! {
-    impl [E: EffectForNoneDependency] for EffectOnce<E> {
-        #[inline]
-        poll_next_update(self) {
-            self.get_mut().impl_poll()
-        }
-        #[inline]
-        use_hook(self, effect: E) -> () {
-            self.use_hook_with(move || effect)
-        }
-    }
-}
-
-pub struct EffectOnceWith<E: EffectForNoneDependency>(EffectOnce<E>);
-
-impl<E: EffectForNoneDependency> Unpin for EffectOnceWith<E> {}
-
-impl<E: EffectForNoneDependency> Default for EffectOnceWith<E> {
+crate::utils::impl_hook![
+    type For<E: EffectForNoneDependency> = EffectOnce<E>;
     #[inline]
-    fn default() -> Self {
-        Self(Default::default())
+    fn unmount(self) {
+        drop(std::mem::take(self.get_mut()))
     }
+    #[inline]
+    fn poll_next_update(self) {
+        self.get_mut().impl_poll()
+    }
+    #[inline]
+    fn use_hook(self) -> () {}
+];
+
+pub struct UseEffectOnce<E>(pub E);
+pub use UseEffectOnce as use_effect_once;
+
+crate::utils::impl_hook![
+    type For<E: EffectForNoneDependency> = UseEffectOnce<E>;
+    #[inline]
+    fn into_hook(self) -> EffectOnce<E> {
+        EffectOnce { inner: Err(self.0) }
+    }
+    #[inline]
+    fn update_hook(self, hook: _) {
+        hook.get_mut().register_effect_with(move || self.0)
+    }
+    #[inline]
+    fn h(self, hook: EffectOnce<E>) {
+        hooks_core::UpdateHook::update_hook(self, hook)
+    }
+];
+
+pub struct UseEffectOnceWith<F>(pub F);
+
+#[inline(always)]
+pub fn use_effect_once_with<E: EffectForNoneDependency>(
+    get_effect: impl FnOnce() -> E,
+) -> UseEffectOnceWith<impl FnOnce() -> E> {
+    UseEffectOnceWith(get_effect)
 }
 
-impl<E: EffectForNoneDependency> std::fmt::Debug for EffectOnceWith<E> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_tuple("EffectOnceWith").field(&self.0).finish()
-    }
-}
+crate::utils::impl_hook![
+    type For<E: EffectForNoneDependency, F> = UseEffectOnceWith<F>
+        where __![F: FnOnce() -> E] : __;
 
-crate::utils::impl_hook! {
-    impl [E: EffectForNoneDependency] for EffectOnceWith<E> {
-        #[inline]
-        poll_next_update(self) {
-            self.get_mut().0.impl_poll()
+    #[inline]
+    fn into_hook(self) -> EffectOnce<E> {
+        EffectOnce {
+            inner: Err(self.0()),
         }
-        #[inline]
-        use_hook[F: FnOnce() -> E](self, get_effect: F) -> () {
-            Pin::new(&mut self.get_mut().0).use_hook_with(get_effect)
-        }
     }
-}
-
-#[inline]
-pub fn use_effect_once<E: EffectForNoneDependency>() -> EffectOnce<E> {
-    Default::default()
-}
-
-#[inline]
-pub fn use_effect_once_with<E: EffectForNoneDependency>() -> EffectOnceWith<E> {
-    Default::default()
-}
+    #[inline]
+    fn update_hook(self, hook: _) {
+        hook.get_mut().register_effect_with(self.0)
+    }
+    #[inline]
+    fn h(self, hook: EffectOnce<E>) {
+        hooks_core::UpdateHook::update_hook(self, hook)
+    }
+];
 
 #[cfg(test)]
 mod tests {
     use std::cell::RefCell;
 
-    use hooks_core::HookExt;
+    use hooks_core::{HookExt, IntoHook};
 
     #[test]
     fn effect_once() {
@@ -137,13 +136,15 @@ mod tests {
                 || effected.borrow_mut().push("cleaned")
             };
 
-            let mut hook = super::use_effect_once_with();
+            let hook = super::use_effect_once_with(effect).into_hook();
+
+            futures_lite::pin!(hook);
 
             futures_lite::future::block_on(async {
-                assert!(hook.next_value((move || effect,)).await.is_some());
+                assert!(hook.next_value().await.is_some());
                 assert_eq!(effected.borrow().len(), 0);
-                hook.use_hook((|| unreachable!(),));
-                assert!(hook.next_value((|| unreachable!(),)).await.is_none());
+                hook.use_hook();
+                assert!(hook.next_value().await.is_none());
                 assert_eq!(*effected.borrow(), ["effected"]);
             });
         }

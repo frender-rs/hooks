@@ -1,16 +1,30 @@
-use std::task::Poll;
+use std::{marker::PhantomData, pin::Pin, task::Poll};
 
 use super::{inner::EffectInner, EffectCleanup, EffectFor};
 
 #[derive(Debug)]
 struct EffectDep<Dep> {
     changed: bool,
-    value: Dep,
+    value: Option<Dep>,
 }
 
 pub struct Effect<Dep, E: EffectFor<Dep>> {
-    dep: Option<EffectDep<Dep>>,
+    dep: EffectDep<Dep>,
     inner: EffectInner<E, E::Cleanup>,
+}
+
+impl<Dep, E: EffectFor<Dep>> Unpin for Effect<Dep, E> {}
+
+impl<Dep, E: EffectFor<Dep>> Default for Effect<Dep, E> {
+    fn default() -> Self {
+        Self {
+            dep: EffectDep {
+                changed: false,
+                value: None,
+            },
+            inner: Default::default(),
+        }
+    }
 }
 
 impl<Dep: std::fmt::Debug, E: EffectFor<Dep>> std::fmt::Debug for Effect<Dep, E> {
@@ -22,120 +36,52 @@ impl<Dep: std::fmt::Debug, E: EffectFor<Dep>> std::fmt::Debug for Effect<Dep, E>
     }
 }
 
-impl<Dep, E: EffectFor<Dep>> Default for Effect<Dep, E> {
+crate::utils::impl_hook![
+    type For<Dep, E: EffectFor<Dep>> = Effect<Dep, E>;
     #[inline]
-    fn default() -> Self {
-        Self {
-            dep: None,
-            inner: Default::default(),
-        }
+    fn unmount(self) {
+        self.get_mut().inner.unmount()
     }
-}
-
-impl<Dep, E: EffectFor<Dep>> Unpin for Effect<Dep, E> {}
-
-impl<Dep, E: EffectFor<Dep>> crate::HookBounds for Effect<Dep, E> {
-    type Bounds = Self;
-}
-
-impl<Dep, E: EffectFor<Dep>> crate::HookPollNextUpdate for Effect<Dep, E> {
-    #[inline]
-    fn poll_next_update(
-        self: std::pin::Pin<&mut Self>,
-        _cx: &mut std::task::Context<'_>,
-    ) -> Poll<bool> {
+    fn poll_next_update(self) {
         let this = self.get_mut();
-
-        match &mut this.dep {
-            Some(dep) => {
-                if dep.changed {
-                    dep.changed = false;
-                    this.inner.cleanup_and_effect_for(&dep.value)
-                }
-                Poll::Ready(false)
+        let EffectDep { changed, value } = &mut this.dep;
+        if *changed {
+            *changed = false;
+            if let Some(value) = &value {
+                this.inner.cleanup_and_effect_for(value);
             }
-            None => Poll::Ready(true),
         }
+        Poll::Ready(false)
     }
-}
+    #[inline(always)]
+    fn use_hook(self) {}
+];
 
 impl<Dep, E: EffectFor<Dep>> Effect<Dep, E> {
-    pub fn use_hook_eq(self: std::pin::Pin<&mut Self>, effect: E, dep: Dep)
+    pub fn register_effect_if_dep_ne(self: std::pin::Pin<&mut Self>, effect: E, dep: Dep)
     where
         Dep: PartialEq,
     {
         let this = self.get_mut();
 
-        if let Some(old) = &mut this.dep {
-            if old.value != dep {
-                old.value = dep;
-                old.changed = true;
-                this.inner.register_effect(effect)
-            }
-        } else {
-            this.dep = Some(EffectDep {
-                changed: true,
-                value: dep,
-            });
+        let dep = Some(dep);
+        if this.dep.value != dep {
+            this.dep.changed = true;
+            this.dep.value = dep;
             this.inner.register_effect(effect)
         }
     }
 
-    pub fn use_hook_with(
+    pub fn register_effect_if(
         self: std::pin::Pin<&mut Self>,
         get_new_dep_and_effect: impl FnOnce(Option<&Dep>) -> Option<(Dep, E)>,
     ) {
         let this = self.get_mut();
-        if let Some(old) = &mut this.dep {
-            if let Some((dep, effect)) = get_new_dep_and_effect(Some(&old.value)) {
-                old.changed = true;
-                old.value = dep;
-                this.inner.register_effect(effect)
-            }
-        } else if let Some((dep, effect)) = get_new_dep_and_effect(None) {
-            this.dep = Some(EffectDep {
-                changed: true,
-                value: dep,
-            });
-            this.inner.register_effect(effect)
+        if let Some((dep, new_effect)) = get_new_dep_and_effect(this.dep.value.as_ref()) {
+            this.dep.changed = true;
+            this.dep.value = Some(dep);
+            this.inner.register_effect(new_effect)
         }
-    }
-}
-
-impl<'hook, Dep: PartialEq, E: EffectFor<Dep>> crate::HookLifetime<'hook, (E, Dep)>
-    for Effect<Dep, E>
-{
-    type Value = ();
-}
-
-impl<Dep: PartialEq, E: EffectFor<Dep>> crate::Hook<(E, Dep)> for Effect<Dep, E> {
-    #[inline]
-    fn use_hook<'hook>(self: std::pin::Pin<&'hook mut Self>, (effect, dep): (E, Dep))
-    where
-        Self: 'hook,
-    {
-        self.use_hook_eq(effect, dep)
-    }
-}
-
-impl<'hook, Dep, E: EffectFor<Dep>, F: FnOnce(Option<&Dep>) -> Option<(Dep, E)>>
-    crate::HookLifetime<'hook, (F,)> for Effect<Dep, E>
-{
-    type Value = ();
-}
-
-impl<Dep, E: EffectFor<Dep>, F: FnOnce(Option<&Dep>) -> Option<(Dep, E)>> crate::Hook<(F,)>
-    for Effect<Dep, E>
-{
-    #[inline]
-    fn use_hook<'hook>(
-        self: std::pin::Pin<&'hook mut Self>,
-        (get_new_dep_and_effect,): (F,),
-    ) -> <Self as hooks_core::HookLifetime<'hook, (F,)>>::Value
-    where
-        Self: 'hook,
-    {
-        self.use_hook_with(get_new_dep_and_effect)
     }
 }
 
@@ -247,35 +193,102 @@ impl<Dep, E: EffectFor<Dep>, F: FnOnce(Option<&Dep>) -> Option<(Dep, E)>> crate:
 /// cleaning up
 /// hook is dropped
 /// ```
-#[inline]
-pub fn use_effect<Dep, E: EffectFor<Dep>>() -> Effect<Dep, E> {
-    Default::default()
+pub struct UseEffect<Dep: PartialEq, E: EffectFor<Dep>>(pub E, pub Dep);
+pub use UseEffect as use_effect;
+
+hooks_core::impl_hook![
+    type For<Dep: PartialEq, E: EffectFor<Dep>> = UseEffect<Dep, E>;
+    #[inline]
+    fn into_hook(self) -> Effect<Dep, E> {
+        Effect {
+            dep: EffectDep {
+                changed: false,
+                value: Some(self.1),
+            },
+            inner: EffectInner::new_registered(self.0),
+        }
+    }
+    #[inline]
+    fn update_hook(self, hook: _) {
+        hook.register_effect_if_dep_ne(self.0, self.1)
+    }
+    #[inline]
+    fn h(self, hook: Effect<Dep, E>) {
+        hook.register_effect_if_dep_ne(self.0, self.1)
+    }
+];
+
+pub struct UseEffectWith<Dep, E: EffectFor<Dep>, F: FnOnce(Option<&Dep>) -> Option<(Dep, E)>>(
+    F,
+    PhantomData<Dep>,
+);
+
+#[inline(always)]
+pub fn use_effect_with<Dep, E: EffectFor<Dep>>(
+    get_effect: impl FnOnce(Option<&Dep>) -> Option<(Dep, E)>,
+) -> UseEffectWith<Dep, E, impl FnOnce(Option<&Dep>) -> Option<(Dep, E)>> {
+    UseEffectWith(get_effect, PhantomData)
 }
+
+hooks_core::impl_hook![
+    type For<Dep, E: EffectFor<Dep>, F> = UseEffectWith<Dep, E, F>
+        where __![F: FnOnce(Option<&Dep>) -> Option<(Dep, E)>]: __;
+
+    fn into_hook(self) -> Effect<Dep, E> {
+        if let Some((dep, effect)) = self.0(None) {
+            Effect {
+                dep: EffectDep {
+                    changed: false,
+                    value: Some(dep),
+                },
+                inner: EffectInner::new_registered(effect),
+            }
+        } else {
+            Effect {
+                dep: EffectDep {
+                    changed: false,
+                    value: None,
+                },
+                inner: EffectInner::default(),
+            }
+        }
+    }
+
+    #[inline]
+    fn update_hook(self, hook: _) {
+        hook.register_effect_if(self.0)
+    }
+    #[inline]
+    fn h(self, hook: Effect<Dep, E>) {
+        hook.register_effect_if(self.0)
+    }
+];
 
 #[cfg(test)]
 mod tests {
     use std::cell::RefCell;
 
     use futures_lite::future::block_on;
-    use hooks_core::{HookExt, HookPollNextUpdateExt};
+    use hooks_core::{hook_fn, HookExt, HookPollNextUpdateExt};
 
     use crate::{effect_fn, get_new_dep_and_effect, hook, use_effect};
 
     #[test]
     fn custom_hook() {
-        #[hook(hooks_core_path = "::hooks_core")]
-        fn use_test_effect<'a>(history: &'a RefCell<Vec<&'static str>>) {
-            use_effect(
-                effect_fn(move |_| {
-                    // Do some effects
-                    history.borrow_mut().push("effecting");
+        hook_fn!(
+            fn use_test_effect(history: &RefCell<Vec<&str>>) {
+                h![use_effect(
+                    effect_fn(move |_| {
+                        // Do some effects
+                        history.borrow_mut().push("effecting");
 
-                    // Return an optional cleanup function
-                    move || history.borrow_mut().push("cleaning")
-                }),
-                (),
-            )
-        }
+                        // Return an optional cleanup function
+                        move || history.borrow_mut().push("cleaning")
+                    }),
+                    (),
+                )]
+            }
+        );
 
         let history = RefCell::new(Vec::with_capacity(2));
 
@@ -383,46 +396,4 @@ pub fn get_new_dep_and_effect<
 #[inline]
 pub fn effect_fn<Dep, C: EffectCleanup, F: FnOnce(&Dep) -> C>(f: F) -> F {
     f
-}
-
-pub mod v2 {
-    use super::*;
-    use hooks_core::v2::{IntoHook, UpdateHook, UpdateHookUninitialized};
-
-    pub struct UseEffect<Dep: PartialEq, E: EffectFor<Dep>>(pub E, pub Dep);
-
-    impl<Dep: PartialEq, E: EffectFor<Dep>> UpdateHookUninitialized for UseEffect<Dep, E> {
-        type Uninitialized = Effect<Dep, E>;
-
-        fn h(
-            self,
-            hook: std::pin::Pin<&mut Self::Uninitialized>,
-        ) -> <Self::Hook as hooks_core::v2::Hook>::Value<'_> {
-            self.update_hook(hook)
-        }
-    }
-
-    hooks_core::v2_impl_hook!(
-        const _: super::Effect<Dep, E> = Generics![Dep: PartialEq, E: EffectFor<Dep>];
-        #[inline(always)]
-        fn use_hook(self) {}
-    );
-
-    impl<Dep: PartialEq, E: EffectFor<Dep>> IntoHook for UseEffect<Dep, E> {
-        type Hook = super::Effect<Dep, E>;
-
-        fn into_hook(self) -> Self::Hook {
-            let mut h = super::Effect::default();
-            std::pin::Pin::new(&mut h).use_hook_eq(self.0, self.1);
-            h
-        }
-    }
-
-    impl<Dep: PartialEq, E: EffectFor<Dep>> UpdateHook for UseEffect<Dep, E> {
-        fn update_hook(self, hook: std::pin::Pin<&mut Self::Hook>) {
-            hook.use_hook_eq(self.0, self.1)
-        }
-    }
-
-    pub use UseEffect as use_effect;
 }

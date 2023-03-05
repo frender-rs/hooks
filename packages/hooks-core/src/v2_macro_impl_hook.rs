@@ -11,7 +11,7 @@ macro_rules! __expand_or {
 #[macro_export]
 macro_rules! h {
     (must_be_used_in_fn_hook $method:ident $hook_id:ident $e:expr) => {
-        $crate::v2::UpdateHookUninitialized::$method(
+        $crate::UpdateHookUninitialized::$method(
             $e,
             $hook_id
         )
@@ -22,30 +22,13 @@ macro_rules! h {
 macro_rules! __impl_fn_hook_body_finish {
     (
         [
-            [] // options
-            $rest_ids:tt
-        ]
-        $used_ids:tt
-        $transformed_code:tt
-    ) => {
-        $crate::__impl_fn_hook_body_finish! {
-            [
-                [(FnMut)]
-                $rest_ids
-            ]
-            $used_ids
-            $transformed_code
-        }
-    };
-    (
-        [
-            [($method:ident)] // options
+            [$(($($method_path:ident),* $(,)?))?] // options
             $rest_ids:tt
         ]
         [] // used_ids
         [$($transformed_code:tt)*]
     ) => {
-        $crate::v2::fn_hook::UpdateFnHook::$method(
+        $crate::fn_hook::use_fn_hook $($(::$method_path)*)? (
             (),
             move |_| {
                 $($transformed_code)*
@@ -54,37 +37,37 @@ macro_rules! __impl_fn_hook_body_finish {
     };
     (
         [
-            [($method:ident)] // options
+            [$(($($method_path:ident),* $(,)?))?] // options
             $rest_ids:tt
         ]
         [$used_id:ident] // used_ids
         [$($transformed_code:tt)*]
     ) => {
-        $crate::v2::fn_hook::UpdateFnHook::$method(
-            move |$used_id| {
+        $crate::fn_hook::use_fn_hook $($(::$method_path)*)? (
+            move |$used_id : ::core::pin::Pin<&mut _>| {
                 $($transformed_code)*
             }
         )
     };
     (
         [
-            [($method:ident)] // options
+            [$(($($method_path:ident),* $(,)?))?] // options
             $rest_ids:tt
         ]
         [$($used_id:ident)+] // used_ids
         [$($transformed_code:tt)*]
     ) => {
-        // $crate::v2::HookTuple(($(
+        // $crate::HookTuple(($(
         //     $crate::__expand_or!(
         //         [::core::default::Default::default()]
         //         $used_id
         //     ),
         // )+)) // TODO: remove
-        $crate::v2::fn_hook::UpdateFnHook::$method(
+        $crate::fn_hook::use_fn_hook $($(::$method_path)*)? (
             move |__hooks_hook_data: ::core::pin::Pin<&mut _>| {
                 // SAFETY: pin projection
                 let ($($used_id,)+) = unsafe {
-                    let $crate::v2::HookTuple(($($used_id,)+)) = ::core::pin::Pin::get_unchecked_mut(__hooks_hook_data);
+                    let $crate::HookTuple(($($used_id,)+)) = ::core::pin::Pin::get_unchecked_mut(__hooks_hook_data);
                     ($(
                         ::core::pin::Pin::new_unchecked($used_id),
                     )+)
@@ -219,7 +202,7 @@ macro_rules! __impl_fn_hook_body_start {
 }
 
 #[macro_export]
-macro_rules! fn_hook {
+macro_rules! hook_fn {
     (
         $(#[hook $options:tt])?
         $(#$attr:tt)*
@@ -238,7 +221,7 @@ macro_rules! fn_hook {
         ($($args:tt)*)
         $( -> $ret_ty:ty )?
         $( where
-            __![$($where_clause:tt)*]: __,
+            __![$($where_clause:tt)*]: __
             $(,)?
         )?
         {
@@ -260,13 +243,14 @@ macro_rules! fn_hook {
             )?
         ),*>)?
         ($($args)*)
-        -> $crate::Hook![$($ret_ty)?]
+        -> $crate::UpdateHookUninitialized![$($ret_ty)?]
         $(
             where $($where_clause)*
         )?
         {
             $(#!$inner_attr)*
 
+            #[allow(unused_imports)]
             use $crate::prelude_h::*;
 
             $crate::__impl_fn_hook_body_start!(
@@ -318,6 +302,24 @@ macro_rules! __impl_hook_method_poll_next_update {
 }
 
 #[macro_export]
+macro_rules! __impl_unmount_fn {
+    ({}[$(#$attr:tt)*] $fn_name:ident ($($args:tt)*)) => {
+        $crate::__impl_unexpected_token! { $($attr)* }
+        $crate::__impl_unexpected_token! { $($args)* }
+    };
+    (
+        $fn_body:tt [$($attr:tt)*] $fn_name:ident (
+            $($self_arg:ident)+ $(,)?
+        )
+    ) => {
+        $($attr)*
+        fn $fn_name(
+            $($self_arg)+ : ::core::pin::Pin<&mut Self>
+        ) $fn_body
+    };
+}
+
+#[macro_export]
 macro_rules! __impl_hook_with_method {
     (
         poll_next_update([$($generics:tt)*][$ty:ty][$( $($where_clause:tt)+ )?]) $fn_data:tt
@@ -327,23 +329,94 @@ macro_rules! __impl_hook_with_method {
         }
     };
     (
+        unmount([$($generics:tt)*][$ty:ty][$( $($where_clause:tt)+ )?])[
+            $(#$fn_attr:tt)*
+            $fn_name:ident
+            $args:tt
+            $fn_body:tt
+        ]
+    ) => {
+        impl<$($generics)*> $crate::HookUnmount for $ty $(where $($where_clause)*)? {
+            $crate::__impl_unmount_fn! {
+                $fn_body
+                [$(#$fn_attr)*]
+                $fn_name
+                $args
+            }
+        }
+    };
+    (
         use_hook([$($generics:tt)*][$ty:ty][$( $($where_clause:tt)+ )?])[
             $(#$fn_attr:tt)*
             $fn_name:ident
-            ($self0:ident $($self1:ident)?)
+            ($self0:ident $($self1:ident)? $(,)?)
             $(-> $ret_ty:ty)?
-            {$($fn_body:tt)*}
+            {
+                $($fn_body:tt)*
+            }
         ]
     ) => {
-        impl<$($generics)*> $crate::v2::Hook for $ty $(where $($where_clause)*)? {
+        impl<$($generics)*> $crate::Hook for $ty $(where $($where_clause)*)? {
             type Value<'hook> = $crate::__expand_or![
                 [$($ret_ty)?]
                 ()
             ] where Self: 'hook;
+            $(#$fn_attr)*
             fn $fn_name(
                 $self0 $($self1)? : ::core::pin::Pin<&mut Self>
             ) -> Self::Value<'_>
             {$($fn_body)*}
+        }
+    };
+    (
+        into_hook([$($generics:tt)*][$ty:ty][$( $($where_clause:tt)+ )?])[
+            $(#$fn_attr:tt)*
+            $fn_name:ident
+            ($self0:ident $($self1:ident)?)
+            -> $hook_ty:ty
+            {$($fn_body:tt)*}
+        ]
+    ) => {
+        impl<$($generics)*> $crate::IntoHook for $ty $(where $($where_clause)*)? {
+            type Hook = $hook_ty;
+            $(#$fn_attr)*
+            fn $fn_name(
+                $self0 $($self1)?
+            ) -> Self::Hook
+            {$($fn_body)*}
+        }
+    };
+    (
+        update_hook([$($generics:tt)*][$ty:ty][$( $($where_clause:tt)+ )?])[
+            $(#$fn_attr:tt)*
+            $fn_name:ident
+            ($self0:ident $($self1:ident)?, $hook0:ident $($hook1:ident)? : _ $(,)?)
+            $fn_body:tt
+        ]
+    ) => {
+        impl<$($generics)*> $crate::UpdateHook for $ty $(where $($where_clause)*)? {
+            $(#$fn_attr)*
+            fn $fn_name(
+                $self0 $($self1)?,
+                $hook0 $($hook1)? : ::core::pin::Pin<&mut Self::Hook>,
+            ) $fn_body
+        }
+    };
+    (
+        h([$($generics:tt)*][$ty:ty][$( $($where_clause:tt)+ )?])[
+            $(#$fn_attr:tt)*
+            $fn_name:ident
+            ($self0:ident $($self1:ident)?, $hook0:ident $($hook1:ident)? : $ty_uninitialized:ty)
+            $fn_body:tt
+        ]
+    ) => {
+        impl<$($generics)*> $crate::UpdateHookUninitialized for $ty $(where $($where_clause)*)? {
+            type Uninitialized = $ty_uninitialized;
+            $(#$fn_attr)*
+            fn $fn_name(
+                $self0 $($self1)?,
+                $hook0 $($hook1)? : ::core::pin::Pin<&mut Self::Uninitialized>,
+            ) -> <Self::Hook as $crate::Hook>::Value<'_> $fn_body
         }
     };
 }
@@ -366,14 +439,25 @@ macro_rules! __impl_hook_methods {
 }
 
 #[macro_export]
-macro_rules! v2_impl_hook {
+macro_rules! impl_hook {
     (
-        const _
-            : $ty:ty
+        type For
+            $(<$(
+                $($lt:lifetime)?
+                $($tp1:ident $($tp2:ident)?)?
+                $(
+                    :
+                    $($bound_lt:lifetime)?
+                    $(+ $bounds_lt:lifetime)*
+                    $(? $([$relax_ignore:tt])?  )?
+                    $($bounds:path)?
+                )?
+            ),* $(,)? >)?
+            = $ty:ty
             $(
-                =
-                $(Generics![$($generics:tt)*] $(+)?)?
-                $(Where![$($where_clause:tt)*] $(+)?)?
+                where
+                __![$($($where_clause:tt)+)?]: __
+                $(,)?
             )?
         ;
         $(
@@ -384,9 +468,19 @@ macro_rules! v2_impl_hook {
     ) => {
         $crate::__impl_hook_methods! {
             (
-                [$($($($generics)*)?)?]
+                [$($(
+                    $($lt)?
+                    $($tp1 $($tp2)?)?
+                    $(
+                        :
+                        $($bound_lt)?
+                        $(+ $bounds_lt)*
+                        $(? $([$relax_ignore])?  )?
+                        $($bounds)?
+                    )?
+                ),*)?]
                 [$ty]
-                [$($($($where_clause)*)?)?]
+                [$($($($where_clause)+)?)?]
             )
             $(
                 $fn_name [
@@ -400,13 +494,13 @@ macro_rules! v2_impl_hook {
 }
 
 #[macro_export]
-macro_rules! Hook {
+macro_rules! UpdateHookUninitialized {
     () => {
-        $crate::Hook![()]
+        $crate::UpdateHookUninitialized![()]
     };
     ($ty:ty) => {
-        impl $crate::v2::UpdateHookUninitialized<
-            Hook = impl for<'hook> $crate::v2::Hook<Value<'hook> = $ty>
+        impl $crate::UpdateHookUninitialized<
+            Hook = impl for<'hook> $crate::Hook<Value<'hook> = $ty>
         >
     };
 }

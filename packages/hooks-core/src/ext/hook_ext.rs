@@ -1,6 +1,6 @@
 use std::{pin::Pin, task::Poll};
 
-use crate::{Hook, HookLifetime, HookPollNextUpdate};
+use crate::{Hook, HookPollNextUpdate};
 
 use super::NextUpdate;
 
@@ -26,43 +26,39 @@ pub trait HookPollNextUpdateExt: HookPollNextUpdate {
 
 impl<H: HookPollNextUpdate + ?Sized> HookPollNextUpdateExt for H {}
 
-pub trait HookExt<Args>: Hook<Args> {
+pub trait HookExt: Hook {
     /// A shortcut to call [`Hook::use_hook`] on Unpin hooks.
-    #[inline]
-    fn use_hook(&mut self, args: Args) -> <Self as HookLifetime<'_, Args>>::Value
+    #[inline(always)]
+    fn use_hook(&mut self) -> Self::Value<'_>
     where
         Self: Unpin,
     {
-        <Self as Hook<Args>>::use_hook(Pin::new(self), args)
+        <Self as Hook>::use_hook(Pin::new(self))
     }
 
     #[inline]
-    fn next_value(&mut self, args: Args) -> crate::NextValue<'_, Self, Args>
+    fn next_value(&mut self) -> super::NextValue<'_, Self>
     where
         Self: Unpin,
     {
-        crate::NextValue::new(Pin::new(self), args)
+        crate::NextValue::new(Pin::new(self))
     }
 
     #[inline]
-    fn next_value_with<F: FnOnce(Pin<&mut Self>) -> Args>(
-        &mut self,
-        get_args: F,
-    ) -> crate::NextValueWith<'_, Self, Args, F>
+    fn into_values(self) -> super::Values<Self>
     where
-        Self: Unpin,
+        Self: Sized,
     {
-        crate::NextValueWith::new(Pin::new(self), get_args)
+        super::Values::new(self)
     }
 
     #[inline]
-    fn next_value_with_default_args(&mut self) -> crate::NextValueWithDefaultArgs<'_, Self, Args>
+    fn values(&mut self) -> super::Values<&mut Self>
     where
         Self: Unpin,
-        Args: Default,
     {
-        crate::NextValueWithDefaultArgs::new(Pin::new(self))
+        super::Values::new(self)
     }
 }
 
-impl<Args, H: Hook<Args> + ?Sized> HookExt<Args> for H {}
+impl<H: Hook + ?Sized> HookExt for H {}
