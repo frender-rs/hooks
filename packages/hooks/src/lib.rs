@@ -19,8 +19,8 @@ pub mod pinned;
 #[cfg(feature = "use_lazy_pinned")]
 pub mod lazy_pinned;
 
-#[cfg(feature = "use_pinned_hook")]
-pub mod pinned_hook;
+#[cfg(feature = "use_lazy_pinned_hook")]
+pub mod lazy_pinned_hook;
 
 #[cfg(feature = "use_ref")]
 pub mod ref_hook;
