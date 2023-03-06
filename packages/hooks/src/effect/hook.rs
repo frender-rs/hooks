@@ -74,12 +74,11 @@ impl<Dep, E: EffectFor<Dep>> Effect<Dep, E> {
 
     pub fn register_effect_if(
         self: std::pin::Pin<&mut Self>,
-        get_new_dep_and_effect: impl FnOnce(Option<&Dep>) -> Option<(Dep, E)>,
+        get_new_dep_and_effect: impl FnOnce(&mut Option<Dep>) -> Option<E>,
     ) {
         let this = self.get_mut();
-        if let Some((dep, new_effect)) = get_new_dep_and_effect(this.dep.value.as_ref()) {
+        if let Some(new_effect) = get_new_dep_and_effect(&mut this.dep.value) {
             this.dep.changed = true;
-            this.dep.value = Some(dep);
             this.inner.register_effect(new_effect)
         }
     }
@@ -218,39 +217,32 @@ hooks_core::impl_hook![
     }
 ];
 
-pub struct UseEffectWith<Dep, E: EffectFor<Dep>, F: FnOnce(Option<&Dep>) -> Option<(Dep, E)>>(
+pub struct UseEffectWith<Dep, E: EffectFor<Dep>, F: FnOnce(&mut Option<Dep>) -> Option<E>>(
     F,
     PhantomData<Dep>,
 );
 
 #[inline(always)]
 pub fn use_effect_with<Dep, E: EffectFor<Dep>>(
-    get_effect: impl FnOnce(Option<&Dep>) -> Option<(Dep, E)>,
-) -> UseEffectWith<Dep, E, impl FnOnce(Option<&Dep>) -> Option<(Dep, E)>> {
+    get_effect: impl FnOnce(&mut Option<Dep>) -> Option<E>,
+) -> UseEffectWith<Dep, E, impl FnOnce(&mut Option<Dep>) -> Option<E>> {
     UseEffectWith(get_effect, PhantomData)
 }
 
 hooks_core::impl_hook![
     type For<Dep, E: EffectFor<Dep>, F> = UseEffectWith<Dep, E, F>
-        where __![F: FnOnce(Option<&Dep>) -> Option<(Dep, E)>]: __;
+        where __![F: FnOnce(&mut Option<Dep>) -> Option<E>]: __;
 
     fn into_hook(self) -> Effect<Dep, E> {
-        if let Some((dep, effect)) = self.0(None) {
-            Effect {
-                dep: EffectDep {
-                    changed: false,
-                    value: Some(dep),
-                },
-                inner: EffectInner::new_registered(effect),
-            }
-        } else {
-            Effect {
-                dep: EffectDep {
-                    changed: false,
-                    value: None,
-                },
-                inner: EffectInner::default(),
-            }
+        let mut dep = None;
+        let effect = self.0(&mut dep);
+
+        Effect {
+            dep: EffectDep {
+                changed: effect.is_some() && dep.is_some(),
+                value: dep,
+            },
+            inner: effect.map(EffectInner::new_registered).unwrap_or_default(),
         }
     }
 
@@ -269,9 +261,9 @@ mod tests {
     use std::cell::RefCell;
 
     use futures_lite::future::block_on;
-    use hooks_core::{hook_fn, HookExt, HookPollNextUpdateExt, IntoHook};
+    use hooks_core::{hook_fn, HookExt, HookPollNextUpdateExt, IntoHook, UpdateHookUninitialized};
 
-    use crate::{effect_fn, get_new_dep_and_effect, hook, use_effect};
+    use super::{effect_fn, get_new_dep_and_effect, use_effect, use_effect_with};
 
     #[test]
     fn custom_hook() {
@@ -315,26 +307,31 @@ mod tests {
         })
     }
 
-    #[cfg(aa)]
     #[test]
     fn test_use_effect_with() {
         block_on(async {
             let mut values = vec![];
 
             {
-                let mut hook = use_effect();
+                let hook = super::Effect::default();
 
-                assert!(hook.next_update().await);
+                futures_lite::pin!(hook);
+
+                assert!(!hook.next_update().await);
 
                 let v = "123".to_string();
 
-                hook.use_hook((get_new_dep_and_effect(|old_v| {
-                    if old_v == Some(&v) {
+                use_effect_with(get_new_dep_and_effect(|old_v| {
+                    if old_v.as_ref() == Some(&v) {
                         None
                     } else {
-                        Some((v.clone(), |v: &String| values.push(v.clone())))
+                        *old_v = Some(v.clone());
+                        Some(|v: &String| values.push(v.clone()))
                     }
-                }),));
+                }))
+                .h(hook.as_mut());
+
+                assert!(!hook.next_update().await);
 
                 drop(v); // v is not moved before.
 
@@ -380,11 +377,7 @@ mod tests {
 /// }
 /// ```
 #[inline]
-pub fn get_new_dep_and_effect<
-    Dep,
-    E: EffectFor<Dep>,
-    F: FnOnce(Option<&Dep>) -> Option<(Dep, E)>,
->(
+pub fn get_new_dep_and_effect<Dep, E: EffectFor<Dep>, F: FnOnce(&mut Option<Dep>) -> Option<E>>(
     f: F,
 ) -> F {
     f
