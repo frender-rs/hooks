@@ -37,6 +37,25 @@ pub trait HookUnmount {
     fn unmount(self: Pin<&mut Self>) {}
 }
 
+pub trait HookValueGat<'hook, Bounds = &'hook Self> {
+    type ValueGat;
+}
+
+impl<H> HookValue for H
+where
+    H: for<'hook> HookValueGat<'hook>,
+{
+    type Value<'hook> = <H as HookValueGat<'hook>>::ValueGat
+    where
+        Self: 'hook;
+}
+
+pub trait HookValue {
+    type Value<'hook>
+    where
+        Self: 'hook;
+}
+
 /// ## How to impl `Hook`
 ///
 /// ### with [`fn_hook`](crate::fn_hook) macro
@@ -150,11 +169,7 @@ pub trait HookUnmount {
 ///   the executor can still get the values
 ///   from the no-longer-dynamic hooks,
 ///   and pass the values to the dynamic hooks.
-pub trait Hook: HookPollNextUpdate + HookUnmount {
-    type Value<'hook>
-    where
-        Self: 'hook;
-
+pub trait Hook: HookPollNextUpdate + HookUnmount + HookValue {
     fn use_hook(self: Pin<&mut Self>) -> Self::Value<'_>;
 }
 
@@ -204,11 +219,11 @@ macro_rules! impl_for_deref_hook {
             $unmount
         }
 
-        impl<H: Hook + Unpin + ?Sized> Hook for $ty {
-            type Value<'hook> = H::Value<'hook>
-            where
-                Self: 'hook;
+        impl<'hook, H: Hook + Unpin + ?Sized> HookValueGat<'hook> for $ty {
+            type ValueGat = H::Value<'hook>;
+        }
 
+        impl<H: Hook + Unpin + ?Sized> Hook for $ty {
             $use_hook
         }
     )*};
@@ -258,15 +273,19 @@ where
     }
 }
 
+impl<'hook, P> HookValueGat<'hook> for Pin<P>
+where
+    P: DerefMut,
+    <P as Deref>::Target: Hook,
+{
+    type ValueGat = <<P as Deref>::Target as HookValue>::Value<'hook>;
+}
+
 impl<P> Hook for Pin<P>
 where
     P: DerefMut,
     <P as Deref>::Target: Hook,
 {
-    type Value<'hook> = <<P as Deref>::Target as Hook>::Value<'hook>
-    where
-        Self: 'hook;
-
     #[inline]
     fn use_hook(self: Pin<&mut Self>) -> Self::Value<'_> {
         <P::Target as Hook>::use_hook(crate::utils::pin_as_deref_mut(self))
@@ -306,5 +325,5 @@ pub trait UpdateHook: IntoHook {
 pub trait UpdateHookUninitialized: UpdateHook {
     type Uninitialized: HookPollNextUpdate + Default;
 
-    fn h(self, hook: Pin<&mut Self::Uninitialized>) -> <Self::Hook as Hook>::Value<'_>;
+    fn h(self, hook: Pin<&mut Self::Uninitialized>) -> <Self::Hook as HookValue>::Value<'_>;
 }

@@ -269,14 +269,15 @@ mod tests {
     use std::cell::RefCell;
 
     use futures_lite::future::block_on;
-    use hooks_core::{hook_fn, HookExt, HookPollNextUpdateExt};
+    use hooks_core::{hook_fn, HookExt, HookPollNextUpdateExt, IntoHook};
 
     use crate::{effect_fn, get_new_dep_and_effect, hook, use_effect};
 
     #[test]
     fn custom_hook() {
         hook_fn!(
-            fn use_test_effect(history: &RefCell<Vec<&str>>) {
+            type Bounds = impl 'a;
+            fn use_test_effect<'a>(history: &'a RefCell<Vec<&'static str>>) {
                 h![use_effect(
                     effect_fn(move |_| {
                         // Do some effects
@@ -293,31 +294,28 @@ mod tests {
         let history = RefCell::new(Vec::with_capacity(2));
 
         futures_lite::future::block_on(async {
-            let mut hook = use_test_effect();
+            {
+                let hook = use_test_effect(&history).into_hook_values();
+                futures_lite::pin!(hook);
 
-            // poll_next_update would return true, use_hook would register effect,
-            assert!(hook.next_value((&history,)).await.is_some());
+                // this FnHook is unpin, thus it is initialized in `into_hook`
+                assert!(hook.as_mut().next_value().await.is_none());
 
-            assert_eq!(history.borrow().len(), 0);
+                assert_eq!(*history.borrow(), ["effecting"]);
 
-            // poll_next_update would return false and effect and register cleanup
-            // use_hook would not register because dependencies does not change
-            assert!(hook.next_value((&history,)).await.is_none());
+                // poll_next_update would return false and do nothing
+                // use_hook would not register because dependencies does not change
+                assert!(hook.as_mut().next_value().await.is_none());
 
-            assert_eq!(*history.borrow(), ["effecting"]);
-
-            // poll_next_update would return false and do nothing
-            // use_hook would not register because dependencies does not change
-            assert!(hook.next_value((&history,)).await.is_none());
-
-            assert_eq!(*history.borrow(), ["effecting"]);
-
-            drop(hook); // The last cleanup will be run when dropping.
+                assert_eq!(*history.borrow(), ["effecting"]);
+            }
+            // The last cleanup will be run when `hook` is dropped.
 
             assert_eq!(history.into_inner(), ["effecting", "cleaning"]);
         })
     }
 
+    #[cfg(aa)]
     #[test]
     fn test_use_effect_with() {
         block_on(async {

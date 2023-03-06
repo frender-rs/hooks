@@ -1,6 +1,6 @@
 use std::{marker::PhantomData, pin::Pin};
 
-use crate::{Hook, HookPollNextUpdate, HookUnmount, UpdateHook};
+use crate::{HookPollNextUpdate, HookUnmount};
 
 mod sealed {
     pub trait Initialized: Default {
@@ -62,13 +62,33 @@ crate::impl_hook![
             this.inner_hook.unmount()
         }
     }
+];
+
+impl<
+        'hook,
+        InnerHook: Default + HookPollNextUpdate + HookUnmount,
+        U: FnMutOneArg<Pin<&'hook mut InnerHook>>,
+        I: sealed::Initialized,
+    > crate::HookValueGat<'hook> for FnHook<InnerHook, U, I>
+{
+    type ValueGat = U::FnOutput;
+}
+
+impl<
+        InnerHook: Default + HookPollNextUpdate + HookUnmount,
+        U: for<'hook> FnMutOneArg<Pin<&'hook mut InnerHook>>,
+        I: sealed::Initialized,
+    > crate::Hook for FnHook<InnerHook, U, I>
+{
     #[inline]
-    fn use_hook(self) -> <U as FnMutOneArg<std::pin::Pin<&'hook mut InnerHook>>>::FnOutput {
+    fn use_hook(
+        self: Pin<&mut Self>,
+    ) -> <U as FnMutOneArg<std::pin::Pin<&mut InnerHook>>>::FnOutput {
         let this = self.project();
         I::mark_as_initialized(this.initialized);
         this.use_hook.call_mut_with_one_arg(this.inner_hook)
     }
-];
+}
 
 pin_project_lite::pin_project![
     pub struct FnHookUninitialized<InnerHook: Default, U> {

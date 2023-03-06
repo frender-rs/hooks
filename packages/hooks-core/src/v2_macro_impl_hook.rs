@@ -204,9 +204,12 @@ macro_rules! __impl_fn_hook_body_start {
 #[macro_export]
 macro_rules! hook_fn {
     (
+        $(type Bounds = impl $hook_bound:lifetime $(+ $hook_bounds:lifetime)* ;)?
+
         $(#[hook $options:tt])?
         $(#$attr:tt)*
-        $vis:vis fn $name:ident
+        $(pub $(($($vis:tt)*))?)?
+        fn $name:ident
         $(<$(
             $($lt:lifetime)?
             $($tp1:ident $($tp2:ident)?)?
@@ -230,7 +233,8 @@ macro_rules! hook_fn {
         }
     ) => {
         $(#$attr)*
-        $vis fn $name
+        $(pub $(($($vis)*))?)?
+        fn $name
         $(<$(
             $($lt)?
             $($tp1 $($tp2)?)?
@@ -243,7 +247,10 @@ macro_rules! hook_fn {
             )?
         ),*>)?
         ($($args)*)
-        -> $crate::UpdateHookUninitialized![$($ret_ty)?]
+        -> $crate::UpdateHookUninitialized![
+            { $($hook_bound $(+ $hook_bounds)*)? }
+            $($ret_ty)?
+        ]
         $(
             where $($where_clause)*
         )?
@@ -356,11 +363,14 @@ macro_rules! __impl_hook_with_method {
             }
         ]
     ) => {
-        impl<$($generics)*> $crate::Hook for $ty $(where $($where_clause)*)? {
+        impl<$($generics)*> $crate::HookValue for $ty $(where $($where_clause)*)? {
             type Value<'hook> = $crate::__expand_or![
                 [$($ret_ty)?]
                 ()
             ] where Self: 'hook;
+        }
+
+        impl<$($generics)*> $crate::Hook for $ty $(where $($where_clause)*)? {
             $(#$fn_attr)*
             fn $fn_name(
                 $self0 $($self1)? : ::core::pin::Pin<&mut Self>
@@ -416,7 +426,7 @@ macro_rules! __impl_hook_with_method {
             fn $fn_name(
                 $self0 $($self1)?,
                 $hook0 $($hook1)? : ::core::pin::Pin<&mut Self::Uninitialized>,
-            ) -> <Self::Hook as $crate::Hook>::Value<'_> $fn_body
+            ) -> <Self::Hook as $crate::HookValue>::Value<'_> $fn_body
         }
     };
 }
@@ -495,12 +505,13 @@ macro_rules! impl_hook {
 
 #[macro_export]
 macro_rules! UpdateHookUninitialized {
-    () => {
-        $crate::UpdateHookUninitialized![()]
+    ($bounds:tt) => {
+        $crate::UpdateHookUninitialized![$bounds ()]
     };
-    ($ty:ty) => {
+    ({$($($bounds:tt)+)?} $ty:ty) => {
         impl $crate::UpdateHookUninitialized<
-            Hook = impl for<'hook> $crate::Hook<Value<'hook> = $ty>
-        >
+            Hook = impl $crate::Hook + for <'hook> $crate::HookValueGat<'hook, ValueGat = $ty>
+                    $(+ $($bounds)+)?
+        > $(+ $($bounds)+)?
     };
 }

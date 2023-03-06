@@ -29,6 +29,9 @@ impl<H> Values<H> {
     pub fn next_value(self: Pin<&mut Self>) -> NextValue<H> {
         NextValue::new(self.pin_project_hook())
     }
+
+    // #[inline]
+    // pub fn
 }
 
 #[cfg(feature = "futures-core")]
