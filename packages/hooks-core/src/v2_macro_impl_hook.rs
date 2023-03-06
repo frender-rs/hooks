@@ -22,60 +22,47 @@ macro_rules! h {
 macro_rules! __impl_fn_hook_body_finish {
     (
         [
-            [$(($($method_path:ident),* $(,)?))?] // options
+            [] // options
             $rest_ids:tt
         ]
         [] // used_ids
         [$($transformed_code:tt)*]
     ) => {
-        $crate::fn_hook::use_fn_hook $($(::$method_path)*)? (
-            (),
-            move |_| {
-                $($transformed_code)*
-            }
-        )
+        move |_| {
+            $($transformed_code)*
+        }
     };
     (
         [
-            [$(($($method_path:ident),* $(,)?))?] // options
+            [] // options
             $rest_ids:tt
         ]
         [$used_id:ident] // used_ids
         [$($transformed_code:tt)*]
     ) => {
-        $crate::fn_hook::use_fn_hook $($(::$method_path)*)? (
-            move |$used_id : ::core::pin::Pin<&mut _>| {
-                $($transformed_code)*
-            }
-        )
+        move |$used_id : ::core::pin::Pin<&mut _>| {
+            $($transformed_code)*
+        }
     };
     (
         [
-            [$(($($method_path:ident),* $(,)?))?] // options
+            [] // options
             $rest_ids:tt
         ]
         [$($used_id:ident)+] // used_ids
         [$($transformed_code:tt)*]
     ) => {
-        // $crate::HookTuple(($(
-        //     $crate::__expand_or!(
-        //         [::core::default::Default::default()]
-        //         $used_id
-        //     ),
-        // )+)) // TODO: remove
-        $crate::fn_hook::use_fn_hook $($(::$method_path)*)? (
-            move |__hooks_hook_data: ::core::pin::Pin<&mut _>| {
-                // SAFETY: pin projection
-                let ($($used_id,)+) = unsafe {
-                    let $crate::HookTuple(($($used_id,)+)) = ::core::pin::Pin::get_unchecked_mut(__hooks_hook_data);
-                    ($(
-                        ::core::pin::Pin::new_unchecked($used_id),
-                    )+)
-                };
+        move |__hooks_hook_data: ::core::pin::Pin<&mut _>| {
+            // SAFETY: pin projection
+            let ($($used_id,)+) = unsafe {
+                let $crate::HookTuple(($($used_id,)+)) = ::core::pin::Pin::get_unchecked_mut(__hooks_hook_data);
+                ($(
+                    ::core::pin::Pin::new_unchecked($used_id),
+                )+)
+            };
 
-                $($transformed_code)*
-            }
-        )
+            $($transformed_code)*
+        }
     };
 }
 
@@ -206,7 +193,7 @@ macro_rules! hook_fn {
     (
         $(type Bounds = impl $hook_bound:lifetime $(+ $hook_bounds:lifetime)* ;)?
 
-        $(#[hook $options:tt])?
+        $(#[hook ($($method_path:ident),* $(,)?)])?
         $(#$attr:tt)*
         $(pub $(($($vis:tt)*))?)?
         fn $name:ident
@@ -260,9 +247,65 @@ macro_rules! hook_fn {
             #[allow(unused_imports)]
             use $crate::prelude_h::*;
 
-            $crate::__impl_fn_hook_body_start!(
-                [$($options)?]
-                [$($code)*]
+            enum __HooksImplNever {}
+
+            struct __HooksValueOfThisHook $(<$(
+                $($lt)?
+                $($tp1 $($tp2)?)?
+                $(
+                    :
+                    $($bound_lt)?
+                    $(+ $bounds_lt)*
+                    $(? $([$relax_ignore] +)?  )?
+                    $($bounds)?
+                )?
+            ),*>)?
+            $( where $($where_clause)* )?
+            {
+                __: (
+                    __HooksImplNever,
+                    $($(
+                        $crate::__impl_phantom![
+                            $($lt)?
+                            $($tp1 $($tp2)?)?
+                        ],
+                    ),*)?
+                )
+            }
+
+            impl<
+                'hook,
+                $($(
+                    $($lt)?
+                    $($tp1 $($tp2)?)?
+                    $(
+                        :
+                        $($bound_lt)?
+                        $(+ $bounds_lt)*
+                        $(? $([$relax_ignore] +)?  )?
+                        $($bounds)?
+                    )?
+                ),*)?
+            > $crate::HookValueGat<'hook> for __HooksValueOfThisHook $(<$(
+                $($lt)?
+                $($tp1 $($tp2)?)?
+            ),*>)? {
+                type ValueGat = $crate::__expand_or![[$($ret_ty)?]()];
+            }
+
+            $crate::fn_hook::use_fn_hook $($(::$method_path)*)?
+            ::<
+                __HooksValueOfThisHook $(<$(
+                    $($lt)?
+                    $($tp1 $($tp2)?)?
+                ),*>)?
+                , _, _
+            >
+            (
+                $crate::__impl_fn_hook_body_start!(
+                    []
+                    [$($code)*]
+                )
             )
         }
     };
@@ -513,5 +556,18 @@ macro_rules! UpdateHookUninitialized {
             Hook = impl $crate::Hook + for <'hook> $crate::HookValueGat<'hook, ValueGat = $ty>
                     $(+ $($bounds)+)?
         > $(+ $($bounds)+)?
+    };
+}
+
+#[macro_export]
+macro_rules! __impl_phantom {
+    ($lt:lifetime) => {
+        &$lt()
+    };
+    (const $tp:ident) => {
+        ()
+    };
+    ($tp:ident) => {
+        ::core::marker::PhantomData::<$tp>
     };
 }
