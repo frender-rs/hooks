@@ -189,14 +189,48 @@ macro_rules! __impl_fn_hook_body_start {
 }
 
 #[macro_export]
+macro_rules! __impl_hook_fn_bounds_resolved {
+    ($hook_bounds:tt #[hook $(($($options:tt)*))? ] $($rest:tt)*) => {
+        $crate::__impl_hook_fn_bounds_and_options_resolved! {
+            $hook_bounds ($($($options)*)?)
+            $($rest)*
+        }
+    };
+    ($hook_bounds:tt $($rest:tt)*) => {
+        $crate::__impl_hook_fn_bounds_and_options_resolved! {
+            $hook_bounds ()
+            $($rest)*
+        }
+    };
+}
+
+#[macro_export]
 macro_rules! hook_fn {
     (
-        $(type Bounds = impl $hook_bound:lifetime $(+ $hook_bounds:lifetime)* ;)?
+        type Bounds = impl $hook_bound:lifetime $(+ $hook_bounds:lifetime)* ;
+        $($rest:tt)*
+    ) => {
+        $crate::__impl_hook_fn_bounds_resolved! {
+            { $hook_bound $(+ $hook_bounds)* }
+            $($rest)*
+        }
+    };
+    ($($rest:tt)*) => {
+        $crate::__impl_hook_fn_bounds_resolved! {
+            {}
+            $($rest)*
+        }
+    };
+}
 
-        $(#[hook ($($method_path:ident),* $(,)?)])?
+#[macro_export]
+macro_rules! __impl_hook_fn_bounds_and_options_resolved {
+    (
+        $hook_bounds:tt // { 'a + 'b }
+        ($($method_path:ident),* $(,)?)
+
         $(#$attr:tt)*
-        $(pub $(($($vis:tt)*))?)?
-        fn $name:ident
+        $vis:vis fn $name:ident
         $(<$(
             $($lt:lifetime)?
             $($tp1:ident $($tp2:ident)?)?
@@ -220,8 +254,7 @@ macro_rules! hook_fn {
         }
     ) => {
         $(#$attr)*
-        $(pub $(($($vis)*))?)?
-        fn $name
+        $vis fn $name
         $(<$(
             $($lt)?
             $($tp1 $($tp2)?)?
@@ -234,10 +267,7 @@ macro_rules! hook_fn {
             )?
         ),*>)?
         ($($args)*)
-        -> $crate::UpdateHookUninitialized![
-            { $($hook_bound $(+ $hook_bounds)*)? }
-            $($ret_ty)?
-        ]
+        -> $crate::UpdateHookUninitialized![ $hook_bounds $($ret_ty)? ]
         $(
             where $($where_clause)*
         )?
@@ -293,7 +323,7 @@ macro_rules! hook_fn {
                 type ValueGat = $crate::__expand_or![[$($ret_ty)?]()];
             }
 
-            $crate::fn_hook::use_fn_hook $($(::$method_path)*)?
+            $crate::fn_hook::use_fn_hook $(::$method_path)*
             ::<
                 __HooksValueOfThisHook $(<$(
                     $($lt)?
