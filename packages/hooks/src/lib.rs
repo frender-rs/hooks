@@ -22,11 +22,13 @@ pub mod lazy_pinned;
 #[cfg(feature = "use_lazy_pinned_hook")]
 pub mod lazy_pinned_hook;
 
-#[cfg(feature = "use_ref")]
-pub mod ref_hook;
-
 #[cfg(feature = "ShareValue")]
-pub mod share_value;
+mod share_value;
+#[cfg(feature = "ShareValue")]
+pub use share_value::ShareValue;
+
+#[cfg(feature = "use_shared_ref")]
+pub mod shared_ref;
 
 #[cfg(feature = "use_shared_state")]
 pub mod shared_state;
@@ -35,11 +37,17 @@ pub mod shared_state;
 mod state;
 
 pub mod prelude {
+    pub use hooks_core::prelude::*;
+
     #[cfg(feature = "use_effect")]
     pub use crate::effect::{
         use_effect, use_effect_on_next_poll, use_effect_once, use_effect_once_with, use_effect_with,
     };
-    pub use hooks_core::prelude::*;
+    #[cfg(feature = "use_shared_ref")]
+    pub use crate::shared_ref::{use_shared_ref, use_shared_ref_with, SharedRef};
+
+    #[cfg(feature = "ShareValue")]
+    pub use crate::ShareValue;
 }
 
 pub use hooks_core as core;

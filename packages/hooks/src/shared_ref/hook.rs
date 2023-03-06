@@ -3,6 +3,8 @@ use std::{cell::RefCell, rc::Rc};
 #[derive(Debug, Default)]
 pub struct SharedRef<T>(Rc<RefCell<T>>);
 
+impl<T> Unpin for SharedRef<T> {}
+
 impl<T> Clone for SharedRef<T> {
     #[inline]
     fn clone(&self) -> Self {
@@ -40,8 +42,7 @@ impl<T> SharedRef<T> {
 impl<T> crate::ShareValue<T> for SharedRef<T> {
     #[inline]
     fn is_shared(&self) -> bool {
-        // Weak is never created, thus only need to check strong count.
-        Rc::strong_count(&self.0) != 0
+        self.shared_count() != 0
     }
 
     #[inline]
@@ -87,3 +88,16 @@ impl<T> crate::ShareValue<T> for SharedRef<T> {
         f(&mut *v)
     }
 }
+
+hooks_core::impl_hook![
+    type For<T> = SharedRef<T>;
+    fn unmount() {}
+    #[inline(always)]
+    fn poll_next_update(self, _cx: _) {
+        std::task::Poll::Ready(false)
+    }
+    #[inline]
+    fn use_hook(self) -> &'hook Self {
+        self.get_mut()
+    }
+];
