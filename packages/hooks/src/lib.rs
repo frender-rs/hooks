@@ -16,6 +16,9 @@ pub mod memo;
 #[cfg(feature = "use_default_pinned")]
 pub mod pinned;
 
+#[cfg(feature = "use_lazy_pinned")]
+pub mod lazy_pinned;
+
 #[cfg(feature = "use_pinned_hook")]
 pub mod pinned_hook;
 

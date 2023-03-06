@@ -92,6 +92,7 @@ dependencies = [
  "futures-lite",
  "hooks-core",
  "hooks-derive",
+ "lazy-pinned",
  "pin-project-lite",
  "smallvec",
 ]
@@ -137,6 +138,12 @@ checksum = "7a5bbe824c507c5da5956355e86a746d82e0e1464f65d862cc5e71da70e94b2c"
 dependencies = [
  "cfg-if",
 ]
+
+[[package]]
+name = "lazy-pinned"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "85a140d4d7ef417e1b0abf66c11b792f92c9de9e7cce22788c78d04e34ba3b44"
 
 [[package]]
 name = "memchr"
