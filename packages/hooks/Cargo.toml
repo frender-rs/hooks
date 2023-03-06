@@ -22,5 +22,11 @@ futures-lite = "1.12.0"
 default = ["derive", "futures-core", "all"]
 derive = ["hooks-derive"]
 futures-core = ["hooks-core/futures-core"]
-all = ["use_effect"]
+all = [
+    "use_effect",
+    # "use_memo",
+    "use_mut",
+]
 use_effect = []
+use_memo = []
+use_mut = []
