@@ -1,6 +1,4 @@
-use std::pin::Pin;
-
-use super::{inner::Cleanup, EffectCleanup, EffectForNoneDependency};
+use super::{inner::Cleanup, EffectForNoneDependency};
 
 pub struct EffectOnce<E: EffectForNoneDependency> {
     /// - `Ok(Cleanup(None))` means uninitialized
@@ -43,7 +41,7 @@ impl<E: EffectForNoneDependency> EffectOnce<E> {
     #[inline]
     fn impl_poll(&mut self) -> std::task::Poll<bool> {
         let inner = &mut self.inner;
-        if let Err(_) = &inner {
+        if inner.is_err() {
             let effect = match std::mem::replace(inner, Ok(Cleanup(None))) {
                 Err(effect) => effect,
                 _ => unreachable!(),
@@ -136,14 +134,11 @@ mod tests {
                 || effected.borrow_mut().push("cleaned")
             };
 
-            let hook = super::use_effect_once_with(effect).into_hook();
+            let hook = super::use_effect_once(effect).into_hook();
 
             futures_lite::pin!(hook);
 
             futures_lite::future::block_on(async {
-                assert!(hook.next_value().await.is_some());
-                assert_eq!(effected.borrow().len(), 0);
-                hook.use_hook();
                 assert!(hook.next_value().await.is_none());
                 assert_eq!(*effected.borrow(), ["effected"]);
             });
