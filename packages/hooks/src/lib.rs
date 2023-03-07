@@ -45,6 +45,10 @@ pub mod prelude {
     };
     #[cfg(feature = "use_shared_ref")]
     pub use crate::shared_ref::{use_shared_ref, use_shared_ref_with, SharedRef};
+    #[cfg(feature = "use_shared_state")]
+    pub use crate::shared_state::{
+        use_shared_state, use_shared_state_eq, use_shared_state_eq_with, use_shared_state_with,
+    };
 
     #[cfg(feature = "ShareValue")]
     pub use crate::ShareValue;

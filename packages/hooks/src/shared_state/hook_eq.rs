@@ -1,79 +1,36 @@
-use std::pin::Pin;
+use super::SharedStateEq;
 
-use hooks_core::HookPollNextUpdateExt;
+pub struct UseSharedStateEq<T: PartialEq>(pub T);
+pub use UseSharedStateEq as use_shared_state_eq;
 
-use super::SharedStateEqData;
-
-#[derive(Debug)]
-pub struct SharedStateEq<T: PartialEq>(super::inner::SharedState<SharedStateEqData<T>>);
-
-impl<T: PartialEq> Default for SharedStateEq<T> {
+hooks_core::impl_hook![
+    type For<T: PartialEq> = UseSharedStateEq<T>;
     #[inline]
-    fn default() -> Self {
-        Self(Default::default())
+    fn into_hook(self) -> SharedStateEq<T> {
+        SharedStateEq::new(self.0)
     }
-}
+    #[inline(always)]
+    fn update_hook(self, hook: _) {}
+    fn h(self, hook: crate::utils::UninitializedHook<SharedStateEq<T>>) {
+        hook.get_mut().use_into_hook(self)
+    }
+];
 
-impl<T: PartialEq> SharedStateEq<T> {
+pub struct UseSharedStateEqWith<T, F: FnOnce() -> T>(pub F);
+pub use UseSharedStateEqWith as use_shared_state_eq_with;
+
+hooks_core::impl_hook![
+    type For<T: PartialEq, F> = UseSharedStateEqWith<T,F>
+        where __![F: FnOnce() -> T]: __;
+
     #[inline]
-    pub fn use_hook_with(
-        self: Pin<&mut Self>,
-        get_initial_state: impl FnOnce() -> T,
-    ) -> &SharedStateEqData<T> {
-        self.get_mut().0.get_or_init_with(move |waker| {
-            SharedStateEqData::new_with_waker(get_initial_state(), waker)
-        })
+    fn into_hook(self) -> SharedStateEq<T> {
+        SharedStateEq::new(self.0())
     }
-}
 
-impl<T: PartialEq> Unpin for SharedStateEq<T> {}
-
-#[derive(Debug)]
-pub struct SharedStateEqWith<T: PartialEq>(SharedStateEq<T>);
-
-impl<T: PartialEq> Default for SharedStateEqWith<T> {
-    #[inline]
-    fn default() -> Self {
-        Self(Default::default())
+    #[inline(always)]
+    fn update_hook(self, hook: _) {}
+    fn h(self, hook: crate::utils::UninitializedHook<SharedStateEq<T>>) {
+        hook.get_mut().use_into_hook(self)
     }
-}
-
-impl<T: PartialEq> Unpin for SharedStateEqWith<T> {}
-
-crate::utils::impl_hook! {
-    impl [T: PartialEq] for SharedStateEq<T> {
-        #[inline]
-        poll_next_update(self, cx) {
-            self.get_mut().0.impl_poll_next_update(cx, SharedStateEqData::impl_poll_next_update)
-        }
-
-        #[inline]
-        use_hook(self, initial_state: T) -> &'hook SharedStateEqData<T> {
-            self.use_hook_with(move || initial_state)
-        }
-    }
-}
-
-crate::utils::impl_hook! {
-    impl [T: PartialEq] for SharedStateEqWith<T> {
-        #[inline]
-        poll_next_update(self, cx) {
-            self.get_mut().0.poll_next_update(cx)
-        }
-
-        #[inline]
-        use_hook[F: FnOnce() -> T](self, get_initial_state: F) -> &'hook SharedStateEqData<T> {
-            Pin::new(&mut self.get_mut().0).use_hook_with(get_initial_state)
-        }
-    }
-}
-
-#[inline]
-pub fn use_shared_state_eq<T: PartialEq>() -> SharedStateEq<T> {
-    Default::default()
-}
-
-#[inline]
-pub fn use_shared_state_eq_with<T: PartialEq>() -> SharedStateEqWith<T> {
-    Default::default()
-}
+];

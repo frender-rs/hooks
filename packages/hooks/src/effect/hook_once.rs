@@ -53,7 +53,7 @@ impl<E: EffectForNoneDependency> EffectOnce<E> {
     }
 }
 
-crate::utils::impl_hook![
+hooks_core::impl_hook![
     type For<E: EffectForNoneDependency> = EffectOnce<E>;
     #[inline]
     fn unmount(self) {
@@ -70,7 +70,7 @@ crate::utils::impl_hook![
 pub struct UseEffectOnce<E>(pub E);
 pub use UseEffectOnce as use_effect_once;
 
-crate::utils::impl_hook![
+hooks_core::impl_hook![
     type For<E: EffectForNoneDependency> = UseEffectOnce<E>;
     #[inline]
     fn into_hook(self) -> EffectOnce<E> {
@@ -95,7 +95,7 @@ pub fn use_effect_once_with<E: EffectForNoneDependency>(
     UseEffectOnceWith(get_effect)
 }
 
-crate::utils::impl_hook![
+hooks_core::impl_hook![
     type For<E: EffectForNoneDependency, F> = UseEffectOnceWith<F>
         where __![F: FnOnce() -> E] : __;
 

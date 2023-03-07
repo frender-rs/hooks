@@ -1,33 +1,34 @@
 use std::task::{Context, Poll};
 
-use crate::{ShareValue, SharedStateData};
+use crate::ShareValue;
+
+use super::SharedState;
 
 #[derive(Debug)]
-pub struct SharedStateEqData<T: PartialEq>(SharedStateData<T>);
+pub struct SharedStateEq<T: PartialEq>(SharedState<T>);
 
-impl<T: PartialEq> Clone for SharedStateEqData<T> {
+impl<T: PartialEq> Unpin for SharedStateEq<T> {}
+
+impl<T: PartialEq> Clone for SharedStateEq<T> {
     #[inline]
     fn clone(&self) -> Self {
         Self(self.0.clone())
     }
 }
 
-impl<T: PartialEq> SharedStateEqData<T> {
+impl<T: PartialEq> SharedStateEq<T> {
     #[inline]
     pub fn new(initial_value: T) -> Self {
-        Self(SharedStateData::new(initial_value))
+        Self(SharedState::new(initial_value))
     }
 
     #[inline]
-    pub fn new_with_waker(
-        initial_value: T,
-        waker: Option<std::task::Waker>,
-    ) -> SharedStateEqData<T> {
-        Self(SharedStateData::new_with_waker(initial_value, waker))
+    pub fn new_with_waker(initial_value: T, waker: Option<std::task::Waker>) -> SharedStateEq<T> {
+        Self(SharedState::new_with_waker(initial_value, waker))
     }
 
     #[inline]
-    pub fn inner(&self) -> &SharedStateData<T> {
+    pub fn inner(&self) -> &SharedState<T> {
         &self.0
     }
 
@@ -36,7 +37,7 @@ impl<T: PartialEq> SharedStateEqData<T> {
     }
 }
 
-impl<T: PartialEq> ShareValue<T> for SharedStateEqData<T> {
+impl<T: PartialEq> ShareValue<T> for SharedStateEq<T> {
     #[inline]
     fn is_shared(&self) -> bool {
         self.0.is_shared()
@@ -108,3 +109,16 @@ impl<T: PartialEq> ShareValue<T> for SharedStateEqData<T> {
         self.0.map_mut(f)
     }
 }
+
+hooks_core::impl_hook![
+    type For<T: PartialEq> = SharedStateEq<T>;
+    fn unmount() {}
+    #[inline]
+    fn poll_next_update(self, cx: _) {
+        self.get_mut().impl_poll_next_update(cx)
+    }
+    #[inline]
+    fn use_hook(self) -> &'hook Self {
+        self.get_mut()
+    }
+];

@@ -19,11 +19,11 @@ impl WakerStatus {
     }
 }
 
-pub struct SharedStateData<T> {
+pub struct SharedState<T> {
     shared_ref: SharedRef<(T, WakerStatus)>,
 }
 
-impl<T> Drop for SharedStateData<T> {
+impl<T> Drop for SharedState<T> {
     fn drop(&mut self) {
         // This is the last rc.
         // Or, after this is dropped, rc will be no longer shared
@@ -43,9 +43,9 @@ impl<T> Drop for SharedStateData<T> {
     }
 }
 
-impl<T: std::fmt::Debug> std::fmt::Debug for SharedStateData<T> {
+impl<T: std::fmt::Debug> std::fmt::Debug for SharedState<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut d = f.debug_tuple("SharedStateData");
+        let mut d = f.debug_tuple("SharedState");
         self.shared_ref.try_borrow(|v| {
             if let Some(v) = v {
                 d.field(&v.0);
@@ -58,7 +58,7 @@ impl<T: std::fmt::Debug> std::fmt::Debug for SharedStateData<T> {
     }
 }
 
-impl<T> Clone for SharedStateData<T> {
+impl<T> Clone for SharedState<T> {
     fn clone(&self) -> Self {
         Self {
             shared_ref: self.shared_ref.clone(),
@@ -66,7 +66,7 @@ impl<T> Clone for SharedStateData<T> {
     }
 }
 
-impl<T> SharedStateData<T> {
+impl<T> SharedState<T> {
     #[inline]
     pub fn new(initial_value: T) -> Self {
         Self {
@@ -132,7 +132,7 @@ impl<T> SharedStateData<T> {
     }
 }
 
-impl<T> ShareValue<T> for SharedStateData<T> {
+impl<T> ShareValue<T> for SharedState<T> {
     #[inline]
     fn is_shared(&self) -> bool {
         self.shared_ref.is_shared()
@@ -172,3 +172,16 @@ impl<T> ShareValue<T> for SharedStateData<T> {
         })
     }
 }
+
+hooks_core::impl_hook![
+    type For<T> = SharedState<T>;
+    fn unmount() {}
+    #[inline]
+    fn poll_next_update(self, cx: _) {
+        self.get_mut().impl_poll_next_update(cx)
+    }
+    #[inline]
+    fn use_hook(self) -> &'hook Self {
+        self.get_mut()
+    }
+];

@@ -36,7 +36,7 @@ impl<Dep: std::fmt::Debug, E: EffectFor<Dep>> std::fmt::Debug for Effect<Dep, E>
     }
 }
 
-crate::utils::impl_hook![
+hooks_core::impl_hook![
     type For<Dep, E: EffectFor<Dep>> = Effect<Dep, E>;
     #[inline]
     fn unmount(self) {
