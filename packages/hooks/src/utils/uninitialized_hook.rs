@@ -7,11 +7,14 @@ pub struct UninitializedHook<H>(pub Option<H>);
 
 impl<H: Hook + Unpin> UninitializedHook<H> {
     #[inline]
-    pub(crate) fn use_hook(&mut self, get_hook: impl FnOnce() -> H) -> H::Value<'_> {
+    pub(crate) fn use_hook(&mut self, get_hook: impl FnOnce() -> H) -> hooks_core::Value![H] {
         self.0.get_or_insert_with(get_hook).use_hook()
     }
     #[inline]
-    pub(crate) fn use_into_hook(&mut self, into_hook: impl IntoHook<Hook = H>) -> H::Value<'_> {
+    pub(crate) fn use_into_hook(
+        &mut self,
+        into_hook: impl IntoHook<Hook = H>,
+    ) -> hooks_core::Value![H] {
         self.use_hook(|| into_hook.into_hook())
     }
 }

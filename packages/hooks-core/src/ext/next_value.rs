@@ -1,6 +1,6 @@
 use std::{future::Future, pin::Pin};
 
-use crate::{Hook, HookPollNextUpdate};
+use crate::{Hook, HookPollNextUpdate, HookValue};
 
 pub struct NextValue<'hook, H: ?Sized> {
     hook: Option<Pin<&'hook mut H>>,
@@ -19,7 +19,7 @@ impl<'hook, H: ?Sized> Future for NextValue<'hook, H>
 where
     H: Hook,
 {
-    type Output = Option<H::Value<'hook>>;
+    type Output = Option<<H as HookValue<'hook>>::Value>;
 
     #[inline]
     fn poll(

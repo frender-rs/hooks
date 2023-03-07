@@ -316,11 +316,11 @@ macro_rules! __impl_hook_fn_bounds_and_options_resolved {
                         $($bounds)?
                     )?
                 ),*)?
-            > $crate::HookValueGat<'hook> for __HooksValueOfThisHook $(<$(
+            > $crate::HookValue<'hook> for __HooksValueOfThisHook $(<$(
                 $($lt)?
                 $($tp1 $($tp2)?)?
             ),*>)? {
-                type ValueGat = $crate::__expand_or![[$($ret_ty)?]()];
+                type Value = $crate::__expand_or![[$($ret_ty)?]()];
             }
 
             $crate::fn_hook::use_fn_hook $(::$method_path)*
@@ -436,18 +436,18 @@ macro_rules! __impl_hook_with_method {
             }
         ]
     ) => {
-        impl<$($generics)*> $crate::HookValue for $ty $(where $($where_clause)*)? {
-            type Value<'hook> = $crate::__expand_or![
+        impl<'hook, $($generics)*> $crate::HookValue<'hook> for $ty $(where $($where_clause)*)? {
+            type Value = $crate::__expand_or![
                 [$($ret_ty)?]
                 ()
-            ] where Self: 'hook;
+            ];
         }
 
         impl<$($generics)*> $crate::Hook for $ty $(where $($where_clause)*)? {
             $(#$fn_attr)*
             fn $fn_name(
                 $self0 $($self1)? : ::core::pin::Pin<&mut Self>
-            ) -> Self::Value<'_>
+            ) -> <Self as $crate::HookValue<'_>>::Value
             {$($fn_body)*}
         }
     };
@@ -499,7 +499,7 @@ macro_rules! __impl_hook_with_method {
             fn $fn_name(
                 $self0 $($self1)?,
                 $hook0 $($hook1)? : ::core::pin::Pin<&mut Self::Uninitialized>,
-            ) -> <Self::Hook as $crate::HookValue>::Value<'_> $fn_body
+            ) -> <Self::Hook as $crate::HookValue<'_>>::Value $fn_body
         }
     };
 }
@@ -583,7 +583,7 @@ macro_rules! UpdateHookUninitialized {
     };
     ({$($($bounds:tt)+)?} $ty:ty) => {
         impl $crate::UpdateHookUninitialized<
-            Hook = impl $crate::Hook + for <'hook> $crate::HookValueGat<'hook, ValueGat = $ty>
+            Hook = impl $crate::Hook + for <'hook> $crate::HookValue<'hook, Value = $ty>
                     $(+ $($bounds)+)?
         > $(+ $($bounds)+)?
     };
@@ -599,5 +599,15 @@ macro_rules! __impl_phantom {
     };
     ($tp:ident) => {
         ::core::marker::PhantomData::<$tp>
+    };
+}
+
+#[macro_export]
+macro_rules! Value {
+    ($hook_ty:ty $(,)?) => {
+        <$hook_ty as $crate::HookValue<'_>>::Value
+    };
+    ($hook_ty:ty , $lt:lifetime $(,)?) => {
+        <$hook_ty as $crate::HookValue<$lt>>::Value
     };
 }

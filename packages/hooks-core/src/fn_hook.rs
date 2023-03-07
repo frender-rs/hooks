@@ -69,9 +69,9 @@ impl<
         InnerHook: Default + HookPollNextUpdate + HookUnmount,
         U: FnMutOneArg<Pin<&'hook mut InnerHook>>,
         I: sealed::Initialized,
-    > crate::HookValueGat<'hook> for FnHook<InnerHook, U, I>
+    > crate::HookValue<'hook> for FnHook<InnerHook, U, I>
 {
-    type ValueGat = U::FnOutput;
+    type Value = U::FnOutput;
 }
 
 impl<
@@ -173,11 +173,9 @@ pub mod use_fn_hook {
     }
 
     pub fn pin<
-        Value: for<'hook> crate::HookValueGat<'hook>,
+        Value: for<'hook> crate::HookValue<'hook>,
         InnerHook: Default + HookPollNextUpdate + HookUnmount,
-        U: for<'hook> FnMut(
-            Pin<&'hook mut InnerHook>,
-        ) -> <Value as crate::HookValueGat<'hook>>::ValueGat,
+        U: for<'hook> FnMut(Pin<&'hook mut InnerHook>) -> <Value as crate::HookValue<'hook>>::Value,
     >(
         use_hook: U,
     ) -> pin::UseFnHook<InnerHook, U> {
@@ -233,11 +231,9 @@ pub mod use_fn_hook {
     }
 
     pub fn unpin<
-        Value: for<'hook> crate::HookValueGat<'hook>,
+        Value: for<'hook> crate::HookValue<'hook>,
         InnerHook: Default + HookPollNextUpdate + HookUnmount + Unpin,
-        U: for<'hook> FnMut(
-            Pin<&'hook mut InnerHook>,
-        ) -> <Value as crate::HookValueGat<'hook>>::ValueGat,
+        U: for<'hook> FnMut(Pin<&'hook mut InnerHook>) -> <Value as crate::HookValue<'hook>>::Value,
     >(
         use_hook: U,
     ) -> unpin::UseFnHook<InnerHook, U> {

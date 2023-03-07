@@ -4,7 +4,23 @@ use std::{
     task::Poll,
 };
 
-use crate::identity::Identity;
+mod sealed {
+    pub trait HookValueBounds<'hook, This: ?Sized> {}
+    impl<'hook, T: ?Sized> HookValueBounds<'hook, T> for &'hook T {}
+}
+
+/// This is a helper trait to define
+/// *lifetime generic associated types (lifetime-GAT)*
+/// for [`Hook`].
+///
+/// This trait follows the [*better GAT*] pattern so that
+/// *lifetime-GAT* can be used in earlier rust versions.
+///
+/// [*better GAT*]: https://sabrinajewson.org/blog/the-better-alternative-to-lifetime-gats#the-better-gats
+/// [compiler bug]: https://github.com/rust-lang/rust/issues/61949#issuecomment-789664939
+pub trait HookValue<'hook, ImplicitBounds: sealed::HookValueBounds<'hook, Self> = &'hook Self> {
+    type Value;
+}
 
 pub trait HookPollNextUpdate {
     /// The meaning of the return value is:
@@ -35,25 +51,6 @@ pub trait HookUnmount {
     /// After `unmount`, the hook might still be used or updated.
     #[inline(always)]
     fn unmount(self: Pin<&mut Self>) {}
-}
-
-pub trait HookValueGat<'hook, Bounds = &'hook Self> {
-    type ValueGat;
-}
-
-impl<H> HookValue for H
-where
-    H: for<'hook> HookValueGat<'hook>,
-{
-    type Value<'hook> = <H as HookValueGat<'hook>>::ValueGat
-    where
-        Self: 'hook;
-}
-
-pub trait HookValue {
-    type Value<'hook>
-    where
-        Self: 'hook;
 }
 
 /// ## How to impl `Hook`
@@ -169,8 +166,8 @@ pub trait HookValue {
 ///   the executor can still get the values
 ///   from the no-longer-dynamic hooks,
 ///   and pass the values to the dynamic hooks.
-pub trait Hook: HookPollNextUpdate + HookUnmount + HookValue {
-    fn use_hook(self: Pin<&mut Self>) -> Self::Value<'_>;
+pub trait Hook: HookPollNextUpdate + HookUnmount + for<'hook> HookValue<'hook> {
+    fn use_hook(self: Pin<&mut Self>) -> <Self as HookValue<'_>>::Value;
 }
 
 /// `NonLendingHook` is a subset of [`Hook`].
@@ -181,23 +178,17 @@ pub trait Hook: HookPollNextUpdate + HookUnmount + HookValue {
 /// [`Hook`] can be run by executor and become a `LendingAsyncIterator`,
 /// `NonLendingHook` can be run by executor and become an [`AsyncIterator`](std::async_iter::AsyncIterator)
 /// (also known as [`Stream`](futures_core::Stream)).
-pub trait NonLendingHook: Hook {
+pub trait NonLendingHook:
+    Hook + for<'hook> HookValue<'hook, Value = Self::NonGenericValue>
+{
     type NonGenericValue;
-
-    fn use_non_lending_hook(self: Pin<&mut Self>) -> Self::NonGenericValue;
 }
 
 impl<H, V> NonLendingHook for H
 where
-    H: Hook,
-    for<'hook> H::Value<'hook>: Identity<This = V>,
+    H: Hook + for<'hook> HookValue<'hook, Value = V>,
 {
     type NonGenericValue = V;
-
-    #[inline(always)]
-    fn use_non_lending_hook(self: Pin<&mut Self>) -> Self::NonGenericValue {
-        Identity::identity(<H as Hook>::use_hook(self))
-    }
 }
 
 macro_rules! impl_for_deref_hook {
@@ -219,8 +210,8 @@ macro_rules! impl_for_deref_hook {
             $unmount
         }
 
-        impl<'hook, H: Hook + Unpin + ?Sized> HookValueGat<'hook> for $ty {
-            type ValueGat = H::Value<'hook>;
+        impl<'hook, H: Hook + Unpin + ?Sized> HookValue<'hook> for $ty {
+            type Value = <H as HookValue<'hook>>::Value;
         }
 
         impl<H: Hook + Unpin + ?Sized> Hook for $ty {
@@ -242,7 +233,7 @@ impl_for_deref_hook![
         }
 
         #[inline]
-        fn use_hook(self: Pin<&mut Self>) -> Self::Value<'_> {
+        fn use_hook(self: Pin<&mut Self>) -> <Self as HookValue<'_>>::Value {
             H::use_hook(Pin::new(self.get_mut()))
         }
     }
@@ -273,12 +264,12 @@ where
     }
 }
 
-impl<'hook, P> HookValueGat<'hook> for Pin<P>
+impl<'hook, P> HookValue<'hook> for Pin<P>
 where
     P: DerefMut,
     <P as Deref>::Target: Hook,
 {
-    type ValueGat = <<P as Deref>::Target as HookValue>::Value<'hook>;
+    type Value = <<P as Deref>::Target as HookValue<'hook>>::Value;
 }
 
 impl<P> Hook for Pin<P>
@@ -287,7 +278,7 @@ where
     <P as Deref>::Target: Hook,
 {
     #[inline]
-    fn use_hook(self: Pin<&mut Self>) -> Self::Value<'_> {
+    fn use_hook(self: Pin<&mut Self>) -> <Self as HookValue<'_>>::Value {
         <P::Target as Hook>::use_hook(crate::utils::pin_as_deref_mut(self))
     }
 }
@@ -325,5 +316,5 @@ pub trait UpdateHook: IntoHook {
 pub trait UpdateHookUninitialized: UpdateHook {
     type Uninitialized: HookPollNextUpdate + Default;
 
-    fn h(self, hook: Pin<&mut Self::Uninitialized>) -> <Self::Hook as HookValue>::Value<'_>;
+    fn h(self, hook: Pin<&mut Self::Uninitialized>) -> <Self::Hook as HookValue<'_>>::Value;
 }

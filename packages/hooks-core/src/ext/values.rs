@@ -49,7 +49,7 @@ where
         let mut hook = self.pin_project_hook();
         <H as crate::HookPollNextUpdate>::poll_next_update(hook.as_mut(), cx).map(|dynamic| {
             if dynamic {
-                let value = <H as crate::NonLendingHook>::use_non_lending_hook(hook);
+                let value = <H as crate::Hook>::use_hook(hook);
                 Some(value)
             } else {
                 None
