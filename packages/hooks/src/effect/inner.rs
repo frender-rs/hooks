@@ -49,7 +49,6 @@ impl<E, C: EffectCleanup> Default for EffectInner<E, C> {
 }
 
 impl<E, C: EffectCleanup> EffectInner<E, C> {
-    #[deprecated]
     pub fn cleanup_and_effect_with(&mut self, run_effect: impl FnOnce(E) -> C) {
         let this = std::mem::take(self);
         drop(this.cleanup);

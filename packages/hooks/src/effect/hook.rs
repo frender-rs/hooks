@@ -1,15 +1,9 @@
-use std::{marker::PhantomData, pin::Pin, task::Poll};
+use std::{marker::PhantomData, task::Poll};
 
 use super::{inner::EffectInner, EffectCleanup, EffectFor};
 
-#[derive(Debug)]
-struct EffectDep<Dep> {
-    changed: bool,
-    value: Option<Dep>,
-}
-
 pub struct Effect<Dep, E: EffectFor<Dep>> {
-    dep: EffectDep<Dep>,
+    dependency: Option<Dep>,
     inner: EffectInner<E, E::Cleanup>,
 }
 
@@ -18,10 +12,7 @@ impl<Dep, E: EffectFor<Dep>> Unpin for Effect<Dep, E> {}
 impl<Dep, E: EffectFor<Dep>> Default for Effect<Dep, E> {
     fn default() -> Self {
         Self {
-            dep: EffectDep {
-                changed: false,
-                value: None,
-            },
+            dependency: None,
             inner: Default::default(),
         }
     }
@@ -30,7 +21,7 @@ impl<Dep, E: EffectFor<Dep>> Default for Effect<Dep, E> {
 impl<Dep: std::fmt::Debug, E: EffectFor<Dep>> std::fmt::Debug for Effect<Dep, E> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Effect")
-            .field("dep", &self.dep)
+            .field("dependency", &self.dependency)
             .field("inner", &self.inner)
             .finish()
     }
@@ -44,11 +35,9 @@ hooks_core::impl_hook![
     }
     fn poll_next_update(self) {
         let this = self.get_mut();
-        let EffectDep { changed, value } = &mut this.dep;
-        if *changed {
-            *changed = false;
-            if let Some(value) = &value {
-                this.inner.cleanup_and_effect_for(value);
+        if this.inner.effect.is_some() {
+            if let Some(dependency) = &this.dependency {
+                this.inner.cleanup_and_effect_for(dependency);
             }
         }
         Poll::Ready(false)
@@ -65,9 +54,8 @@ impl<Dep, E: EffectFor<Dep>> Effect<Dep, E> {
         let this = self.get_mut();
 
         let dep = Some(dep);
-        if this.dep.value != dep {
-            this.dep.changed = true;
-            this.dep.value = dep;
+        if this.dependency != dep {
+            this.dependency = dep;
             this.inner.register_effect(effect)
         }
     }
@@ -77,8 +65,7 @@ impl<Dep, E: EffectFor<Dep>> Effect<Dep, E> {
         get_new_dep_and_effect: impl FnOnce(&mut Option<Dep>) -> Option<E>,
     ) {
         let this = self.get_mut();
-        if let Some(new_effect) = get_new_dep_and_effect(&mut this.dep.value) {
-            this.dep.changed = true;
+        if let Some(new_effect) = get_new_dep_and_effect(&mut this.dependency) {
             this.inner.register_effect(new_effect)
         }
     }
@@ -200,10 +187,7 @@ hooks_core::impl_hook![
     #[inline]
     fn into_hook(self) -> Effect<Dep, E> {
         Effect {
-            dep: EffectDep {
-                changed: false,
-                value: Some(self.1),
-            },
+            dependency: Some(self.1),
             inner: EffectInner::new_registered(self.0),
         }
     }
@@ -234,14 +218,11 @@ hooks_core::impl_hook![
         where __![F: FnOnce(&mut Option<Dep>) -> Option<E>]: __;
 
     fn into_hook(self) -> Effect<Dep, E> {
-        let mut dep = None;
-        let effect = self.0(&mut dep);
+        let mut dependency = None;
+        let effect = self.0(&mut dependency);
 
         Effect {
-            dep: EffectDep {
-                changed: effect.is_some() && dep.is_some(),
-                value: dep,
-            },
+            dependency,
             inner: effect.map(EffectInner::new_registered).unwrap_or_default(),
         }
     }
@@ -261,7 +242,7 @@ mod tests {
     use std::cell::RefCell;
 
     use futures_lite::future::block_on;
-    use hooks_core::{hook_fn, HookExt, HookPollNextUpdateExt, IntoHook, UpdateHookUninitialized};
+    use hooks_core::{hook_fn, HookPollNextUpdateExt, IntoHook, UpdateHookUninitialized};
 
     use super::{effect_fn, get_new_dep_and_effect, use_effect, use_effect_with};
 
