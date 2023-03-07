@@ -10,7 +10,7 @@ hooks_core::impl_hook![
         SharedState::new(self.0)
     }
     #[inline(always)]
-    fn update_hook(self, hook: _) {}
+    fn update_hook(self, _hook: _) {}
     fn h(self, hook: crate::utils::UninitializedHook<SharedState<T>>) {
         hook.get_mut().use_into_hook(self)
     }
@@ -29,7 +29,7 @@ hooks_core::impl_hook![
     }
 
     #[inline(always)]
-    fn update_hook(self, hook: _) {}
+    fn update_hook(self, _hook: _) {}
     fn h(self, hook: crate::utils::UninitializedHook<SharedState<T>>) {
         hook.get_mut().use_into_hook(self)
     }

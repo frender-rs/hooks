@@ -70,17 +70,7 @@ impl<T> SharedState<T> {
     #[inline]
     pub fn new(initial_value: T) -> Self {
         Self {
-            shared_ref: SharedRef::new((initial_value, WakerStatus::Unregistered)),
-        }
-    }
-
-    #[inline]
-    pub fn new_with_waker(initial_value: T, waker: Option<Waker>) -> Self {
-        Self {
-            shared_ref: SharedRef::new((
-                initial_value,
-                waker.map_or(WakerStatus::Unregistered, WakerStatus::Registered),
-            )),
+            shared_ref: SharedRef::new((initial_value, WakerStatus::Updated)),
         }
     }
 
@@ -110,7 +100,7 @@ impl<T> SharedState<T> {
                         Poll::Ready(false)
                     } else {
                         *waker = WakerStatus::Registered(cx.waker().clone());
-                        Poll::Ready(true)
+                        Poll::Pending
                     }
                 }
                 WakerStatus::Registered(w) => {
@@ -123,10 +113,7 @@ impl<T> SharedState<T> {
                         Poll::Pending
                     }
                 }
-                WakerStatus::Updated => {
-                    *waker = WakerStatus::Registered(cx.waker().clone());
-                    Poll::Ready(true)
-                }
+                WakerStatus::Updated => Poll::Ready(true),
             }
         })
     }
@@ -182,6 +169,10 @@ hooks_core::impl_hook![
     }
     #[inline]
     fn use_hook(self) -> &'hook Self {
-        self.get_mut()
+        let this = self.get_mut();
+        this.shared_ref.borrow_mut(|(_, waker_status), _| {
+            *waker_status = WakerStatus::Unregistered;
+        });
+        this
     }
 ];

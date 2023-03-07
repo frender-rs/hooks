@@ -23,11 +23,6 @@ impl<T: PartialEq> SharedStateEq<T> {
     }
 
     #[inline]
-    pub fn new_with_waker(initial_value: T, waker: Option<std::task::Waker>) -> SharedStateEq<T> {
-        Self(SharedState::new_with_waker(initial_value, waker))
-    }
-
-    #[inline]
     pub fn inner(&self) -> &SharedState<T> {
         &self.0
     }
