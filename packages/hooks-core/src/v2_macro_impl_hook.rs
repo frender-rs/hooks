@@ -10,11 +10,8 @@ macro_rules! __expand_or {
 
 #[macro_export]
 macro_rules! h {
-    (must_be_used_in_fn_hook $method:ident $hook_id:ident $e:expr) => {
-        $crate::UpdateHookUninitialized::$method(
-            $e,
-            $hook_id
-        )
+    [] => {
+        ::core::compile_error! {"h! must be used in hook_fn!"}
     };
 }
 
@@ -69,7 +66,7 @@ macro_rules! __impl_fn_hook_body_finish {
 #[macro_export]
 macro_rules! __impl_fn_hook_body_hook_resolved {
     (
-        [$id:ident = $e:expr]
+        [$id:ident = $($e:tt)+]
         $state:tt
         [$($used_ids:ident)*]
         $hook_ident:ident
@@ -81,14 +78,17 @@ macro_rules! __impl_fn_hook_body_hook_resolved {
             [$($used_ids)* $id]
             [
                 $($transformed_code)*
-                $hook_ident! { called_in_fn_hook $hook_ident $id $e }
+                $crate::UpdateHookUninitialized::$hook_ident(
+                    $($e)+,
+                    $id
+                )
             ]
             $code
             $code
         }
     };
     (
-        [$e:expr]
+        [$($e:tt)+]
         [
             $options:tt
             [$id:ident $($rest_ids:ident)*]
@@ -106,7 +106,10 @@ macro_rules! __impl_fn_hook_body_hook_resolved {
             [$($used_ids)* $id]
             [
                 $($transformed_code)*
-                $hook_ident! { must_be_used_in_fn_hook $hook_ident $id $e }
+                $crate::UpdateHookUninitialized::$hook_ident(
+                    $($e)+,
+                    $id
+                )
             ]
             $code
             $code
