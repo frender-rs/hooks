@@ -13,6 +13,9 @@ pub mod hook_mut;
 #[cfg(feature = "use_memo")]
 pub mod memo;
 
+#[cfg(feature = "use_debug")]
+pub mod debug;
+
 #[cfg(feature = "use_default_pinned")]
 pub mod pinned;
 
@@ -38,6 +41,9 @@ mod state;
 
 pub mod prelude {
     pub use hooks_core::prelude::*;
+
+    #[cfg(feature = "use_debug")]
+    pub use crate::debug::use_debug;
 
     #[cfg(feature = "use_effect")]
     pub use crate::effect::{
