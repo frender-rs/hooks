@@ -48,13 +48,12 @@ crate::impl_hook![
             U: for<'hook> FnMutOneArg<Pin<&'hook mut InnerHook>>,
         ]: __;
     fn poll_next_update(self, cx: _) {
-        let mut this = self.project();
-        if !I::is_initialized(this.initialized) {
-            I::mark_as_initialized(this.initialized);
-            this.use_hook
-                .call_mut_with_one_arg(this.inner_hook.as_mut());
+        let this = self.project();
+        if I::is_initialized(this.initialized) {
+            this.inner_hook.poll_next_update(cx)
+        } else {
+            std::task::Poll::Ready(true)
         }
-        this.inner_hook.poll_next_update(cx)
     }
     fn unmount(self) {
         let this = self.project();
@@ -182,66 +181,8 @@ pub mod use_fn_hook {
         pin::UseFnHook(use_hook, PhantomData)
     }
 
-    pub mod unpin {
-        use super::super::*;
-        pub struct UseFnHook<
-            InnerHook: Default + HookPollNextUpdate + HookUnmount + Unpin,
-            U: for<'hook> FnMutOneArg<Pin<&'hook mut InnerHook>>,
-        >(pub U, pub PhantomData<InnerHook>);
-
-        impl<
-                InnerHook: Default + HookPollNextUpdate + HookUnmount + Unpin,
-                U: for<'hook> FnMutOneArg<Pin<&'hook mut InnerHook>>,
-            > UseFnHook<InnerHook, U>
-        {
-            pub fn new(use_hook: U) -> Self {
-                Self(use_hook, PhantomData)
-            }
-        }
-
-        crate::impl_hook![
-            type For<InnerHook, U> = UseFnHook<InnerHook, U>
-                where __![
-                    InnerHook: Default + HookPollNextUpdate + HookUnmount + Unpin,
-                    U: for<'hook> FnMutOneArg<Pin<&'hook mut InnerHook>>,
-                ]: __;
-
-            fn into_hook(mut self) -> FnHook<InnerHook, U, ()> {
-                let mut inner_hook = Default::default();
-                self.0.call_mut_with_one_arg(Pin::new(&mut inner_hook));
-                FnHook {
-                    inner_hook,
-                    use_hook: self.0,
-                    initialized: (),
-                }
-            }
-
-            #[inline]
-            fn update_hook(self, hook: _) {
-                hook.get_mut().use_hook = self.0;
-            }
-
-            #[inline]
-            fn h(self, hook: FnHookUninitialized<InnerHook, U>) {
-                let hook = hook.project();
-                let use_hook = hook.use_hook.insert(self.0);
-                use_hook.call_mut_with_one_arg(hook.inner_hook)
-            }
-        ];
-    }
-
-    pub fn unpin<
-        Value: for<'hook> crate::HookValue<'hook>,
-        InnerHook: Default + HookPollNextUpdate + HookUnmount + Unpin,
-        U: for<'hook> FnMut(Pin<&'hook mut InnerHook>) -> <Value as crate::HookValue<'hook>>::Value,
-    >(
-        use_hook: U,
-    ) -> unpin::UseFnHook<InnerHook, U> {
-        unpin::UseFnHook(use_hook, PhantomData)
-    }
-
     pub(super) mod prelude_name {
-        pub use super::unpin as use_fn_hook;
+        pub use super::pin as use_fn_hook;
     }
 }
 
