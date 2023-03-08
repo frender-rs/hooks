@@ -1,17 +1,49 @@
-use std::{marker::PhantomData, pin::Pin, task::Poll};
-
 use super::{StateUpdater, STAGING_STATES_DEFAULT_STACK_COUNT};
 
+pub trait PollNextUpdateFromStateUpdater<const EQ: bool>: Sized {
+    fn poll_next_update_from_state_updater<const N: usize>(
+        current_state: &mut Self,
+        state_updater: &mut StateUpdater<'_, Self, N>,
+        cx: &mut std::task::Context<'_>,
+    ) -> std::task::Poll<bool>;
+}
+
+impl<T> PollNextUpdateFromStateUpdater<false> for T {
+    #[inline(always)]
+    fn poll_next_update_from_state_updater<const N: usize>(
+        current_state: &mut Self,
+        state_updater: &mut StateUpdater<'_, Self, N>,
+        cx: &mut std::task::Context<'_>,
+    ) -> std::task::Poll<bool> {
+        state_updater.poll_next_update_always_not_equal(current_state, cx)
+    }
+}
+
+impl<T: PartialEq> PollNextUpdateFromStateUpdater<true> for T {
+    #[inline(always)]
+    fn poll_next_update_from_state_updater<const N: usize>(
+        current_state: &mut Self,
+        state_updater: &mut StateUpdater<'_, Self, N>,
+        cx: &mut std::task::Context<'_>,
+    ) -> std::task::Poll<bool> {
+        state_updater.poll_next_update_if_not_equal(current_state, PartialEq::eq, cx)
+    }
+}
+
 #[derive(Debug, Default)]
-pub struct State<'a, T, const N: usize = STAGING_STATES_DEFAULT_STACK_COUNT, const EQ: bool = false>
-{
+pub struct State<'a, T: PollNextUpdateFromStateUpdater<EQ>, const N: usize, const EQ: bool> {
     pub current_state: T,
     pub state_updater: StateUpdater<'a, T, N>,
 }
 
-impl<'a, T, const N: usize, const EQ: bool> Unpin for State<'a, T, N, EQ> {}
+impl<'a, T: PollNextUpdateFromStateUpdater<EQ>, const N: usize, const EQ: bool> Unpin
+    for State<'a, T, N, EQ>
+{
+}
 
-impl<'a, T, const N: usize, const EQ: bool> State<'a, T, N, EQ> {
+impl<'a, T: PollNextUpdateFromStateUpdater<EQ>, const N: usize, const EQ: bool>
+    State<'a, T, N, EQ>
+{
     pub fn new(current_state: T) -> Self {
         Self {
             current_state,
@@ -43,19 +75,15 @@ impl<'a, T, const N: usize, const EQ: bool> Default for StateUninitialized<'a, T
 }
 
 hooks_core::impl_hook![
-    type For<'a, T, const N: usize, const EQ: bool> = State<'a, T, N, EQ>;
+    type For<'a, T: PollNextUpdateFromStateUpdater<EQ>, const N: usize, const EQ: bool> =
+        State<'a, T, N, EQ>;
 
     fn unmount() {}
-];
-
-hooks_core::impl_hook![
-    type For<'a, T, const N: usize> = State<'a, T, N, false>;
 
     #[inline]
     fn poll_next_update(mut self, cx: _) {
         let this = self.get_mut();
-        this.state_updater
-            .poll_next_update_always_not_equal(&mut this.current_state, cx)
+        T::poll_next_update_from_state_updater(&mut this.current_state, &mut this.state_updater, cx)
     }
 
     #[inline]
@@ -66,30 +94,10 @@ hooks_core::impl_hook![
 ];
 
 hooks_core::impl_hook![
-    type For<'a, T: PartialEq, const N: usize> = State<'a, T, N, true>;
-
-    #[inline]
-    fn poll_next_update(mut self, cx: _) {
-        let this = self.get_mut();
-        this.state_updater
-            .poll_next_update_if_not_equal(&mut this.current_state, PartialEq::eq, cx)
-    }
-
-    #[inline]
-    fn use_hook(self) -> (&'hook mut T, &'hook StateUpdater<'a, T, N>) {
-        let this = self.get_mut();
-        (&mut this.current_state, &mut this.state_updater)
-    }
-];
-
-hooks_core::impl_hook![
-    type For<'a, T, const N: usize, const EQ: bool> = StateUninitialized<'a, T, N, EQ>;
+    type For<'a, T: PollNextUpdateFromStateUpdater<EQ>, const N: usize, const EQ: bool> =
+        StateUninitialized<'a, T, N, EQ>;
 
     fn unmount() {}
-];
-
-hooks_core::impl_hook![
-    type For<'a, T, const N: usize> = StateUninitialized<'a, T, N, false>;
 
     #[inline]
     fn poll_next_update(mut self, cx: _) {
@@ -97,21 +105,6 @@ hooks_core::impl_hook![
         if let Some(current_state) = &mut this.current_state {
             this.state_updater
                 .poll_next_update_always_not_equal(current_state, cx)
-        } else {
-            std::task::Poll::Ready(false)
-        }
-    }
-];
-
-hooks_core::impl_hook![
-    type For<'a, T: PartialEq, const N: usize> = StateUninitialized<'a, T, N, true>;
-
-    #[inline]
-    fn poll_next_update(mut self, cx: _) {
-        let this = self.get_mut();
-        if let Some(current_state) = &mut this.current_state {
-            this.state_updater
-                .poll_next_update_if_not_equal(current_state, PartialEq::eq, cx)
         } else {
             std::task::Poll::Ready(false)
         }

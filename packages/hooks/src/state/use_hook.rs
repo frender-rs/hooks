@@ -1,21 +1,28 @@
 use std::marker::PhantomData;
 
-use super::{State, StateUninitialized, StateUpdater, STAGING_STATES_DEFAULT_STACK_COUNT};
+use super::{
+    PollNextUpdateFromStateUpdater, State, StateUninitialized, StateUpdater,
+    STAGING_STATES_DEFAULT_STACK_COUNT,
+};
 
-pub struct UseState<'a, T, const N: usize>(T, PhantomData<&'a ()>);
+pub struct UseState<'a, T: PollNextUpdateFromStateUpdater<EQ>, const N: usize, const EQ: bool>(
+    T,
+    PhantomData<&'a ()>,
+);
 
 hooks_core::impl_hook![
-    type For<'a, T, const N: usize> = UseState<'a, T, N>;
+    type For<'a, T: PollNextUpdateFromStateUpdater<EQ>, const N: usize, const EQ: bool> =
+        UseState<'a, T, N, EQ>;
 
     #[inline]
-    fn into_hook(self) -> State<'a, T, N, false> {
+    fn into_hook(self) -> State<'a, T, N, EQ> {
         State::new(self.0)
     }
 
     #[inline(always)]
     fn update_hook(self, _hook: _) {}
 
-    fn h(self, hook: StateUninitialized<'a, T, N, false>) -> (&mut T, &StateUpdater<'a, T, N>) {
+    fn h(self, hook: StateUninitialized<'a, T, N, EQ>) -> (&mut T, &StateUpdater<'a, T, N>) {
         let hook = hook.get_mut();
         (
             hook.current_state.get_or_insert(self.0),
@@ -24,31 +31,22 @@ hooks_core::impl_hook![
     }
 ];
 
-#[inline(always)]
-pub fn use_state<'a, T>(initial_value: T) -> UseState<'a, T, STAGING_STATES_DEFAULT_STACK_COUNT> {
-    UseState(initial_value, PhantomData)
-}
-
-#[inline(always)]
-pub fn use_state_n<'a, T, const N: usize>(initial_value: T) -> UseState<'a, T, N> {
-    UseState(initial_value, PhantomData)
-}
-
-pub struct UseStateWith<'a, F, const N: usize>(F, PhantomData<&'a ()>);
+pub struct UseStateWith<'a, F, const N: usize, const EQ: bool>(F, PhantomData<&'a ()>);
 
 hooks_core::impl_hook![
-    type For<'a, T, F, const N: usize> = UseStateWith<'a, F, N>
+    type For<'a, T: PollNextUpdateFromStateUpdater<EQ>, F, const N: usize, const EQ: bool> =
+        UseStateWith<'a, F, N, EQ>
         where __![F: FnOnce() -> T]: __;
 
     #[inline]
-    fn into_hook(self) -> State<'a, T, N, false> {
+    fn into_hook(self) -> State<'a, T, N, EQ> {
         State::new(self.0())
     }
 
     #[inline(always)]
     fn update_hook(self, _hook: _) {}
 
-    fn h(self, hook: StateUninitialized<'a, T, N, false>) -> (&mut T, &StateUpdater<'a, T, N>) {
+    fn h(self, hook: StateUninitialized<'a, T, N, EQ>) -> (&mut T, &StateUpdater<'a, T, N>) {
         let hook = hook.get_mut();
         (
             hook.current_state.get_or_insert_with(self.0),
@@ -56,6 +54,18 @@ hooks_core::impl_hook![
         )
     }
 ];
+
+#[inline(always)]
+pub fn use_state<'a, T>(
+    initial_value: T,
+) -> UseState<'a, T, STAGING_STATES_DEFAULT_STACK_COUNT, false> {
+    UseState(initial_value, PhantomData)
+}
+
+#[inline(always)]
+pub fn use_state_n<'a, T, const N: usize>(initial_value: T) -> UseState<'a, T, N, false> {
+    UseState(initial_value, PhantomData)
+}
 
 /// [`use_state`] with a lazy initializer.
 ///
@@ -81,7 +91,7 @@ hooks_core::impl_hook![
 #[inline(always)]
 pub fn use_state_with<'a, T>(
     get_initial_value: impl FnOnce() -> T,
-) -> UseStateWith<'a, impl FnOnce() -> T, STAGING_STATES_DEFAULT_STACK_COUNT> {
+) -> UseStateWith<'a, impl FnOnce() -> T, STAGING_STATES_DEFAULT_STACK_COUNT, false> {
     UseStateWith(get_initial_value, PhantomData)
 }
 
@@ -89,6 +99,34 @@ pub fn use_state_with<'a, T>(
 #[inline(always)]
 pub fn use_state_n_with<'a, T, const N: usize>(
     get_initial_value: impl FnOnce() -> T,
-) -> UseStateWith<'a, impl FnOnce() -> T, N> {
+) -> UseStateWith<'a, impl FnOnce() -> T, N, false> {
+    UseStateWith(get_initial_value, PhantomData)
+}
+
+#[inline(always)]
+pub fn use_state_eq<'a, T: PartialEq>(
+    initial_value: T,
+) -> UseState<'a, T, STAGING_STATES_DEFAULT_STACK_COUNT, true> {
+    UseState(initial_value, PhantomData)
+}
+
+#[inline(always)]
+pub fn use_state_eq_n<'a, T: PartialEq, const N: usize>(
+    initial_value: T,
+) -> UseState<'a, T, N, true> {
+    UseState(initial_value, PhantomData)
+}
+
+#[inline(always)]
+pub fn use_state_eq_with<'a, T: PartialEq>(
+    get_initial_value: impl FnOnce() -> T,
+) -> UseStateWith<'a, impl FnOnce() -> T, STAGING_STATES_DEFAULT_STACK_COUNT, true> {
+    UseStateWith(get_initial_value, PhantomData)
+}
+
+#[inline(always)]
+pub fn use_state_eq_n_with<'a, T: PartialEq, const N: usize>(
+    get_initial_value: impl FnOnce() -> T,
+) -> UseStateWith<'a, impl FnOnce() -> T, N, true> {
     UseStateWith(get_initial_value, PhantomData)
 }

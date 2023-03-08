@@ -1,13 +1,11 @@
 mod hook;
 mod updater;
 mod use_default;
-mod use_eq;
 mod use_hook;
 
 pub use hook::*;
 pub use updater::*;
 pub use use_default::*;
-pub use use_eq::*;
 pub use use_hook::*;
 
 #[cfg(test)]
@@ -21,7 +19,7 @@ mod tests {
     #[test]
     fn state() {
         futures_lite::future::block_on(async {
-            let hook = super::State::<_, 3>::new(1);
+            let hook = super::State::<_, 3, false>::new(1);
             futures_lite::pin!(hook);
 
             assert!(!std::future::poll_fn(|cx| hook.poll_next_update(cx)).await);
