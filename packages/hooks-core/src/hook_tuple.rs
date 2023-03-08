@@ -3,6 +3,14 @@ use super::*;
 #[derive(Default)]
 pub struct HookTuple<T>(pub T);
 
+crate::impl_hook![
+    type For = HookTuple<()>;
+    fn unmount() {}
+    fn poll_next_update(self) {
+        std::task::Poll::Ready(false)
+    }
+];
+
 macro_rules! impl_tuple {
         // ignore zero length
         () => {};

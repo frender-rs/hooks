@@ -25,7 +25,7 @@ macro_rules! __impl_fn_hook_body_finish {
         [] // used_ids
         [$($transformed_code:tt)*]
     ) => {
-        move |_| {
+        move |_: ::core::pin::Pin<&mut $crate::HookTuple<()>>| {
             $($transformed_code)*
         }
     };
