@@ -543,7 +543,7 @@ macro_rules! impl_hook {
                     $(? $([$relax_ignore:tt])?  )?
                     $($bounds:path)?
                 )?
-            ),* $(,)? >)?
+            ),* >)?
             = $ty:ty
             $(
                 where
