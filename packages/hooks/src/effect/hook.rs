@@ -271,7 +271,12 @@ mod tests {
                 let hook = use_test_effect(&history).into_hook_values();
                 futures_lite::pin!(hook);
 
-                // this FnHook is unpin, thus it is initialized in `into_hook`
+                assert!(hook.as_mut().next_value().await.is_some());
+
+                assert!(history.borrow().is_empty());
+
+                // poll_next_update would return false and run effect
+                // use_hook would not register because dependencies does not change
                 assert!(hook.as_mut().next_value().await.is_none());
 
                 assert_eq!(*history.borrow(), ["effecting"]);
