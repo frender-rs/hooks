@@ -302,7 +302,7 @@ macro_rules! __impl_hook_fn_bounds_and_options_resolved {
                             $($lt)?
                             $($tp1 $($tp2)?)?
                         ],
-                    ),*)?
+                    )*)?
                 )
             }
 
