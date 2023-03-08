@@ -493,7 +493,8 @@ macro_rules! __impl_hook_with_method {
             $(#$fn_attr:tt)*
             $fn_name:ident
             ($self0:ident $($self1:ident)?, $hook0:ident $($hook1:ident)? : $ty_uninitialized:ty)
-            $fn_body:tt
+            $(-> $explicit_value:ty)?
+            {$($fn_body:tt)*}
         ]
     ) => {
         impl<$($generics)*> $crate::UpdateHookUninitialized for $ty $(where $($where_clause)*)? {
@@ -502,7 +503,11 @@ macro_rules! __impl_hook_with_method {
             fn $fn_name(
                 $self0 $($self1)?,
                 $hook0 $($hook1)? : ::core::pin::Pin<&mut Self::Uninitialized>,
-            ) -> <Self::Hook as $crate::HookValue<'_>>::Value $fn_body
+            ) -> $crate::__expand_or![
+                [$($explicit_value)?]
+                <Self::Hook as $crate::HookValue<'_>>::Value
+            ]
+            {$($fn_body)*}
         }
     };
 }
