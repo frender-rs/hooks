@@ -29,8 +29,7 @@ pub struct UseSharedRefWith<T, F: FnOnce() -> T>(pub F);
 pub use UseSharedRefWith as use_shared_ref_with;
 
 hooks_core::impl_hook![
-    type For<T, F> = UseSharedRefWith<T, F>
-        where __![F: FnOnce() -> T]: __;
+    type For<T, F: FnOnce() -> T> = UseSharedRefWith<T, F>;
 
     #[inline]
     fn into_hook(self) -> SharedRef<T> {

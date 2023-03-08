@@ -35,8 +35,7 @@ impl<H: HookPollNextUpdate + HookUnmount> LazyPinnedHook<H> {
 }
 
 hooks_core::impl_hook![
-    type For<H> = LazyPinnedHook<H>
-        where __![H: HookPollNextUpdate + HookUnmount]: __;
+    type For<H: HookPollNextUpdate + HookUnmount> = LazyPinnedHook<H>;
 
     fn unmount(self) {
         if let Some(hook) = self.pin_project_hook() {

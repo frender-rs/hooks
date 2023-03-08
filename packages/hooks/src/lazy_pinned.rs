@@ -51,8 +51,8 @@ pub struct UseLazyPinnedWith<T, F: FnOnce() -> T>(pub F);
 pub use UseLazyPinnedWith as use_lazy_pinned_with;
 
 hooks_core::impl_hook![
-    type For<T, F> = UseLazyPinnedWith<T, F>
-        where __![F: FnOnce() -> T]: __;
+    type For<T, F: FnOnce() -> T> = UseLazyPinnedWith<T, F>;
+
     fn into_hook(self) -> super::pinned::Pinned<T> {
         super::pinned::Pinned { inner: self.0() }
     }

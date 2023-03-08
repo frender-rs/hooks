@@ -96,8 +96,7 @@ pub fn use_effect_once_with<E: EffectForNoneDependency>(
 }
 
 hooks_core::impl_hook![
-    type For<E: EffectForNoneDependency, F> = UseEffectOnceWith<F>
-        where __![F: FnOnce() -> E] : __;
+    type For<E: EffectForNoneDependency, F: FnOnce() -> E> = UseEffectOnceWith<F>;
 
     #[inline]
     fn into_hook(self) -> EffectOnce<E> {

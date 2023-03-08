@@ -20,8 +20,7 @@ pub struct UseSharedStateWith<T, F: FnOnce() -> T>(pub F);
 pub use UseSharedStateWith as use_shared_state_with;
 
 hooks_core::impl_hook![
-    type For<T,F> = UseSharedStateWith<T,F>
-        where __![F: FnOnce() -> T]: __;
+    type For<T, F: FnOnce() -> T> = UseSharedStateWith<T, F>;
 
     #[inline]
     fn into_hook(self) -> SharedState<T> {

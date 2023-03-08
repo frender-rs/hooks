@@ -14,9 +14,8 @@ pub struct UseStateDefault<
 >(PhantomData<(&'a (), T)>);
 
 hooks_core::impl_hook![
-    type For<'a, T: PollNextUpdateFromStateUpdater<EQ>, const N: usize, const EQ: bool> =
-        UseStateDefault<'a, T, N, EQ>
-        where __![T: Default]: __;
+    type For<'a, T: PollNextUpdateFromStateUpdater<EQ> + Default, const N: usize, const EQ: bool> =
+        UseStateDefault<'a, T, N, EQ>;
 
     #[inline]
     fn into_hook(self) -> State<'a, T, N, EQ> {

@@ -33,8 +33,7 @@ pub struct UseMutWith<T, F: FnOnce() -> T>(pub F);
 pub use UseMutWith as use_mut_with;
 
 hooks_core::impl_hook![
-    type For<T, F> = UseMutWith<T, F>
-        where __![F: FnOnce() -> T]: __;
+    type For<T, F: FnOnce() -> T> = UseMutWith<T, F>;
 
     #[inline]
     fn into_hook(self) -> Mut<T> {

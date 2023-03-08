@@ -1,6 +1,6 @@
 use std::pin::Pin;
 
-use hooks_core::{Hook, HookExt, HookUnmount, IntoHook};
+use hooks_core::{Hook, HookExt, IntoHook};
 
 #[derive(Debug)]
 pub struct UninitializedHook<H>(pub Option<H>);
@@ -26,8 +26,8 @@ impl<H> Default for UninitializedHook<H> {
 }
 
 hooks_core::impl_hook![
-    type For<H> = UninitializedHook<H>
-        where __![H: Unpin + Hook]: __;
+    type For<H: Unpin + Hook> = UninitializedHook<H>;
+
     fn unmount(self) {
         if let Some(hook) = &mut self.get_mut().0 {
             H::unmount(Pin::new(hook))

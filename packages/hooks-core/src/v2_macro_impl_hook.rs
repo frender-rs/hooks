@@ -540,8 +540,11 @@ macro_rules! impl_hook {
                     :
                     $($bound_lt:lifetime)?
                     $(+ $bounds_lt:lifetime)*
-                    $(? $([$relax_ignore:tt])?  )?
-                    $($bounds:path)?
+                    $(
+                        $( + $({$plus_ignore:tt })? )?
+                        $( ? $([$relax_ignore:tt])? )?
+                        $bounds:path
+                    )*
                 )?
             ),* >)?
             = $ty:ty
@@ -566,8 +569,11 @@ macro_rules! impl_hook {
                         :
                         $($bound_lt)?
                         $(+ $bounds_lt)*
-                        $(? $([$relax_ignore])?  )?
-                        $($bounds)?
+                        $(
+                            $( + $({$plus_ignore})?  )?
+                            $( ? $([$relax_ignore])? )?
+                            $bounds
+                        )*
                     )?
                 ),*)?]
                 [$ty]

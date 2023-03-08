@@ -34,9 +34,13 @@ hooks_core::impl_hook![
 pub struct UseStateWith<'a, F, const N: usize, const EQ: bool>(F, PhantomData<&'a ()>);
 
 hooks_core::impl_hook![
-    type For<'a, T: PollNextUpdateFromStateUpdater<EQ>, F, const N: usize, const EQ: bool> =
-        UseStateWith<'a, F, N, EQ>
-        where __![F: FnOnce() -> T]: __;
+    type For<
+        'a,
+        T: PollNextUpdateFromStateUpdater<EQ>,
+        F: FnOnce() -> T,
+        const N: usize,
+        const EQ: bool,
+    > = UseStateWith<'a, F, N, EQ>;
 
     #[inline]
     fn into_hook(self) -> State<'a, T, N, EQ> {

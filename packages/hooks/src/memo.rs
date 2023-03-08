@@ -105,8 +105,7 @@ pub struct UseMemo<Data, Dep: PartialEq, F: FnOnce(&Dep) -> Data>(pub F, pub Dep
 pub use UseMemo as use_memo;
 
 hooks_core::impl_hook![
-    type For<Data, Dep: PartialEq, F> = UseMemo<Data, Dep, F>
-        where __![F: FnOnce(&Dep) -> Data]: __;
+    type For<Data, Dep: PartialEq, F: FnOnce(&Dep) -> Data> = UseMemo<Data, Dep, F>;
 
     fn into_hook(self) -> Memo<Data, Dep> {
         Memo {

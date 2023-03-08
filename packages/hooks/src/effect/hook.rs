@@ -214,8 +214,8 @@ pub fn use_effect_with<Dep, E: EffectFor<Dep>>(
 }
 
 hooks_core::impl_hook![
-    type For<Dep, E: EffectFor<Dep>, F> = UseEffectWith<Dep, E, F>
-        where __![F: FnOnce(&mut Option<Dep>) -> Option<E>]: __;
+    type For<Dep, E: EffectFor<Dep>, F: FnOnce(&mut Option<Dep>) -> Option<E>> =
+        UseEffectWith<Dep, E, F>;
 
     fn into_hook(self) -> Effect<Dep, E> {
         let mut dependency = None;

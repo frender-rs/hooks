@@ -20,8 +20,7 @@ pub struct UseSharedStateEqWith<T, F: FnOnce() -> T>(pub F);
 pub use UseSharedStateEqWith as use_shared_state_eq_with;
 
 hooks_core::impl_hook![
-    type For<T: PartialEq, F> = UseSharedStateEqWith<T,F>
-        where __![F: FnOnce() -> T]: __;
+    type For<T: PartialEq, F: FnOnce() -> T> = UseSharedStateEqWith<T, F>;
 
     #[inline]
     fn into_hook(self) -> SharedStateEq<T> {
