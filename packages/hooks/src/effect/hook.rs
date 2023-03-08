@@ -73,7 +73,7 @@ impl<Dep, E: EffectFor<Dep>> Effect<Dep, E> {
 
 /// Register an effect for a dependency.
 /// The effect will be run in the [`poll_next_update`]
-/// after [`use_hook`] registers a new dependency.
+/// after [`use_effect`] or [`use_effect_with`] registers a new effect.
 ///
 /// [`use_hook`]: crate::Hook::use_hook
 /// [`poll_next_update`]: crate::HookPollNextUpdate::poll_next_update
