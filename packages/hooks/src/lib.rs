@@ -32,6 +32,8 @@ pub use share_value::ShareValue;
 
 #[cfg(feature = "use_shared_ref")]
 pub mod shared_ref;
+#[cfg(feature = "use_shared_ref")]
+pub use shared_ref::SharedRef;
 
 #[cfg(feature = "use_shared_state")]
 pub mod shared_state;
@@ -44,16 +46,31 @@ pub mod prelude {
 
     #[cfg(feature = "use_debug")]
     pub use crate::debug::use_debug;
-
     #[cfg(feature = "use_effect")]
     pub use crate::effect::{
         use_effect, use_effect_on_next_poll, use_effect_once, use_effect_once_with, use_effect_with,
     };
+    #[cfg(feature = "use_mut")]
+    pub use crate::hook_mut::{use_mut, use_mut_default, use_mut_with};
+    #[cfg(feature = "use_lazy_pinned")]
+    pub use crate::lazy_pinned::{use_lazy_pinned, use_lazy_pinned_with};
+    #[cfg(feature = "use_lazy_pinned_hook")]
+    pub use crate::lazy_pinned_hook::use_lazy_pinned_hook;
+    #[cfg(feature = "use_memo")]
+    pub use crate::memo::use_memo;
+    #[cfg(feature = "use_default_pinned")]
+    pub use crate::pinned::use_default_pinned;
     #[cfg(feature = "use_shared_ref")]
-    pub use crate::shared_ref::{use_shared_ref, use_shared_ref_with, SharedRef};
+    pub use crate::shared_ref::{use_shared_ref, use_shared_ref_with};
     #[cfg(feature = "use_shared_state")]
     pub use crate::shared_state::{
         use_shared_state, use_shared_state_eq, use_shared_state_eq_with, use_shared_state_with,
+    };
+    #[cfg(feature = "use_state")]
+    pub use crate::state::{
+        use_state, use_state_default, use_state_default_n, use_state_eq, use_state_eq_default,
+        use_state_eq_default_n, use_state_eq_n, use_state_eq_n_with, use_state_eq_with,
+        use_state_n, use_state_n_with, use_state_with,
     };
 
     #[cfg(feature = "ShareValue")]

@@ -23,7 +23,19 @@ futures-lite = "1.12.0"
 default = ["derive", "futures-core", "all"]
 derive = ["hooks-derive"]
 futures-core = ["hooks-core/futures-core"]
-all = []
+all = [
+    "use_debug",
+    "use_default_pinned",
+    "use_effect",
+    "use_lazy_pinned",
+    "use_lazy_pinned_hook",
+    "use_memo",
+    "use_mut",
+    "use_shared_ref",
+    "use_shared_state",
+    "use_state",
+]
+ShareValue = []
 use_debug = []
 use_default_pinned = []
 use_effect = []
@@ -33,4 +45,4 @@ use_memo = []
 use_mut = []
 use_shared_ref = ["ShareValue"]
 use_shared_state = ["use_shared_ref"]
-ShareValue = []
+use_state = []
