@@ -86,8 +86,8 @@ macro_rules! h {
 /// <details>
 /// <summary>
 ///
-/// There is a limitation that lifetimes must be used.
-/// Otherwise, you should use [`#[hook]`](hooks::hook) with `#[phantom]`.
+/// There is a limitation that lifetimes must be used in arguments.
+/// Phantom lifetimes will failed to compile.
 ///
 /// </summary>
 ///
