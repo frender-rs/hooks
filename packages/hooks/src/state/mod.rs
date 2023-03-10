@@ -14,7 +14,7 @@ mod tests {
     use hooks_core::{hook_fn, Hook, HookPollNextUpdateExt};
     use hooks_derive::hook;
 
-    use super::{use_state, use_state_with, STAGING_STATES_DEFAULT_STACK_COUNT};
+    use super::{use_state, use_state_with};
 
     #[test]
     fn state() {
