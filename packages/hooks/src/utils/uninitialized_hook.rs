@@ -1,21 +1,24 @@
 use std::pin::Pin;
 
-use hooks_core::{Hook, HookExt, IntoHook};
+use hooks_core::{Hook, HookExt, IntoHook, UpdateHook};
 
 #[derive(Debug)]
 pub struct UninitializedHook<H>(pub Option<H>);
 
 impl<H: Hook + Unpin> UninitializedHook<H> {
     #[inline]
-    pub(crate) fn use_hook(&mut self, get_hook: impl FnOnce() -> H) -> hooks_core::Value![H] {
-        self.0.get_or_insert_with(get_hook).use_hook()
-    }
-    #[inline]
-    pub(crate) fn use_into_hook(
+    pub(crate) fn use_into_or_update_hook(
         &mut self,
-        into_hook: impl IntoHook<Hook = H>,
+        into_hook: impl IntoHook<Hook = H> + UpdateHook,
     ) -> hooks_core::Value![H] {
-        self.use_hook(|| into_hook.into_hook())
+        let hook = match &mut self.0 {
+            Some(hook) => {
+                into_hook.update_hook(Pin::new(hook));
+                hook
+            }
+            hook @ None => hook.insert(into_hook.into_hook()),
+        };
+        hook.use_hook()
     }
 }
 

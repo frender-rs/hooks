@@ -12,7 +12,7 @@ hooks_core::impl_hook![
     #[inline(always)]
     fn update_hook(self, hook: _) {}
     fn h(self, hook: crate::utils::UninitializedHook<SharedStateEq<T>>) {
-        hook.get_mut().use_into_hook(self)
+        hook.get_mut().use_into_or_update_hook(self)
     }
 ];
 
@@ -30,6 +30,6 @@ hooks_core::impl_hook![
     #[inline(always)]
     fn update_hook(self, hook: _) {}
     fn h(self, hook: crate::utils::UninitializedHook<SharedStateEq<T>>) {
-        hook.get_mut().use_into_hook(self)
+        hook.get_mut().use_into_or_update_hook(self)
     }
 ];
