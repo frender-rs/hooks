@@ -63,6 +63,8 @@ pub mod prelude {
     pub use crate::memo::use_memo;
     #[cfg(feature = "use_default_pinned")]
     pub use crate::pinned::use_default_pinned;
+    #[cfg(feature = "use_poll_next_update")]
+    pub use crate::poll_next_update::use_poll_next_update;
     #[cfg(feature = "use_shared_ref")]
     pub use crate::shared_ref::{use_shared_ref, use_shared_ref_with};
     #[cfg(feature = "use_shared_state")]
