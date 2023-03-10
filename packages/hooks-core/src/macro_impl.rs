@@ -1,3 +1,10 @@
+#[doc(hidden)]
+#[macro_export]
+macro_rules! __impl_unexpected_token {
+    () => {};
+}
+
+#[doc(hidden)]
 #[macro_export]
 macro_rules! __expand_or {
     ([]$($defaults:tt)*) => {
@@ -8,13 +15,7 @@ macro_rules! __expand_or {
     };
 }
 
-#[macro_export]
-macro_rules! h {
-    [] => {
-        ::core::compile_error! {"h! must be used in hook_fn!"}
-    };
-}
-
+#[doc(hidden)]
 #[macro_export]
 macro_rules! __impl_fn_hook_body_finish {
     (
@@ -63,6 +64,7 @@ macro_rules! __impl_fn_hook_body_finish {
     };
 }
 
+#[doc(hidden)]
 #[macro_export]
 macro_rules! __impl_fn_hook_body_hook_resolved {
     (
@@ -123,6 +125,7 @@ macro_rules! __impl_fn_hook_body_hook_resolved {
     };
 }
 
+#[doc(hidden)]
 #[macro_export]
 macro_rules! __impl_fn_hook_body {
     (
@@ -163,6 +166,7 @@ macro_rules! __impl_fn_hook_body {
     };
 }
 
+#[doc(hidden)]
 #[macro_export]
 macro_rules! __impl_fn_hook_body_start {
     ( $options:tt $code:tt ) => {
@@ -191,6 +195,7 @@ macro_rules! __impl_fn_hook_body_start {
     };
 }
 
+#[doc(hidden)]
 #[macro_export]
 macro_rules! __impl_hook_fn_bounds_resolved {
     ($hook_bounds:tt #[hook $(($($options:tt)*))? ] $($rest:tt)*) => {
@@ -207,29 +212,11 @@ macro_rules! __impl_hook_fn_bounds_resolved {
     };
 }
 
-#[macro_export]
-macro_rules! hook_fn {
-    (
-        type Bounds = impl $hook_bound:lifetime $(+ $hook_bounds:lifetime)* ;
-        $($rest:tt)*
-    ) => {
-        $crate::__impl_hook_fn_bounds_resolved! {
-            { $hook_bound $(+ $hook_bounds)* }
-            $($rest)*
-        }
-    };
-    ($($rest:tt)*) => {
-        $crate::__impl_hook_fn_bounds_resolved! {
-            {}
-            $($rest)*
-        }
-    };
-}
-
+#[doc(hidden)]
 #[macro_export]
 macro_rules! __impl_hook_fn_bounds_and_options_resolved {
     (
-        $hook_bounds:tt // { 'a + 'b }
+        { $($hook_bounds:tt)* } // { 'a + 'b }
         ($($method_path:ident),* $(,)?)
 
         $(#$attr:tt)*
@@ -276,7 +263,7 @@ macro_rules! __impl_hook_fn_bounds_and_options_resolved {
             )?
         ),* >)?
         ($($args)*)
-        -> $crate::UpdateHookUninitialized![ $hook_bounds $($ret_ty)? ]
+        -> $crate::UpdateHookUninitialized![ $crate::__expand_or![[$($ret_ty)?]()], $($hook_bounds)* ]
         $(
             where $($where_clause)*
         )?
@@ -356,6 +343,7 @@ macro_rules! __impl_hook_fn_bounds_and_options_resolved {
     };
 }
 
+#[doc(hidden)]
 #[macro_export]
 macro_rules! __impl_hook_method_poll_next_update {
     (
@@ -396,6 +384,7 @@ macro_rules! __impl_hook_method_poll_next_update {
     };
 }
 
+#[doc(hidden)]
 #[macro_export]
 macro_rules! __impl_unmount_fn {
     ({}[$(#$attr:tt)*] $fn_name:ident ($($args:tt)*)) => {
@@ -414,6 +403,7 @@ macro_rules! __impl_unmount_fn {
     };
 }
 
+#[doc(hidden)]
 #[macro_export]
 macro_rules! __impl_hook_with_method {
     (
@@ -524,6 +514,7 @@ macro_rules! __impl_hook_with_method {
     };
 }
 
+#[doc(hidden)]
 #[macro_export]
 macro_rules! __impl_hook_methods {
     (
@@ -541,80 +532,7 @@ macro_rules! __impl_hook_methods {
     )*};
 }
 
-#[macro_export]
-macro_rules! impl_hook {
-    (
-        type For
-            $(<$(
-                $($lt:lifetime)?
-                $($tp1:ident $($tp2:ident)?)?
-                $(
-                    :
-                    $($bound_lt:lifetime)?
-                    $(+ $bounds_lt:lifetime)*
-                    $(
-                        $( + $({$plus_ignore:tt })? )?
-                        $( ? $([$relax_ignore:tt])? )?
-                        $bounds:path
-                    )*
-                )?
-            ),* >)?
-            = $ty:ty
-            $(
-                where
-                __![$($($where_clause:tt)+)?]: __
-                $(,)?
-            )?
-        ;
-        $(
-            $(#$fn_attr:tt)*
-            fn $fn_name:ident $args:tt $(-> $fn_ret_ty:ty)?
-            {$($impl_hook:tt)*}
-        )*
-    ) => {
-        $crate::__impl_hook_methods! {
-            (
-                [$($(
-                    $($lt)?
-                    $($tp1 $($tp2)?)?
-                    $(
-                        :
-                        $($bound_lt)?
-                        $(+ $bounds_lt)*
-                        $(
-                            $( + $({$plus_ignore})?  )?
-                            $( ? $([$relax_ignore])? )?
-                            $bounds
-                        )*
-                    )?
-                ),*)?]
-                [$ty]
-                [$($($($where_clause)+)?)?]
-            )
-            $(
-                $fn_name [
-                    $(#$fn_attr)*
-                    $fn_name $args $(-> $fn_ret_ty)?
-                    {$($impl_hook)*}
-                ]
-            )*
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! UpdateHookUninitialized {
-    ($bounds:tt) => {
-        $crate::UpdateHookUninitialized![$bounds ()]
-    };
-    ({$($($bounds:tt)+)?} $ty:ty) => {
-        impl $crate::UpdateHookUninitialized<
-            Hook = impl $crate::Hook + for <'hook> $crate::HookValue<'hook, Value = $ty>
-                    $(+ $($bounds)+)?
-        > $(+ $($bounds)+)?
-    };
-}
-
+#[doc(hidden)]
 #[macro_export]
 macro_rules! __impl_phantom {
     ($lt:lifetime) => {
@@ -625,15 +543,5 @@ macro_rules! __impl_phantom {
     };
     ($tp:ident) => {
         ::core::marker::PhantomData::<$tp>
-    };
-}
-
-#[macro_export]
-macro_rules! Value {
-    ($hook_ty:ty $(,)?) => {
-        <$hook_ty as $crate::HookValue<'_>>::Value
-    };
-    ($hook_ty:ty , $lt:lifetime $(,)?) => {
-        <$hook_ty as $crate::HookValue<$lt>>::Value
     };
 }

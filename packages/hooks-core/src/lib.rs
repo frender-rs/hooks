@@ -2,23 +2,24 @@
 
 pub mod identity;
 
+mod macro_impl;
+pub use macro_impl::*;
+
+mod macros;
+pub use macros::*;
+
 mod traits;
 pub use traits::*;
 
 mod ext;
 mod hook_tuple;
-mod macro_impl_hook;
 
 pub use ext::*;
 pub use hook_tuple::*;
-pub use macro_impl_hook::*;
 
 pub mod fn_hook;
 
 pub(crate) mod utils;
-
-mod v2_macro_impl_hook;
-pub use v2_macro_impl_hook::*;
 
 pub mod prelude {
     pub use crate::{

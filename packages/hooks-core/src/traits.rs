@@ -16,9 +16,16 @@ mod sealed {
 /// This trait follows the [*better GAT*] pattern so that
 /// *lifetime-GAT* can be used in earlier rust versions.
 ///
+/// Please don't impl this trait manually because in the future this will be changed to GAT.
+/// Instead, use [`impl_hook![...];`](crate::impl_hook).
+///
 /// [*better GAT*]: https://sabrinajewson.org/blog/the-better-alternative-to-lifetime-gats#the-better-gats
 /// [compiler bug]: https://github.com/rust-lang/rust/issues/61949#issuecomment-789664939
 pub trait HookValue<'hook, ImplicitBounds: sealed::HookValueBounds<'hook, Self> = &'hook Self> {
+    /// The output type of [`Hook::use_hook`].
+    ///
+    /// Please don't use this associated type directly.
+    /// Instead, use [`Value![]`](crate::Value) for future compatibility.
     type Value;
 }
 
