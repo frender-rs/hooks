@@ -314,7 +314,7 @@ pub trait UpdateHook: IntoHook {
 }
 
 pub trait UpdateHookUninitialized: UpdateHook {
-    type Uninitialized: HookPollNextUpdate + Default;
+    type Uninitialized: HookPollNextUpdate + HookUnmount + Default;
 
     fn h(self, hook: Pin<&mut Self::Uninitialized>) -> <Self::Hook as HookValue<'_>>::Value;
 }
