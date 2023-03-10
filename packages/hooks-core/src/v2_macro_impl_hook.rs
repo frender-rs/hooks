@@ -241,10 +241,13 @@ macro_rules! __impl_hook_fn_bounds_and_options_resolved {
                 :
                 $($bound_lt:lifetime)?
                 $(+ $bounds_lt:lifetime)*
-                $(? $([$relax_ignore:tt])?  )?
-                $($bounds:path)?
+                $(
+                    $( + $({$plus_ignore:tt })? )?
+                    $( ? $([$relax_ignore:tt])? )?
+                    $bounds:path
+                )*
             )?
-        ),* $(,)? >)?
+        ),* >)?
         ($($args:tt)*)
         $( -> $ret_ty:ty )?
         $( where
@@ -265,10 +268,13 @@ macro_rules! __impl_hook_fn_bounds_and_options_resolved {
                 :
                 $($bound_lt)?
                 $(+ $bounds_lt)*
-                $(? $([$relax_ignore] +)?  )?
-                $($bounds)?
+                $(
+                    $( + $({$plus_ignore })? )?
+                    $( ? $([$relax_ignore])? )?
+                    $bounds
+                )*
             )?
-        ),*>)?
+        ),* >)?
         ($($args)*)
         -> $crate::UpdateHookUninitialized![ $hook_bounds $($ret_ty)? ]
         $(
@@ -289,10 +295,13 @@ macro_rules! __impl_hook_fn_bounds_and_options_resolved {
                     :
                     $($bound_lt)?
                     $(+ $bounds_lt)*
-                    $(? $([$relax_ignore] +)?  )?
-                    $($bounds)?
+                    $(
+                        $( + $({$plus_ignore })? )?
+                        $( ? $([$relax_ignore])? )?
+                        $bounds
+                    )*
                 )?
-            ),*>)?
+            ),* >)?
             $( where $($where_clause)* )?
             {
                 __: (
@@ -315,8 +324,11 @@ macro_rules! __impl_hook_fn_bounds_and_options_resolved {
                         :
                         $($bound_lt)?
                         $(+ $bounds_lt)*
-                        $(? $([$relax_ignore] +)?  )?
-                        $($bounds)?
+                        $(
+                            $( + $({$plus_ignore })? )?
+                            $( ? $([$relax_ignore])? )?
+                            $bounds
+                        )*
                     )?
                 ),*)?
             > $crate::HookValue<'hook> for __HooksValueOfThisHook $(<$(
