@@ -31,6 +31,7 @@ all = [
     "use_lazy_pinned_hook",
     "use_memo",
     "use_mut",
+    "use_poll_next_update",
     "use_shared_ref",
     "use_shared_state",
     "use_state",
@@ -43,6 +44,7 @@ use_lazy_pinned = ["lazy-pinned", "use_default_pinned"]
 use_lazy_pinned_hook = ["lazy-pinned"]
 use_memo = []
 use_mut = []
+use_poll_next_update = []
 use_shared_ref = ["ShareValue"]
 use_shared_state = ["use_shared_ref"]
 use_state = []

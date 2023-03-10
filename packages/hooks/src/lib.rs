@@ -25,6 +25,9 @@ pub mod lazy_pinned;
 #[cfg(feature = "use_lazy_pinned_hook")]
 pub mod lazy_pinned_hook;
 
+#[cfg(feature = "use_poll_next_update")]
+pub mod poll_next_update;
+
 #[cfg(feature = "ShareValue")]
 mod share_value;
 #[cfg(feature = "ShareValue")]
