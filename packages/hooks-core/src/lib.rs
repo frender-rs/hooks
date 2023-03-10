@@ -23,7 +23,7 @@ pub use v2_macro_impl_hook::*;
 pub mod prelude {
     pub use crate::{
         fn_hook, hook_fn, Hook, HookExt as _, HookPollNextUpdate, HookPollNextUpdateExt as _,
-        NonLendingHook,
+        IntoHook as _, NonLendingHook,
     };
 }
 
