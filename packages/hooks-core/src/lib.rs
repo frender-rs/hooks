@@ -1,7 +1,5 @@
 #![deny(clippy::undocumented_unsafe_blocks)]
 
-pub mod identity;
-
 mod macro_impl;
 pub use macro_impl::*;
 
