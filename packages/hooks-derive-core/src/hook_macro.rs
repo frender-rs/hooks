@@ -235,7 +235,7 @@ impl HookArgs {
                         >, _, _
                     >
                     (
-                        |#arg_hooks_data| {
+                        move |#arg_hooks_data| {
                             #impl_extract_hooks_data
 
                             #(#impl_use_hook)*
