@@ -1,9 +1,9 @@
 use std::borrow::Cow;
 
-use darling::{FromMeta, ToTokens};
+use darling::FromMeta;
 use proc_macro2::Span;
-use quote::{quote, quote_spanned};
-use syn::{parse_quote_spanned, spanned::Spanned};
+use quote::quote_spanned;
+use syn::spanned::Spanned;
 
 use crate::{
     detect_hooks, detected_hooks_to_tokens,
@@ -11,7 +11,7 @@ use crate::{
         chain::Chain,
         either::Either,
         empty_or_trailing::AutoEmptyOrTrailing,
-        group::{angled, parened},
+        group::angled,
         map::map_to_tokens,
         path_or_lit::PathOrLit,
         phantom::{make_phantom_or_ref, PhantomOfTy},
