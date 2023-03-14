@@ -73,9 +73,11 @@ mod tests {
         });
     }
 
-    #[cfg(hook_macro)]
+    #[cfg(feature = "use_effect")]
     #[test]
     fn state_2() {
+        use hooks_core::IntoHook;
+
         #[hook(hooks_core_path = "::hooks_core")]
         fn use_state_2() -> (i32, i32) {
             let (state_1, updater_1) = use_state(1);
@@ -85,7 +87,7 @@ mod tests {
 
             let updater_1 = updater_1.clone();
             let updater_2 = updater_2.clone();
-            use_effect(
+            crate::use_effect(
                 move |(v1, v2): &_| {
                     if *v2 > 10 {
                         return;
@@ -100,7 +102,7 @@ mod tests {
         }
 
         futures_lite::future::block_on(async {
-            let values = use_state_2().into_iter().collect::<Vec<_>>().await;
+            let values = use_state_2().into_hook_values().collect::<Vec<_>>().await;
 
             assert_eq!(values, [(1, 2), (2, 3), (3, 5), (5, 8), (8, 13)]);
         });
