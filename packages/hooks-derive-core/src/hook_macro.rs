@@ -74,11 +74,8 @@ impl HookArgs {
         (item_fn, error)
     }
 
-    pub fn transform_item_fn_in_place(
-        mut self,
-        item_fn: &mut syn::ItemFn,
-    ) -> Option<darling::Error> {
-        let mut errors = darling::error::Accumulator::default();
+    pub fn transform_item_fn_in_place(self, item_fn: &mut syn::ItemFn) -> Option<darling::Error> {
+        // let mut errors = darling::error::Accumulator::default();
 
         let hooks_core_path = self.hooks_core_path.map_or_else(
             || syn::Path {
@@ -125,18 +122,19 @@ impl HookArgs {
                     });
                     *fn_rt = syn::ReturnType::Type(
                         syn::Token![->](span),
-                        Box::new(syn::Type::Verbatim(quote_spanned! { span =>
-                            #hooks_core_path::UpdateHookUninitialized![(), #bounds]
-                        })),
+                        Box::new(syn::Type::Verbatim(utils::UpdateHookUninitialized(
+                            &hooks_core_path,
+                            span,
+                            quote_spanned!(span=> ()),
+                            bounds,
+                        ))),
                     );
 
                     output_ty
                 }
                 syn::ReturnType::Type(ra, ty) => {
                     span = ra.span();
-                    let it = quote_spanned! { span =>
-                        #hooks_core_path::UpdateHookUninitialized![#ty, #bounds]
-                    };
+                    let it = utils::UpdateHookUninitialized(&hooks_core_path, span, &**ty, bounds);
                     std::mem::replace(&mut **ty, syn::Type::Verbatim(it))
                 }
             }
@@ -246,7 +244,8 @@ impl HookArgs {
                 },
             )));
 
-        errors.finish().err()
+        // errors.finish().err()
+        None
     }
 
     pub fn from_punctuated_meta_list(
@@ -360,4 +359,34 @@ fn extract_impl_trait_as_type_params(
         })
     });
     ret
+}
+
+mod utils {
+    use darling::ToTokens;
+    use proc_macro2::{Span, TokenStream};
+    use quote::quote_spanned;
+    use syn::spanned::Spanned;
+
+    use crate::utils::chain::Chain;
+
+    #[allow(non_snake_case)]
+    pub fn UpdateHookUninitialized(
+        hooks_core_path: &impl ToTokens,
+        span: Span,
+        value_ty: impl ToTokens,
+        bounds: Option<impl ToTokens>,
+    ) -> TokenStream {
+        let bounds = bounds.map(|bounds| {
+            let bounds = bounds.into_token_stream();
+
+            Chain(syn::Token![+](bounds.span()), bounds)
+        });
+
+        quote_spanned! {span=>
+            impl #hooks_core_path::UpdateHookUninitialized<
+                Hook = impl #hooks_core_path::Hook + for<'hook> #hooks_core_path::HookValue<'hook, Value = #value_ty>
+                #bounds
+            > #bounds
+        }
+    }
 }
