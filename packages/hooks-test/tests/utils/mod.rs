@@ -1,12 +1,23 @@
-use hooks_derive_core::syn;
+#![allow(dead_code)]
+
+use hooks_derive_core::{quote::ToTokens, syn};
 
 pub fn pretty_item_fn(item_fn: syn::ItemFn) -> String {
+    // re-parse code due to usage of Expr::Verbatim and Type::Verbatim
+    // TODO: remove Verbatim in hooks-derive-core or support formatting Verbatim
+    let item_fn: syn::ItemFn = syn::parse2(item_fn.into_token_stream()).unwrap();
     prettyplease::unparse(&syn::File {
         shebang: None,
         attrs: vec![],
         items: vec![item_fn.into()],
     })
 }
+
+pub fn hook_uninitialized_default<H: hooks::UpdateHookUninitialized>(_: H) -> H::Uninitialized {
+    Default::default()
+}
+
+pub type HookUninitialized<H> = <H as hooks::UpdateHookUninitialized>::Uninitialized;
 
 macro_rules! hook_macro {
     ($($tt:tt)*) => {

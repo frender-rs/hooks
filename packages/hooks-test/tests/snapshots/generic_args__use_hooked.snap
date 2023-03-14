@@ -2,91 +2,34 @@
 source: packages/hooks-test/tests/generic_args.rs
 expression: "use_hooked::hook_impl_code()"
 ---
-fn use_hooked<T: ?Sized + ToOwned + PartialEq>() -> impl for<'hooks_auto_lifetime_0> ::hooks::core::Hook<
-    (&'hooks_auto_lifetime_0 T,),
-> + for<'hook, 'hooks_auto_lifetime_0> ::hooks::core::HookLifetime<
-    'hook,
-    (&'hooks_auto_lifetime_0 T,),
-    &'hook (::core::marker::PhantomData<T>,),
-    Value = &'hook T,
-> + ::hooks::core::HookBounds<Bounds = (::core::marker::PhantomData<T>,)> {
-    struct __HookTypes<T: ?Sized + ToOwned + PartialEq> {
-        __: ::core::marker::PhantomData<(::core::marker::PhantomData<T>,)>,
-    }
-    impl<T: ?Sized + ToOwned + PartialEq> ::hooks::core::HookBounds for __HookTypes<T> {
-        type Bounds = (::core::marker::PhantomData<T>,);
-    }
-    impl<
+fn use_hooked<'a, T: ?Sized + ToOwned + PartialEq>(
+    v: &'a T,
+) -> impl ::hooks::core::UpdateHookUninitialized<
+    Hook = impl ::hooks::core::Hook + for<'hook> ::hooks::core::HookValue<
         'hook,
-        'hooks_auto_lifetime_0,
-        T: ?Sized + ToOwned + PartialEq,
-    > ::hooks::core::HookLifetime<
-        'hook,
-        (&'hooks_auto_lifetime_0 T,),
-        &'hook (::core::marker::PhantomData<T>,),
-    > for __HookTypes<T> {
+        Value = &'hook T,
+    > + 'a,
+> + 'a {
+    enum __HooksImplNever {}
+    struct __HooksValueOfThisHook<'a, T: ?Sized + ToOwned + PartialEq> {
+        __: (__HooksImplNever, &'a (), ::core::marker::PhantomData<T>),
+    }
+    impl<'hook, 'a, T: ?Sized + ToOwned + PartialEq> ::hooks::core::HookValue<'hook>
+    for __HooksValueOfThisHook<'a, T> {
         type Value = &'hook T;
     }
-    {
-        #[inline]
-        fn _hooks_def_fn_hook<
-            T: ?Sized + ToOwned + PartialEq,
-            __HooksData,
-            __HooksPoll: ::core::ops::Fn(
-                    ::core::pin::Pin<&mut __HooksData>,
-                    &mut ::core::task::Context,
-                ) -> ::core::task::Poll<::core::primitive::bool>,
-            __HooksUseHook: for<'hook, 'hooks_auto_lifetime_0> ::core::ops::Fn(
-                    ::core::pin::Pin<&'hook mut __HooksData>,
-                    (&'hooks_auto_lifetime_0 T,),
-                ) -> &'hook T,
-        >(
-            hooks_data: __HooksData,
-            hooks_poll: __HooksPoll,
-            hooks_use_hook: __HooksUseHook,
-        ) -> ::hooks::core::fn_hook::FnHook::<
-            __HooksData,
-            __HooksPoll,
-            __HooksUseHook,
-            __HookTypes<T>,
-        > {
-            ::hooks::core::fn_hook::FnHook::<
-                __HooksData,
-                __HooksPoll,
-                __HooksUseHook,
-                __HookTypes<T>,
-            >::new(hooks_data, hooks_poll, hooks_use_hook)
-        }
-        _hooks_def_fn_hook::<
-            T,
-            _,
-            _,
-            _,
-        >(
-            hooks::use_memo::<(), T::Owned>(),
-            ::hooks::core::HookPollNextUpdate::poll_next_update,
-            |__hooks_hook_0, (v,)| {
-                use std::borrow::Borrow;
-                let (_, v) = ::hooks::core::Hook::<
-                    _,
-                >::use_hook(
-                    __hooks_hook_0,
-                    (
-                        hooks::memo_with(|old| match old {
-                            Some(old) => old,
-                            old => {
-                                old
-                                    .insert(hooks::DataAndDep {
-                                        data: (),
-                                        dep: v.to_owned(),
-                                    })
-                            }
-                        }),
-                    ),
-                );
-                v.borrow()
-            },
-        )
-    }
+    ::hooks::core::fn_hook::use_fn_hook::<
+        __HooksValueOfThisHook<'a, T>,
+        _,
+        _,
+    >(move |__hooks_hook_0: ::core::pin::Pin<&mut _>| {
+        use std::borrow::Borrow;
+        let memo = ::hooks::core::UpdateHookUninitialized::h(
+            hooks::use_mut_default::<Option<T::Owned>>(),
+            __hooks_hook_0,
+        );
+        let memo = memo.get_or_insert_with(|| v.to_owned());
+        (*memo).borrow()
+    })
 }
 

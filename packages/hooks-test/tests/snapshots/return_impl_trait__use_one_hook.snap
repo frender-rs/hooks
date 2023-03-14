@@ -1,0 +1,31 @@
+---
+source: packages/hooks-test/tests/return_impl_trait.rs
+expression: "use_one_hook::hook_impl_code()"
+---
+fn use_one_hook() -> impl ::hooks::core::UpdateHookUninitialized<
+    Hook = impl ::hooks::core::Hook + for<'hook> ::hooks::core::HookValue<
+        'hook,
+        Value = &'hook mut (impl Display + Default),
+    >,
+> {
+    enum __HooksImplNever {}
+    struct __HooksValueOfThisHook<HooksImplTrait0: Display + Default> {
+        __: (__HooksImplNever, ::core::marker::PhantomData<HooksImplTrait0>),
+    }
+    impl<'hook, HooksImplTrait0: Display + Default> ::hooks::core::HookValue<'hook>
+    for __HooksValueOfThisHook<HooksImplTrait0> {
+        type Value = &'hook mut HooksImplTrait0;
+    }
+    ::hooks::core::fn_hook::use_fn_hook::<
+        __HooksValueOfThisHook<_>,
+        _,
+        _,
+    >(move |__hooks_hook_0: ::core::pin::Pin<&mut _>| {
+        let v = ::hooks::core::UpdateHookUninitialized::h(
+            ::hooks::use_lazy_pinned(-3),
+            __hooks_hook_0,
+        );
+        v.get_mut()
+    })
+}
+

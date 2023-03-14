@@ -2,55 +2,50 @@
 source: packages/hooks-test/tests/no_args.rs
 expression: "use_state_effect::hook_impl_code()"
 ---
-fn use_state_effect() -> impl ::hooks::core::Hook<
-    (),
-> + for<'hook> ::hooks::core::HookLifetime<
-    'hook,
-    (),
-    &'hook (),
-    Value = &'hook i32,
-> + ::hooks::core::HookBounds<Bounds = ()> {
-    struct __HookTypes {
-        __: ::core::marker::PhantomData<()>,
+fn use_state_effect() -> impl ::hooks::core::UpdateHookUninitialized<
+    Hook = impl ::hooks::core::Hook + for<'hook> ::hooks::core::HookValue<
+        'hook,
+        Value = &'hook i32,
+    >,
+> {
+    enum __HooksImplNever {}
+    struct __HooksValueOfThisHook {
+        __: (__HooksImplNever,),
     }
-    impl ::hooks::core::HookBounds for __HookTypes {
-        type Bounds = ();
-    }
-    impl<'hook> ::hooks::core::HookLifetime<'hook, (), &'hook ()> for __HookTypes {
+    impl<'hook> ::hooks::core::HookValue<'hook> for __HooksValueOfThisHook {
         type Value = &'hook i32;
     }
-    ::hooks::core::fn_hook::new_fn_hook::<
-        (),
+    ::hooks::core::fn_hook::use_fn_hook::<
+        __HooksValueOfThisHook,
         _,
-        __HookTypes,
-    >(
-        ::hooks::core::hook_pair::HookPair::new(
-            ::hooks::use_state_with(),
-            ::hooks::use_effect(),
-        ),
-        ::hooks::core::HookPollNextUpdate::poll_next_update,
-        |__hooks_data, (): ()| {
-            let (__hooks_data, __hooks_hook_1) = __hooks_data.pin_project();
-            let __hooks_hook_0 = __hooks_data;
-            let (state, updater) = ::hooks::core::Hook::<
-                _,
-            >::use_hook(__hooks_hook_0, (Default::default,));
-            let updater = updater.clone();
-            ::hooks::core::Hook::<
-                _,
-            >::use_hook(
-                __hooks_hook_1,
-                (
-                    move |v: &_| {
-                        if *v < 2 {
-                            updater.set(*v + 1)
-                        }
-                    },
-                    *state,
-                ),
+        _,
+    >(move |__hooks_hook_data: ::core::pin::Pin<&mut _>| {
+        let (__hooks_hook_0, __hooks_hook_1) = unsafe {
+            let ::hooks::core::HookTuple((__hooks_hook_0, __hooks_hook_1)) = ::core::pin::Pin::get_unchecked_mut(
+                __hooks_hook_data,
             );
-            state
-        },
-    )
+            (
+                ::core::pin::Pin::new_unchecked(__hooks_hook_0),
+                ::core::pin::Pin::new_unchecked(__hooks_hook_1),
+            )
+        };
+        let (state, updater) = ::hooks::core::UpdateHookUninitialized::h(
+            ::hooks::use_state_with(Default::default),
+            __hooks_hook_0,
+        );
+        let updater = updater.clone();
+        ::hooks::core::UpdateHookUninitialized::h(
+            ::hooks::use_effect(
+                move |v: &_| {
+                    if *v < 2 {
+                        updater.set(*v + 1)
+                    }
+                },
+                *state,
+            ),
+            __hooks_hook_1,
+        );
+        state
+    })
 }
 

@@ -2,36 +2,24 @@
 source: packages/hooks-test/tests/return_impl_trait.rs
 expression: "use_return::hook_impl_code()"
 ---
-fn use_return() -> impl ::hooks::core::Hook<
-    (),
-> + for<'hook> ::hooks::core::HookLifetime<
-    'hook,
-    (),
-    &'hook (),
-    Value = impl Display,
-> + ::hooks::core::HookBounds<Bounds = ()> {
-    struct __HookTypes<HooksImplTrait0: Display> {
-        __: ::core::marker::PhantomData<(::core::marker::PhantomData<HooksImplTrait0>,)>,
-    }
-    impl<HooksImplTrait0: Display> ::hooks::core::HookBounds
-    for __HookTypes<HooksImplTrait0> {
-        type Bounds = ();
-    }
-    impl<
+fn use_return() -> impl ::hooks::core::UpdateHookUninitialized<
+    Hook = impl ::hooks::core::Hook + for<'hook> ::hooks::core::HookValue<
         'hook,
-        HooksImplTrait0: Display,
-    > ::hooks::core::HookLifetime<'hook, (), &'hook ()>
-    for __HookTypes<HooksImplTrait0> {
+        Value = impl Display,
+    >,
+> {
+    enum __HooksImplNever {}
+    struct __HooksValueOfThisHook<HooksImplTrait0: Display> {
+        __: (__HooksImplNever, ::core::marker::PhantomData<HooksImplTrait0>),
+    }
+    impl<'hook, HooksImplTrait0: Display> ::hooks::core::HookValue<'hook>
+    for __HooksValueOfThisHook<HooksImplTrait0> {
         type Value = HooksImplTrait0;
     }
-    ::hooks::core::fn_hook::new_fn_hook::<
-        (),
+    ::hooks::core::fn_hook::use_fn_hook::<
+        __HooksValueOfThisHook<_>,
         _,
-        __HookTypes<_>,
-    >(
-        (),
-        ::hooks::core::fn_hook::poll_next_update_ready_false,
-        |_: ::core::pin::Pin<&mut ()>, (): ()| { 1 },
-    )
+        _,
+    >(move |_: ::core::pin::Pin<&mut ::hooks::core::HookTuple::<()>>| { 1 })
 }
 

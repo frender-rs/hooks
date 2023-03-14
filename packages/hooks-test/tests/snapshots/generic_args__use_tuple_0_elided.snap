@@ -2,65 +2,25 @@
 source: packages/hooks-test/tests/generic_args.rs
 expression: "use_tuple_0_elided::hook_impl_code()"
 ---
-fn use_tuple_0_elided() -> impl for<'hooks_auto_lifetime_0> ::hooks::core::Hook<
-    (&'hooks_auto_lifetime_0 (),),
-> + for<'hook, 'hooks_auto_lifetime_0> ::hooks::core::HookLifetime<
-    'hook,
-    (&'hooks_auto_lifetime_0 (),),
-    &'hook (),
-    Value = (),
-> + ::hooks::core::HookBounds<Bounds = ()> {
-    struct __HookTypes {
-        __: ::core::marker::PhantomData<()>,
-    }
-    impl ::hooks::core::HookBounds for __HookTypes {
-        type Bounds = ();
-    }
-    impl<
+fn use_tuple_0_elided(
+    _: &(),
+) -> impl ::hooks::core::UpdateHookUninitialized<
+    Hook = impl ::hooks::core::Hook + for<'hook> ::hooks::core::HookValue<
         'hook,
-        'hooks_auto_lifetime_0,
-    > ::hooks::core::HookLifetime<'hook, (&'hooks_auto_lifetime_0 (),), &'hook ()>
-    for __HookTypes {
+        Value = (),
+    >,
+> {
+    enum __HooksImplNever {}
+    struct __HooksValueOfThisHook {
+        __: (__HooksImplNever,),
+    }
+    impl<'hook> ::hooks::core::HookValue<'hook> for __HooksValueOfThisHook {
         type Value = ();
     }
-    {
-        #[inline]
-        fn _hooks_def_fn_hook<
-            __HooksData,
-            __HooksPoll: ::core::ops::Fn(
-                    ::core::pin::Pin<&mut __HooksData>,
-                    &mut ::core::task::Context,
-                ) -> ::core::task::Poll<::core::primitive::bool>,
-            __HooksUseHook: for<'hook, 'hooks_auto_lifetime_0> ::core::ops::Fn(
-                    ::core::pin::Pin<&'hook mut __HooksData>,
-                    (&'hooks_auto_lifetime_0 (),),
-                ) -> (),
-        >(
-            hooks_data: __HooksData,
-            hooks_poll: __HooksPoll,
-            hooks_use_hook: __HooksUseHook,
-        ) -> ::hooks::core::fn_hook::FnHook::<
-            __HooksData,
-            __HooksPoll,
-            __HooksUseHook,
-            __HookTypes,
-        > {
-            ::hooks::core::fn_hook::FnHook::<
-                __HooksData,
-                __HooksPoll,
-                __HooksUseHook,
-                __HookTypes,
-            >::new(hooks_data, hooks_poll, hooks_use_hook)
-        }
-        _hooks_def_fn_hook::<
-            _,
-            _,
-            _,
-        >(
-            (),
-            ::hooks::core::fn_hook::poll_next_update_ready_false,
-            |_: ::core::pin::Pin<&mut ()>, (_,)| {},
-        )
-    }
+    ::hooks::core::fn_hook::use_fn_hook::<
+        __HooksValueOfThisHook,
+        _,
+        _,
+    >(move |_: ::core::pin::Pin<&mut ::hooks::core::HookTuple::<()>>| {})
 }
 

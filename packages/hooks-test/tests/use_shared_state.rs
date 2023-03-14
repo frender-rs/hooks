@@ -1,9 +1,7 @@
 use std::future::Future;
 
 use futures_lite::StreamExt;
-use hooks::{
-    hook, use_effect, use_shared_state, use_shared_state_eq, AsyncIterableHook, ShareValue,
-};
+use hooks::{hook, use_effect, use_shared_state, use_shared_state_eq, IntoHook, ShareValue};
 use smol::Task;
 
 #[test]
@@ -18,8 +16,6 @@ fn shared_state_delay() {
 
     #[hook]
     fn use_test() -> i32 {
-        let mut hook = __hooks_hook_0;
-        let __hooks_hook_0 = hook.as_mut();
         let state = use_shared_state(0);
 
         let value = state.get();
@@ -46,7 +42,7 @@ fn shared_state_delay() {
 
     EXE.with(|exe| {
         futures_lite::future::block_on(exe.run(async {
-            let values = use_test().into_iter().collect::<Vec<_>>().await;
+            let values = use_test().into_hook_values().collect::<Vec<_>>().await;
             assert_eq!(values, [0, 1, 2]);
         }))
     });
@@ -90,7 +86,7 @@ fn shared_state_eq_delay() {
 
     EXE.with(|exe| {
         futures_lite::future::block_on(exe.run(async {
-            let values = use_test().into_iter().collect::<Vec<_>>().await;
+            let values = use_test().into_hook_values().collect::<Vec<_>>().await;
             assert_eq!(values, [0, 1, 2]);
         }))
     });

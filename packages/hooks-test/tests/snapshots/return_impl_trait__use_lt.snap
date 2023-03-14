@@ -2,42 +2,26 @@
 source: packages/hooks-test/tests/return_impl_trait.rs
 expression: "use_lt::hook_impl_code()"
 ---
-fn use_lt<'a>() -> impl ::hooks::core::Hook<
-    (),
-> + for<'hook> ::hooks::core::HookLifetime<
-    'hook,
-    (),
-    &'hook (&'a (),),
-    Value = &'a (impl Display + 'a),
-> + ::hooks::core::HookBounds<Bounds = (&'a (),)> {
-    struct __HookTypes<'a, HooksImplTrait0: Display + 'a> {
-        __: ::core::marker::PhantomData<
-            (&'a (), ::core::marker::PhantomData<HooksImplTrait0>),
-        >,
-    }
-    impl<'a, HooksImplTrait0: Display + 'a> ::hooks::core::HookBounds
-    for __HookTypes<'a, HooksImplTrait0> {
-        type Bounds = (&'a (),);
-    }
-    impl<
+fn use_lt<'a>(
+    v: &'a impl Display,
+) -> impl ::hooks::core::UpdateHookUninitialized<
+    Hook = impl ::hooks::core::Hook + for<'hook> ::hooks::core::HookValue<
         'hook,
-        'a,
-        HooksImplTrait0: Display + 'a,
-    > ::hooks::core::HookLifetime<'hook, (), &'hook (&'a (),)>
-    for __HookTypes<'a, HooksImplTrait0> {
+        Value = &'a (impl Display + 'a),
+    > + 'a,
+> + 'a {
+    enum __HooksImplNever {}
+    struct __HooksValueOfThisHook<'a, HooksImplTrait0: Display + 'a> {
+        __: (__HooksImplNever, &'a (), ::core::marker::PhantomData<HooksImplTrait0>),
+    }
+    impl<'hook, 'a, HooksImplTrait0: Display + 'a> ::hooks::core::HookValue<'hook>
+    for __HooksValueOfThisHook<'a, HooksImplTrait0> {
         type Value = &'a HooksImplTrait0;
     }
-    ::hooks::core::fn_hook::new_fn_hook::<
-        (),
+    ::hooks::core::fn_hook::use_fn_hook::<
+        __HooksValueOfThisHook<'a, _>,
         _,
-        __HookTypes<'a, _>,
-    >(
-        (),
-        ::hooks::core::fn_hook::poll_next_update_ready_false,
-        |_: ::core::pin::Pin<&mut ()>, (): ()| {
-            static VALUE: i32 = 1;
-            &VALUE
-        },
-    )
+        _,
+    >(move |_: ::core::pin::Pin<&mut ::hooks::core::HookTuple::<()>>| { v })
 }
 

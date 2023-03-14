@@ -1,7 +1,7 @@
 use std::{any::Any, fmt::Display};
 
 use futures_lite::StreamExt;
-use hooks::{core::AsyncIterableHook, hook, HookExt, HookPollNextUpdateExt};
+use hooks::{hook, HookExt, HookPollNextUpdateExt, IntoHook};
 
 mod utils;
 
@@ -17,10 +17,7 @@ fn no_hooks() {
     }
 
     assert_return_ty! {
-        use_return() =>
-            impl ::hooks::core::Hook<()>
-                + for<'hook> ::hooks::core::HookLifetime<'hook, (), Value = impl Display>
-                + ::hooks::core::HookBounds<Bounds = ()>
+        use_return() => ::hooks::core::UpdateHookUninitialized![impl Display]
     };
 
     assert_eq!(
@@ -29,16 +26,16 @@ fn no_hooks() {
     );
 
     {
-        let mut hook = use_return();
-        assert_eq!(std::mem::size_of_val(&hook), 0);
+        let mut hook = use_return().into_hook();
+        assert_eq!(std::mem::size_of_val(&hook), std::mem::size_of::<bool>());
 
         futures_lite::future::block_on(async {
-            assert!(!hook.next_update().await);
-            assert_eq!(hook.use_hook(()).to_string(), "1");
+            assert!(hook.next_update().await);
+            assert_eq!(hook.use_hook().to_string(), "1");
         });
 
         futures_lite::future::block_on(async {
-            let v = hook.next_value(()).await;
+            let v = hook.next_value().await;
             assert!(v.is_none());
         });
     }
@@ -51,10 +48,7 @@ fn no_hooks() {
     }
 
     assert_return_ty! {
-        use_type_param::<String>() =>
-            impl ::hooks::core::Hook<()>
-                + for<'hook> ::hooks::core::HookLifetime<'hook, (), Value = impl Display>
-                + ::hooks::core::HookBounds<Bounds = (::core::marker::PhantomData<String>,)>
+        use_type_param::<String>() => ::hooks::UpdateHookUninitialized![impl Display]
     };
 
     assert_eq!(
@@ -63,58 +57,63 @@ fn no_hooks() {
     );
 
     {
-        let mut hook = use_type_param::<String>();
-        assert_eq!(std::mem::size_of_val(&hook), 0);
+        let mut hook = use_type_param::<String>().into_hook();
+        assert_eq!(std::mem::size_of_val(&hook), std::mem::size_of::<bool>());
 
         futures_lite::future::block_on(async {
-            assert!(!hook.next_update().await);
-            assert_eq!(hook.use_hook(()).to_string(), "");
+            assert!(hook.next_update().await);
+            assert_eq!(hook.use_hook().to_string(), "");
         });
 
         futures_lite::future::block_on(async {
-            let v = hook.next_value(()).await;
+            let v = hook.next_value().await;
             assert!(v.is_none());
         });
     }
 
-    hook_macro! {
-        #[hook]
-        fn use_lt<'a>() -> &'a (impl Display + 'a) {
-            static VALUE: i32 = 1;
-            &VALUE
+    hook_macro!(
+        #[hook(bounds = "'a")]
+        fn use_lt<'a>(v: &'a impl Display) -> &'a (impl Display + 'a) {
+            v
         }
-    }
+    );
 
-    assert_eq!(use_lt::hook_args(), hooks_derive_core::HookArgs::default());
+    assert_eq!(use_lt::hook_args(), {
+        let mut args = hooks_derive_core::HookArgs::default();
 
-    fn assert_use_lt<'a>() -> impl ::hooks::core::Hook<()>
-           + for<'hook> ::hooks::core::HookLifetime<
-        'hook,
-        (),
-        &'hook (&'a (),),
-        Value = &'a (impl Display + 'a),
-    > + ::hooks::core::HookBounds<Bounds = (&'a (),)> {
-        use_lt::<'a>()
-    }
+        args.bounds = Some(hooks_derive_core::syn::parse_quote!('a));
 
-    assert_use_lt();
+        args
+    });
+
+    assert_return_ty! {
+        use_lt(&1) => ::hooks::UpdateHookUninitialized![&'static (impl Display + 'static)]
+    };
 
     {
-        let mut hook = use_lt();
-        assert_eq!(std::mem::size_of_val(&hook), 0);
+        let mut hook = use_lt(&1).into_hook();
+        assert_eq!(
+            std::mem::size_of_val(&hook),
+            std::mem::size_of_val(&(false, &1)),
+        );
 
         futures_lite::future::block_on(async {
-            assert!(!hook.next_update().await);
-            assert_eq!(hook.use_hook(()).to_string(), "1");
+            assert!(hook.next_update().await);
+            assert_eq!(hook.use_hook().to_string(), "1");
         });
 
         futures_lite::future::block_on(async {
-            let v = hook.next_value(()).await;
+            let v = hook.next_value().await;
             assert!(v.is_none());
         });
     }
 }
 
+/// TODO: hook fn returning (impl Trait + 'hook) is not working
+///
+/// - `higher kinded lifetime bounds on nested opaque types are not supported yet`
+/// - expand `__HooksValueOfThisHook<HooksImplTrait0>`
+///   instead of `struct __HooksValueOfThisHook<HooksImplTrait0: Trait + 'hook>`
 #[cfg(hook_macro_fail)]
 #[test]
 fn no_hooks_borrow_hook() {
@@ -139,7 +138,7 @@ fn no_hooks_borrow_hook() {
 
     {
         let mut hook = use_hook_lt();
-        assert_eq!(std::mem::size_of_val(&hook), 0);
+        assert_eq!(std::mem::size_of_val(&hook), std::mem::size_of::<bool>());
 
         futures_lite::future::block_on(async {
             assert!(!hook.next_update().await);
@@ -153,21 +152,18 @@ fn no_hooks_borrow_hook() {
     }
 }
 
-#[cfg(hook_macro_fail)]
 #[test]
 fn one_hook() {
-    hook_macro! {
+    hook_macro!(
         #[hook]
-        fn use_one_hook() -> &'hook mut impl Display {
-            let v = ::hooks::use_lazy_pinned(0);
+        fn use_one_hook() -> &'hook mut (impl Display + Default) {
+            let v = ::hooks::use_lazy_pinned(-3);
             v.get_mut()
         }
-    }
+    );
 
     assert_return_ty! {
-        use_one_hook() => impl ::hooks::core::Hook<()>
-            + for<'hook> ::hooks::core::HookLifetime<'hook, (), Value = &'hook mut i32>
-            + ::hooks::core::HookBounds<Bounds = ()>
+        use_one_hook() => ::hooks::UpdateHookUninitialized![&'hook mut (impl Display + Default)]
     };
 
     assert_eq!(
@@ -176,23 +172,26 @@ fn one_hook() {
     );
 
     {
-        let mut hook = use_one_hook();
+        let mut hook = use_one_hook().into_hook();
         assert_eq!(
             std::mem::size_of_val(&hook),
-            std::mem::size_of::<::hooks::LazyPinned<i32>>()
+            std::mem::size_of::<(
+                bool,
+                utils::HookUninitialized<::hooks::lazy_pinned::UseLazyPinned<i32>>
+            )>()
         );
 
         futures_lite::future::block_on(async {
+            assert!(hook.next_update().await);
+            assert_eq!(hook.use_hook().to_string(), "-3");
             assert!(!hook.next_update().await);
-            assert_eq!(*hook.use_hook(()), 0);
+            *hook.use_hook() = Default::default();
             assert!(!hook.next_update().await);
-            *hook.use_hook(()) = -3;
-            assert!(!hook.next_update().await);
-            assert_eq!(*hook.use_hook(()), -3);
+            assert_eq!(hook.use_hook().to_string(), "0");
         });
 
         futures_lite::future::block_on(async {
-            let v = hook.next_value(()).await;
+            let v = hook.next_value().await;
             assert!(v.is_none());
         });
     }
@@ -218,9 +217,7 @@ fn one_state() {
     }
 
     assert_return_ty! {
-        use_str_state() => impl ::hooks::core::Hook<()>
-            + for<'hook> ::hooks::core::HookLifetime<'hook, (), Value = impl Any>
-            + ::hooks::core::HookBounds<Bounds = ()>
+        use_str_state() => ::hooks::UpdateHookUninitialized![impl Any]
     };
 
     assert_eq!(
@@ -233,25 +230,34 @@ fn one_state() {
     }
 
     {
-        let mut hook = use_str_state();
+        let mut hook = use_str_state().into_hook();
         assert_eq!(
             std::mem::size_of_val(&hook),
-            std::mem::size_of::<::hooks::State<String>>()
+            std::mem::size_of::<(
+                bool,
+                utils::HookUninitialized<
+                    ::hooks::state::UseState<
+                        String,
+                        { ::hooks::state::STAGING_STATES_DEFAULT_STACK_COUNT },
+                        false,
+                    >,
+                >
+            )>()
         );
 
         futures_lite::future::block_on(async {
             assert!(hook.next_update().await);
-            assert_eq!(assert_string(&hook.use_hook(())), "");
+            assert_eq!(assert_string(&hook.use_hook()), "");
             assert!(hook.next_update().await);
-            assert_eq!(assert_string(&hook.use_hook(())), " ");
+            assert_eq!(assert_string(&hook.use_hook()), " ");
             assert!(hook.next_update().await);
-            assert_eq!(assert_string(&hook.use_hook(())), "  ");
+            assert_eq!(assert_string(&hook.use_hook()), "  ");
             assert!(!hook.next_update().await);
         });
     }
 
     futures_lite::future::block_on(async {
-        let values = use_str_state().into_iter().collect::<Vec<_>>().await;
+        let values = use_str_state().into_hook_values().collect::<Vec<_>>().await;
 
         let values = values
             .iter()
@@ -282,9 +288,7 @@ fn two_hooks() {
     }
 
     assert_return_ty! {
-        use_state_effect() => impl ::hooks::core::Hook<()>
-            + for<'hook> ::hooks::core::HookLifetime<'hook, (), Value = impl Display>
-            + ::hooks::core::HookBounds<Bounds = ()>
+        use_state_effect() => ::hooks::UpdateHookUninitialized![impl Display]
     };
 
     assert_eq!(
@@ -293,35 +297,37 @@ fn two_hooks() {
     );
 
     {
-        let mut hook = use_state_effect();
-
-        let dummy_effect = {
-            let updater = hooks::StateUpdater::<i32>::new();
-            let effect = move |_: &i32| drop(updater);
-            let mut hook = hooks::use_effect();
-            hook.use_hook((effect, 0));
-            hook
-        };
+        let mut hook = use_state_effect().into_hook();
 
         assert_eq!(
             std::mem::size_of_val(&hook),
-            std::mem::size_of::<::hooks::State<i32>>() + std::mem::size_of_val(&dummy_effect),
+            std::mem::size_of_val(&(
+                false,
+                utils::hook_uninitialized_default(hooks::use_state(0)),
+                utils::hook_uninitialized_default(hooks::use_effect(
+                    {
+                        let updater = hooks::state::StateUpdater::<i32>::new();
+                        move |_: &i32| drop(updater)
+                    },
+                    0,
+                )),
+            )),
         );
 
         futures_lite::future::block_on(async {
             assert!(hook.next_update().await);
-            assert_eq!(hook.use_hook(()).to_string(), "0");
+            assert_eq!(hook.use_hook().to_string(), "0");
             assert!(hook.next_update().await);
-            assert_eq!(hook.use_hook(()).to_string(), "1");
+            assert_eq!(hook.use_hook().to_string(), "1");
             assert!(hook.next_update().await);
-            assert_eq!(hook.use_hook(()).to_string(), "2");
+            assert_eq!(hook.use_hook().to_string(), "2");
             assert!(!hook.next_update().await);
         });
     }
 
     futures_lite::future::block_on(async {
         let values = use_state_effect()
-            .into_iter()
+            .into_hook_values()
             .map(|v| v.to_string())
             .collect::<Vec<_>>()
             .await;

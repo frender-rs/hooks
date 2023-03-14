@@ -2,35 +2,24 @@
 source: packages/hooks-test/tests/no_args.rs
 expression: "use_type_param::hook_impl_code()"
 ---
-fn use_type_param<T: Default>() -> impl ::hooks::core::Hook<
-    (),
-> + for<'hook> ::hooks::core::HookLifetime<
-    'hook,
-    (),
-    &'hook (::core::marker::PhantomData<T>,),
-    Value = T,
-> + ::hooks::core::HookBounds<Bounds = (::core::marker::PhantomData<T>,)> {
-    struct __HookTypes<T: Default> {
-        __: ::core::marker::PhantomData<(::core::marker::PhantomData<T>,)>,
-    }
-    impl<T: Default> ::hooks::core::HookBounds for __HookTypes<T> {
-        type Bounds = (::core::marker::PhantomData<T>,);
-    }
-    impl<
+fn use_type_param<T: Default>() -> impl ::hooks::core::UpdateHookUninitialized<
+    Hook = impl ::hooks::core::Hook + for<'hook> ::hooks::core::HookValue<
         'hook,
-        T: Default,
-    > ::hooks::core::HookLifetime<'hook, (), &'hook (::core::marker::PhantomData<T>,)>
-    for __HookTypes<T> {
+        Value = T,
+    >,
+> {
+    enum __HooksImplNever {}
+    struct __HooksValueOfThisHook<T: Default> {
+        __: (__HooksImplNever, ::core::marker::PhantomData<T>),
+    }
+    impl<'hook, T: Default> ::hooks::core::HookValue<'hook>
+    for __HooksValueOfThisHook<T> {
         type Value = T;
     }
-    ::hooks::core::fn_hook::new_fn_hook::<
-        (),
+    ::hooks::core::fn_hook::use_fn_hook::<
+        __HooksValueOfThisHook<T>,
         _,
-        __HookTypes<T>,
-    >(
-        (),
-        ::hooks::core::fn_hook::poll_next_update_ready_false,
-        |_: ::core::pin::Pin<&mut ()>, (): ()| { T::default() },
-    )
+        _,
+    >(move |_: ::core::pin::Pin<&mut ::hooks::core::HookTuple::<()>>| { T::default() })
 }
 
