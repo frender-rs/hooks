@@ -9,18 +9,19 @@ mod sealed {
     impl<'hook, T: ?Sized> HookValueBounds<'hook, T> for &'hook T {}
 }
 
-/// This is a helper trait to define
+/// A helper trait to define
 /// *lifetime generic associated types (lifetime-GAT)*
 /// for [`Hook`].
 ///
-/// This trait follows the [*better GAT*] pattern so that
-/// *lifetime-GAT* can be used in earlier rust versions.
+/// This trait follows the [*better GAT*] pattern.
+/// *better GAT* is a pattern which implements *lifetime-GAT* without real GAT,
+/// and it also solves some problems relating to `for<'hook> HookValue<Value<'hook> = ...>`
+/// that real GAT currently doesn't solve.
 ///
 /// Please don't impl this trait manually because in the future this will be changed to GAT.
 /// Instead, use [`impl_hook![...];`](crate::impl_hook).
 ///
 /// [*better GAT*]: https://sabrinajewson.org/blog/the-better-alternative-to-lifetime-gats#the-better-gats
-/// [compiler bug]: https://github.com/rust-lang/rust/issues/61949#issuecomment-789664939
 pub trait HookValue<'hook, ImplicitBounds: sealed::HookValueBounds<'hook, Self> = &'hook Self> {
     /// The output type of [`Hook::use_hook`].
     ///
@@ -29,6 +30,9 @@ pub trait HookValue<'hook, ImplicitBounds: sealed::HookValueBounds<'hook, Self> 
     type Value;
 }
 
+/// Defines reactivity of a hook.
+///
+/// See [`poll_next_update()`](HookPollNextUpdate::poll_next_update) for details.
 pub trait HookPollNextUpdate {
     /// The meaning of the return value is:
     ///
@@ -54,19 +58,36 @@ pub trait HookPollNextUpdate {
     fn poll_next_update(self: Pin<&mut Self>, cx: &mut std::task::Context<'_>) -> Poll<bool>;
 }
 
+/// Defines how to cleanup a hook.
+///
+/// Consider this as a re-entrant and pinned version of [`Drop`].
+/// Cleanups can be run in [`unmount`](HookUnmount::unmount).
+///
+/// After `unmount`, the hook might still be used or updated.
 pub trait HookUnmount {
-    /// After `unmount`, the hook might still be used or updated.
     #[inline(always)]
     fn unmount(self: Pin<&mut Self>) {}
 }
 
+/// Defines how to use a hook (get value from the hook).
+///
+/// A hook is something that outputs values reactively.
+///
 /// ## How to impl `Hook`
 ///
-/// ### with [`hook_fn!(...)`](crate::hook_fn) macro
+/// Usually, you don't need to impl `Hook`.
+/// You can easily compose hooks with [`hook_fn!(...)`] or
+/// [`#[hook]`](https://docs.rs/hooks/latest/hooks/attr.hook.html).
+///
+/// The hook fn actually returns `impl UpdateHookUninitialized<Hook = impl Hook>`,
+/// so that this hook fn can also be composed in other `hook_fn`.
+/// For more information, see [`hook_fn!(...)`].
+///
+/// ### with `hook_fn!(...)` macro
 ///
 /// ```
-/// # use hooks::use_state;
-///
+/// # extern crate hooks_dev as hooks;
+/// # use hooks::{use_state, hook_fn};
 /// hook_fn![
 ///     pub fn use_my_hook() -> &'hook mut i32 {
 ///         let (state, updater) = h![use_state(1)];
@@ -75,19 +96,14 @@ pub trait HookUnmount {
 /// ];
 /// ```
 ///
-/// ### with [`hook`](hooks::hook) macro
-///
-/// Usually, we just need a function which returns a hook,
-/// without needing a type which implements `Hook`.
-/// With `hook` macro, we can do this easily.
+/// ### with `#[hook]` attribute macro
 ///
 /// ```
 /// # extern crate hooks_dev as hooks;
 /// # use hooks::{use_effect, hook};
-///
 /// /// Print debug on `value` change.
 /// #[hook]
-/// fn use_debug<'a, T: std::fmt::Debug + Eq + 'a>(value: &'a T) {
+/// fn use_debug<T: std::fmt::Debug + PartialEq + Copy>(value: T) {
 ///     use_effect(|v: &_| {
 ///         println!("{v:?}");
 ///     }, value);
@@ -96,36 +112,7 @@ pub trait HookUnmount {
 ///
 /// ### implement `Hook` manually.
 ///
-/// To implement `Hook` for a type, implement
-/// [`HookBounds`], [HookLifetime<'hook>] and [HookPollNextUpdate]
-/// first.
-///
-/// ```
-/// # use hooks_core::{HookBounds, HookLifetime, HookPollNextUpdate};
-///
-/// struct MyHook<T>(Option<T>);
-///
-/// impl<T> HookBounds for MyHook<T> {
-///     type Bounds = Self;
-/// }
-///
-/// impl<'hook, T> HookLifetime<'hook, (T,), &'hook Self> for MyHook<T> {
-/// //                                       ^^^^^^^^^^^
-/// //                                       This must be exactly
-/// //                                       `&'hook <Self as HookBounds>::Bounds`
-///
-///     type Value = &'hook T;
-/// //               ^^^^^^^^  We can write `&'hook T` without
-/// //                         implicitly specifying `T: 'hook`
-/// //                         because `&'hook Self` implies this.
-/// }
-///
-/// impl<T> HookPollNextUpdate for MyHook<T> {
-///     fn poll_next_update(self: std::pin::Pin<&mut Self>, cx: &mut std::task::Context<'_>) -> std::task::Poll<bool> {
-///         todo!()
-///     }
-/// }
-/// ```
+/// See [`impl_hook!`](crate::impl_hook).
 ///
 /// ## Comparison with `LendingAsyncIterator`
 ///
@@ -147,7 +134,6 @@ pub trait HookUnmount {
 ///   the returned value would remain the *same* as the last returned value.
 ///   *Using* a hook is like *inspecting* it.
 ///   Some hooks may do heavy work in `use_hook`.
-///   For example, `use_state_clone` clones the data in `use_hook`.
 ///   It is advised to call `use_hook` only after
 ///   `poll_next_update` returns `Poll::Ready(true)`.
 ///
@@ -164,6 +150,7 @@ pub trait HookUnmount {
 ///   Thus, there is no need to call `use_hook` again because
 ///   the returned value is expected to remain the *same*.
 ///   But the executor can still call `use_hook` to re-get the value
+///   or update it with [`update_hook`](crate::UpdateHook::update_hook) or [`h`](crate::UpdateHookUninitialized::h),
 ///   and this might make the hook dynamic again.
 ///
 ///   This behavior makes it possible to combine multiple hooks.
@@ -172,6 +159,11 @@ pub trait HookUnmount {
 ///   the executor can still get the values
 ///   from the no-longer-dynamic hooks,
 ///   and pass the values to the dynamic hooks.
+///
+/// Also see [`NonLendingHook`] for a subset of hooks that doesn't lend lifetimes to values,
+/// which are like [`AsyncIterator`](std::async_iter::AsyncIterator) or [`Stream`](futures_core::Stream).
+///
+/// [`hook_fn!(...)`]: crate::hook_fn
 pub trait Hook: HookPollNextUpdate + HookUnmount + for<'hook> HookValue<'hook> {
     fn use_hook(self: Pin<&mut Self>) -> <Self as HookValue<'_>>::Value;
 }
@@ -181,9 +173,13 @@ pub trait Hook: HookPollNextUpdate + HookUnmount + for<'hook> HookValue<'hook> {
 /// thus not borrowing from the hook.
 /// In other words, `NonLendingHook` doesn't lend to its `Value`.
 ///
-/// [`Hook`] can be run by executor and become a `LendingAsyncIterator`,
-/// `NonLendingHook` can be run by executor and become an [`AsyncIterator`](std::async_iter::AsyncIterator)
+/// [`Hook`] is like a `LendingAsyncIterator`,
+/// `NonLendingHook` is like an [`AsyncIterator`](std::async_iter::AsyncIterator)
 /// (also known as [`Stream`](futures_core::Stream)).
+///
+/// You can run
+/// [`hook.into_values()`](crate::HookExt::into_values) and [`hook.values()`](crate::HookExt::values)
+/// to get a stream of values from a hook.
 pub trait NonLendingHook:
     Hook + for<'hook> HookValue<'hook, Value = Self::NonGenericValue>
 {

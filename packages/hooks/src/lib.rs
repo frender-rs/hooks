@@ -47,6 +47,9 @@ pub mod state;
 pub mod prelude {
     pub use hooks_core::prelude::*;
 
+    #[cfg(feature = "derive")]
+    pub use hooks_derive::hook;
+
     #[cfg(feature = "use_debug")]
     pub use crate::debug::use_debug;
     #[cfg(feature = "use_effect")]
@@ -88,8 +91,5 @@ pub use hooks_core::{
     UpdateHook, UpdateHookUninitialized,
 };
 pub use prelude::*;
-
-#[cfg(feature = "derive")]
-pub use hooks_derive::hook;
 
 pub(crate) mod utils;

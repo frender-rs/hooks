@@ -3,6 +3,8 @@ use std::pin::Pin;
 use super::NextValue;
 
 pin_project_lite::pin_project! {
+    /// A stream of hook values.
+    /// See [`HookExt::into_values`](crate::HookExt::into_values) and [`HookExt::values`](crate::HookExt::values)
     pub struct Values<H> {
         #[pin]
         hook: H,

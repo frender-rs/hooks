@@ -2,6 +2,9 @@ use std::{future::Future, pin::Pin, task::Poll};
 
 use crate::HookPollNextUpdate;
 
+/// A future which polls [`HookPollNextUpdate::poll_next_update`].
+/// See [`HookExt::next_update`](crate::HookPollNextUpdateExt::next_update).
+#[must_use = "futures do nothing unless you `.await` or poll them"]
 pub struct NextUpdate<'a, H: ?Sized> {
     hook: &'a mut H,
 }

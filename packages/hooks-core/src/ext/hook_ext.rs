@@ -4,6 +4,7 @@ use crate::{Hook, HookPollNextUpdate, HookValue};
 
 use super::NextUpdate;
 
+/// Extend [`HookPollNextUpdate`] with convenient methods.
 pub trait HookPollNextUpdateExt: HookPollNextUpdate {
     /// A shortcut to call [`HookPollNextUpdate::poll_next_update`] on Unpin hooks.
     #[inline]
@@ -26,6 +27,7 @@ pub trait HookPollNextUpdateExt: HookPollNextUpdate {
 
 impl<H: HookPollNextUpdate + ?Sized> HookPollNextUpdateExt for H {}
 
+/// Extend [`Hook`](trait@Hook) with convenient methods.
 pub trait HookExt: Hook {
     /// A shortcut to call [`Hook::use_hook`] on Unpin hooks.
     #[inline(always)]

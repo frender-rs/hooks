@@ -2,6 +2,9 @@ use std::{future::Future, pin::Pin};
 
 use crate::{Hook, HookPollNextUpdate, HookValue};
 
+/// A future which outputs the next value of the hook.
+/// See [`HookExt::next_value`](crate::HookExt::next_value).
+#[must_use = "futures do nothing unless you `.await` or poll them"]
 pub struct NextValue<'hook, H: ?Sized> {
     hook: Option<Pin<&'hook mut H>>,
 }
