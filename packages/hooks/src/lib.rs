@@ -42,7 +42,7 @@ pub use shared_ref::SharedRef;
 pub mod shared_state;
 
 #[cfg(feature = "use_state")]
-mod state;
+pub mod state;
 
 pub mod prelude {
     pub use hooks_core::prelude::*;
