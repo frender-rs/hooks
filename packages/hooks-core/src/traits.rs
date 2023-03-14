@@ -62,13 +62,12 @@ pub trait HookUnmount {
 
 /// ## How to impl `Hook`
 ///
-/// ### with [`fn_hook`](crate::fn_hook) macro
-///
+/// ### with [`hook_fn!(...)`](crate::hook_fn) macro
 ///
 /// ```
 /// # use hooks::use_state;
 ///
-/// fn_hook![
+/// hook_fn![
 ///     pub fn use_my_hook() -> &'hook mut i32 {
 ///         let (state, updater) = h![use_state(1)];
 ///         state

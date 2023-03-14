@@ -1,4 +1,4 @@
-use darling::FromMeta;
+use darling::{FromMeta, ToTokens};
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum PathOrLit<V> {
@@ -7,6 +7,14 @@ pub enum PathOrLit<V> {
 }
 
 impl<V> PathOrLit<V> {
+    #[inline]
+    pub fn as_inner(&self) -> &V {
+        match self {
+            PathOrLit::Path(v) => v,
+            PathOrLit::Lit(v) => v,
+        }
+    }
+
     #[inline]
     pub fn unwrap(self) -> V {
         match self {
@@ -37,5 +45,22 @@ impl<V: FromMeta + From<syn::Path>> FromMeta for PathOrLit<V> {
     #[inline]
     fn from_value(value: &syn::Lit) -> darling::Result<Self> {
         V::from_value(value).map(Self::Lit)
+    }
+}
+
+impl<V: ToTokens> ToTokens for PathOrLit<V> {
+    fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
+        self.as_inner().to_tokens(tokens)
+    }
+
+    fn to_token_stream(&self) -> proc_macro2::TokenStream {
+        self.as_inner().to_token_stream()
+    }
+
+    fn into_token_stream(self) -> proc_macro2::TokenStream
+    where
+        Self: Sized,
+    {
+        self.unwrap().into_token_stream()
     }
 }

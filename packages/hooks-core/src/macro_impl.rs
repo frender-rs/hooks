@@ -536,7 +536,7 @@ macro_rules! __impl_hook_methods {
 #[macro_export]
 macro_rules! __impl_phantom {
     ($lt:lifetime) => {
-        &$lt()
+        ::core::marker::PhantomData::<&$lt()>
     };
     (const $tp:ident) => {
         ()

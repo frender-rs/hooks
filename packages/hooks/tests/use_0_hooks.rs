@@ -50,4 +50,17 @@ test_many_async!(use_zero_hooks(
         assert_eq!(hook.next_value().await, Some("hi"));
         assert!(hook.next_value().await.is_none());
     },
+    {
+        hook_fn!(
+            type Bounds = impl 'a;
+            fn use_borrow<'a>(v: &'a str) -> usize {
+                v.len()
+            }
+        );
+
+        let mut hook = use_borrow("hi").into_hook();
+
+        assert_eq!(hook.next_value().await, Some(2));
+        assert!(hook.next_value().await.is_none());
+    },
 ));

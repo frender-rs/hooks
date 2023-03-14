@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use darling::FromMeta;
+use darling::{FromMeta, ToTokens};
 use proc_macro2::Span;
 use quote::{quote, quote_spanned};
 use syn::{parse_quote_spanned, spanned::Spanned};
@@ -21,8 +21,6 @@ use crate::{
     DetectedHooksTokens,
 };
 
-pub type GenericParams = syn::punctuated::Punctuated<syn::GenericParam, syn::Token![,]>;
-
 #[cfg_attr(feature = "extra-traits", derive(PartialEq, Eq))]
 #[derive(Debug, Default, FromMeta)]
 #[non_exhaustive]
@@ -31,35 +29,39 @@ pub struct HookArgs {
     /// Defaults to `::hooks::core`
     pub hooks_core_path: Option<PathOrLit<syn::Path>>,
 
-    /// Defaults to tuple of all lifetime generics except `'hook`
-    /// and all type generics.
+    /// When a hook fn borrows from a lifetime,
+    /// this bound might need to be explicitly specified.
     ///
-    /// For example, default bounds of the following hook is
-    /// `(&'a (), &'b (), PhantomData<T>)`
+    /// ```compile_fail
+    /// # extern crate hooks_dev as hooks;
+    /// # use hooks::prelude::*;
+    ///
+    /// #[hook]
+    /// fn use_borrow<'a>(v: &'a str) -> usize {
+    ///     v.len()
+    /// }
+    /// ```
     ///
     /// ```
     /// # extern crate hooks_dev as hooks;
-    /// # use std::marker::PhantomData;
-    /// # use hooks::{hook, HookBounds};
-    ///
-    /// #[hook]
-    /// fn use_my_hook<'a, 'b, T>() {
+    /// # use hooks::prelude::*;
+    /// #[hook(bounds = "'a")]
+    /// fn use_borrow<'a>(v: &'a str) -> usize {
+    ///     v.len()
     /// }
-    ///
-    /// fn asserts<'a, 'b, T>() -> impl HookBounds<
-    ///     Bounds = (&'a (), &'b (), PhantomData<T>)
-    /// > {
-    ///     use_my_hook()
-    /// }
-    ///
-    /// # asserts::<()>();
     /// ```
-    pub custom_bounds: Option<syn::Type>,
-
-    /// Generic params used only in `Args`.
-    /// Currently only lifetimes without bounds are supported.
-    /// Defaults to no generics.
-    pub args_generics: GenericParams,
+    ///
+    /// This is equivalent to `type Bounds = impl ...` in [`hook_fn!(...);`](hooks_dev::hook_fn);
+    ///
+    /// ```
+    /// hook_fn!(
+    ///     type Bounds = impl 'a;
+    ///     fn use_borrow<'a>(v: &'a str) -> usize {
+    ///         v.len()
+    ///     }
+    /// );
+    /// ```
+    pub bounds: Option<syn::punctuated::Punctuated<syn::TypeParamBound, syn::Token![+]>>,
 }
 
 impl HookArgs {
@@ -89,131 +91,17 @@ impl HookArgs {
             PathOrLit::unwrap,
         );
 
+        let bounds = self.bounds;
+
         let sig = &mut item_fn.sig;
 
         let span_fn_name = sig.ident.span();
-
-        // let token_add: syn::Token![+];
-        // let lt_hook;
-
-        let (hook_args_pat, mut hook_args_ty) = {
-            let hook_args = std::mem::take(&mut sig.inputs);
-
-            let paren_token = syn::token::Paren(span_fn_name);
-
-            let (hook_args_pat, hook_args_ty) = hook_args
-                .into_pairs()
-                .into_iter()
-                .map(|pair| {
-                    let (arg, comma) = pair.into_tuple();
-                    let comma = comma.unwrap_or_else(|| syn::Token![,](arg.span()));
-
-                    let (pat, ty) = match arg {
-                        syn::FnArg::Receiver(syn::Receiver {
-                            attrs,
-                            reference,
-                            mutability,
-                            self_token,
-                        }) => {
-                            // In fact, this branch is not valid
-                            // because self cannot appear in closure args.
-                            // But we still transform it and
-                            // let the compiler complain about it.
-                            let self_type = syn::Type::Path(syn::TypePath {
-                                qself: None,
-                                path: syn::Token![Self](self_token.span).into(),
-                            });
-
-                            if let Some((and_token, lifetime)) = reference {
-                                let ty = syn::Type::Reference(syn::TypeReference {
-                                    and_token,
-                                    lifetime,
-                                    mutability,
-                                    elem: Box::new(self_type),
-                                });
-                                let pat = syn::Pat::Ident(syn::PatIdent {
-                                    attrs,
-                                    by_ref: None,
-                                    mutability: None,
-                                    ident: self_token.into(),
-                                    subpat: None,
-                                });
-                                (pat, ty)
-                            } else {
-                                (
-                                    syn::Pat::Ident(syn::PatIdent {
-                                        attrs,
-                                        by_ref: None,
-                                        mutability,
-                                        ident: self_token.into(),
-                                        subpat: None,
-                                    }),
-                                    self_type,
-                                )
-                            }
-                        }
-                        syn::FnArg::Typed(pat_ty) => {
-                            for attr in pat_ty.attrs {
-                                errors.push(
-                                    darling::Error::custom(
-                                        "arguments of hook cannot have attributes",
-                                    )
-                                    .with_span(&attr),
-                                );
-                            }
-                            (*pat_ty.pat, *pat_ty.ty)
-                        }
-                    };
-
-                    (
-                        syn::punctuated::Pair::Punctuated(pat, comma),
-                        syn::punctuated::Pair::Punctuated(ty, comma),
-                    )
-                })
-                .unzip();
-
-            let hook_args_pat = syn::PatTuple {
-                attrs: vec![],
-                paren_token,
-                elems: hook_args_pat,
-            };
-
-            let hook_args_ty = syn::TypeTuple {
-                paren_token,
-                elems: hook_args_ty,
-            };
-
-            (hook_args_pat, hook_args_ty)
-        };
-
-        crate::utils::elided_args_generics::auto_fill_lifetimes(
-            &mut self.args_generics,
-            &mut hook_args_ty.elems,
-        );
-
-        let args_lifetimes = &self.args_generics;
-
-        let args_lifetimes_empty = args_lifetimes.is_empty();
-
-        if !args_lifetimes_empty {
-            for g in self.args_generics.iter() {
-                match g {
-                    syn::GenericParam::Lifetime(_) => {}
-                    _ => errors.push(
-                        darling::Error::custom(
-                            "Currently args_generics only supports lifetimes without bounds",
-                        )
-                        .with_span(&g),
-                    ),
-                }
-            }
-        }
 
         let generics = &sig.generics;
 
         let (impl_generics, type_generics, where_clause) = generics.split_for_impl();
 
-        let default_hook_bounds_fields_eot = map_to_tokens(&generics.params, |params| {
+        let hooks_value_struct_field_ty = map_to_tokens(&generics.params, |params| {
             params.pairs().filter_map(|p| {
                 make_phantom_or_ref(p.value()).map(|v| {
                     Chain(
@@ -225,54 +113,33 @@ impl HookArgs {
             })
         });
 
-        let hook_bounds = self.custom_bounds.as_ref().map_or_else(
-            || Either::A(parened(&default_hook_bounds_fields_eot)),
-            |ty| Either::B(ty),
-        );
-
         let mut output_ty: syn::Type = {
             let fn_rt = &mut sig.output;
-            let (ra, output_ty) = match std::mem::replace(fn_rt, syn::ReturnType::Default) {
+            let span;
+            match fn_rt {
                 syn::ReturnType::Default => {
-                    let span = fn_rt.span();
-                    (
+                    span = span_fn_name;
+                    let output_ty = syn::Type::Tuple(syn::TypeTuple {
+                        paren_token: syn::token::Paren(span),
+                        elems: Default::default(),
+                    });
+                    *fn_rt = syn::ReturnType::Type(
                         syn::Token![->](span),
-                        syn::Type::Tuple(syn::TypeTuple {
-                            paren_token: syn::token::Paren(span),
-                            elems: Default::default(),
-                        }),
-                    )
+                        Box::new(syn::Type::Verbatim(quote_spanned! { span =>
+                            #hooks_core_path::UpdateHookUninitialized![(), #bounds]
+                        })),
+                    );
+
+                    output_ty
                 }
-                syn::ReturnType::Type(ra, ty) => (ra, *ty),
-            };
-
-            let (for_hook, for_lifetimes) = if args_lifetimes_empty {
-                (None, None)
-            } else {
-                (
-                    Some(
-                        Chain(syn::Token![for](span_fn_name), syn::Token![<](span_fn_name))
-                            .chain(args_lifetimes)
-                            .chain(syn::Token![>](span_fn_name)),
-                    ),
-                    Some(Chain(syn::Token![,](span_fn_name), args_lifetimes)),
-                )
-            };
-
-            let return_ty = parse_quote_spanned! { span_fn_name =>
-                impl #for_hook #hooks_core_path ::Hook<#hook_args_ty>
-                    + for<'hook #for_lifetimes> #hooks_core_path ::HookLifetime<
-                        'hook,
-                        #hook_args_ty,
-                        &'hook #hook_bounds,
-                        Value = #output_ty
-                    >
-                    + #hooks_core_path ::HookBounds<Bounds = #hook_bounds>
-            };
-
-            *fn_rt = syn::ReturnType::Type(ra, return_ty);
-
-            output_ty
+                syn::ReturnType::Type(ra, ty) => {
+                    span = ra.span();
+                    let it = quote_spanned! { span =>
+                        #hooks_core_path::UpdateHookUninitialized![#ty, #bounds]
+                    };
+                    std::mem::replace(&mut **ty, syn::Type::Verbatim(it))
+                }
+            }
         };
 
         // T,
@@ -287,8 +154,8 @@ impl HookArgs {
             v.iter().map(|pair| Chain(&pair.0.ident, &pair.1))
         });
 
-        // ( PhantomData<T>, PhantomData<HooksImplTrait0>, PhantomData<HooksImplTrait1>, )
-        let hook_types_phantom;
+        // PhantomData<T>, PhantomData<HooksImplTrait0>, PhantomData<HooksImplTrait1>,
+        let hook_types_phantoms_eot;
         // <T: Clone, HooksImplTrait0: Debug, HooksImplTrait1: Any,>
         let hook_types_impl_generics;
         // <T, HooksImplTrait0, HooksImplTrait1,>
@@ -296,24 +163,19 @@ impl HookArgs {
         // _, _,
         let it_generics_elided_without_braces_eot;
 
-        // where T: SomeOtherTrait, HooksImplTrait0: 'hook,
-        // let hook_lifetime_where_clause;
-        // TODO: figure out when hook_lifetime_where_clause is needed.
-
         if it_impl_generics_eot.is_empty() {
-            hook_types_phantom = Either::A(&hook_bounds);
+            hook_types_phantoms_eot = Either::A(&hooks_value_struct_field_ty);
             hook_types_impl_generics = Either::A(impl_generics);
             hook_types_type_generics = Either::A(&type_generics);
             it_generics_elided_without_braces_eot = None;
-            // hook_lifetime_where_clause = Either::A(where_clause);
         } else {
-            hook_types_phantom = Either::B(parened(Chain(
-                &default_hook_bounds_fields_eot,
+            hook_types_phantoms_eot = Either::B(Chain(
+                &hooks_value_struct_field_ty,
                 map_to_tokens(&it_impl_generics_eot, |v| {
                     v.iter()
                         .map(|pair| Chain(PhantomOfTy(&pair.0.ident), pair.1))
                 }),
-            )));
+            ));
 
             hook_types_impl_generics = Either::B(angled(Chain(
                 AutoEmptyOrTrailing(&sig.generics.params),
@@ -327,28 +189,6 @@ impl HookArgs {
                 Chain(<syn::Token![_]>::default(), <syn::Token![,]>::default()),
                 it_impl_generics_eot.len(),
             ));
-
-            // token_add = <syn::Token![+]>::default();
-
-            // lt_hook = syn::Lifetime {
-            //     apostrophe: Span::call_site(),
-            //     ident: syn::Ident::new("hook", Span::call_site()),
-            // };
-
-            // let it_where_predicates_eot = map_to_tokens(&it_impl_generics_eot, |data| {
-            //     data.iter()
-            //         .map(|tp| chain![&tp.0, &token_add, &lt_hook, &tp.1,])
-            // });
-
-            // hook_lifetime_where_clause = Either::B({
-            //     match where_clause {
-            //         None => Chain(Default::default(), Either::A(it_where_predicates_eot)),
-            //         Some(where_clause) => Chain(
-            //             where_clause.where_token,
-            //             Either::B(Chain(it_where_predicates_eot, &where_clause.predicates)),
-            //         ),
-            //     }
-            // });
         };
 
         // T: Clone,
@@ -359,109 +199,52 @@ impl HookArgs {
 
         let used_hooks = detect_hooks(impl_use_hook.iter_mut(), &hooks_core_path);
 
-        let impl_poll_next_update = if used_hooks.is_empty() {
-            quote_spanned! { span_fn_name =>
-                #hooks_core_path ::fn_hook::poll_next_update_ready_false
-            }
-        } else {
-            quote_spanned! { span_fn_name =>
-                #hooks_core_path ::HookPollNextUpdate::poll_next_update
-            }
-        };
-
         let DetectedHooksTokens {
-            data_expr: expr_hooks_data,
             fn_arg_data_pat: arg_hooks_data,
             fn_stmts_extract_data: impl_extract_hooks_data,
-        } = detected_hooks_to_tokens(
-            used_hooks,
-            &hooks_core_path,
-            quote!(()),
-            Some(quote!(())),
-            sig.fn_token.span,
-        );
+        } = detected_hooks_to_tokens(used_hooks.hooks, &hooks_core_path, sig.fn_token.span);
 
-        let (args_generics_for_hook_lifetime_eot, stmt_ret) = if args_lifetimes_empty {
-            let stmt_ret: syn::Expr = parse_quote_spanned! { span_fn_name =>
-                #hooks_core_path ::fn_hook::new_fn_hook::<
-                    #hook_args_ty,
-                    _,
-                    __HookTypes <#fn_type_generics_eot  #it_generics_elided_without_braces_eot>
-                >(
-                    #expr_hooks_data,
-                    #impl_poll_next_update,
-                    |#arg_hooks_data, #hook_args_pat : #hook_args_ty| {
-                        #impl_extract_hooks_data
+        item_fn
+            .block
+            .stmts
+            .push(syn::Stmt::Expr(syn::Expr::Verbatim(
+                quote_spanned! { span_fn_name =>
+                    enum __HooksImplNever {}
 
-                        #(#impl_use_hook)*
-                    }
-                )
-            };
-
-            (None, stmt_ret)
-        } else {
-            let stmt_ret: syn::Expr = parse_quote_spanned! { span_fn_name =>
-                {
-                    #[inline]
-                    fn _hooks_def_fn_hook<
-                        #fn_impl_generics_without_braces_eot
-                        #(#it_impl_generics_eot)*
-                        __HooksData,
-                        __HooksPoll: ::core::ops::Fn(::core::pin::Pin<&mut __HooksData>, &mut ::core::task::Context) -> ::core::task::Poll<::core::primitive::bool>,
-                        __HooksUseHook: for<'hook, #args_lifetimes> ::core::ops::Fn(::core::pin::Pin<&'hook mut __HooksData>, #hook_args_ty) -> #output_ty,
-                    >(
-                        hooks_data: __HooksData,
-                        hooks_poll: __HooksPoll,
-                        hooks_use_hook: __HooksUseHook
-                    ) -> #hooks_core_path ::fn_hook::FnHook::<__HooksData, __HooksPoll, __HooksUseHook, __HookTypes #hook_types_type_generics> #where_clause {
-                        #hooks_core_path ::fn_hook::FnHook::<__HooksData, __HooksPoll, __HooksUseHook, __HookTypes #hook_types_type_generics>::new(
-                            hooks_data,
-                            hooks_poll,
-                            hooks_use_hook
+                    struct __HooksValueOfThisHook #hook_types_impl_generics
+                    #where_clause
+                    {
+                        __: (
+                            __HooksImplNever,
+                            #hook_types_phantoms_eot
                         )
                     }
 
-                    _hooks_def_fn_hook::<
-                        #fn_type_generics_eot
-                        #it_generics_elided_without_braces_eot
-                        _, _, _
-                    >(
-                        #expr_hooks_data,
-                        #impl_poll_next_update,
-                        |#arg_hooks_data, #hook_args_pat| {
+                    impl<
+                        'hook,
+                        #fn_impl_generics_without_braces_eot
+                        #(#it_impl_generics_eot)*
+                    > #hooks_core_path::HookValue<'hook> for
+                        __HooksValueOfThisHook #hook_types_type_generics
+                        #where_clause {
+                        type Value = #output_ty;
+                    }
+
+                    #hooks_core_path::fn_hook::use_fn_hook::<
+                        __HooksValueOfThisHook<
+                            #fn_type_generics_eot
+                            #it_generics_elided_without_braces_eot
+                        >, _, _
+                    >
+                    (
+                        |#arg_hooks_data| {
                             #impl_extract_hooks_data
 
                             #(#impl_use_hook)*
-                        },
+                        }
                     )
-                }
-            };
-
-            (Some(AutoEmptyOrTrailing(self.args_generics)), stmt_ret)
-        };
-
-        item_fn.block.stmts = parse_quote_spanned! { span_fn_name =>
-            struct __HookTypes #hook_types_impl_generics #where_clause {
-                __: ::core::marker::PhantomData< #hook_types_phantom >
-            }
-
-            impl #hook_types_impl_generics #hooks_core_path ::HookBounds for __HookTypes #hook_types_type_generics #where_clause {
-                type Bounds = #hook_bounds;
-            }
-
-            impl <
-                'hook,
-                #args_generics_for_hook_lifetime_eot
-                #fn_impl_generics_without_braces_eot
-                #(#it_impl_generics_eot)*
-            > #hooks_core_path ::HookLifetime<'hook, #hook_args_ty, &'hook #hook_bounds>
-                for __HookTypes #hook_types_type_generics #where_clause
-            {
-                type Value = #output_ty;
-            }
-        };
-
-        item_fn.block.stmts.push(syn::Stmt::Expr(stmt_ret));
+                },
+            )));
 
         errors.finish().err()
     }
@@ -471,11 +254,6 @@ impl HookArgs {
     ) -> darling::Result<Self> {
         let args: Vec<syn::NestedMeta> = meta_list.into_iter().collect();
         Self::from_list(&args)
-    }
-
-    pub fn with_args_generics(mut self, args_generics: GenericParams) -> Self {
-        self.args_generics = args_generics;
-        self
     }
 }
 
