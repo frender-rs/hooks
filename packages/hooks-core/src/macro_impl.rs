@@ -386,20 +386,34 @@ macro_rules! __impl_hook_method_poll_next_update {
 
 #[doc(hidden)]
 #[macro_export]
-macro_rules! __impl_unmount_fn {
-    ({}[$(#$attr:tt)*] $fn_name:ident ($($args:tt)*)) => {
-        $crate::__impl_unexpected_token! { $($attr)* }
+macro_rules! __impl_trait_hook_unmount {
+    (
+        ([$($generics:tt)*][$ty:ty][$( $($where_clause:tt)+ )?])[
+            $(#$fn_attr:tt)*
+            $fn_name:ident
+            ($($args:tt)*)
+            {}
+        ]
+    ) => {
         $crate::__impl_unexpected_token! { $($args)* }
+
+        $(#$fn_attr)*
+        impl<$($generics)*> $crate::HookUnmount for $ty $(where $($where_clause)*)? {}
     };
     (
-        $fn_body:tt [$($attr:tt)*] $fn_name:ident (
-            $($self_arg:ident)+ $(,)?
-        )
+        ([$($generics:tt)*][$ty:ty][$( $($where_clause:tt)+ )?])[
+            $(#$fn_attr:tt)*
+            $fn_name:ident
+            ( $($self_arg:ident)+ $(,)? )
+            $fn_body:tt
+        ]
     ) => {
-        $($attr)*
-        fn $fn_name(
-            $($self_arg)+ : ::core::pin::Pin<&mut Self>
-        ) $fn_body
+        impl<$($generics)*> $crate::HookUnmount for $ty $(where $($where_clause)*)? {
+            $(#$fn_attr)*
+            fn $fn_name(
+                $($self_arg)+ : ::core::pin::Pin<&mut Self>
+            ) $fn_body
+        }
     };
 }
 
@@ -414,20 +428,10 @@ macro_rules! __impl_hook_with_method {
         }
     };
     (
-        unmount([$($generics:tt)*][$ty:ty][$( $($where_clause:tt)+ )?])[
-            $(#$fn_attr:tt)*
-            $fn_name:ident
-            $args:tt
-            $fn_body:tt
-        ]
+        unmount $types:tt $fn_data:tt
     ) => {
-        impl<$($generics)*> $crate::HookUnmount for $ty $(where $($where_clause)*)? {
-            $crate::__impl_unmount_fn! {
-                $fn_body
-                [$(#$fn_attr)*]
-                $fn_name
-                $args
-            }
+        $crate::__impl_trait_hook_unmount! {
+            $types $fn_data
         }
     };
     (
