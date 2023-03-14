@@ -1,6 +1,8 @@
 use proc_macro2::{Span, TokenStream};
 use quote::{quote_spanned, ToTokens};
 
+use crate::utils::{chain::Chain, group::parened, map::map_to_tokens};
+
 pub struct DetectedHooksTokens {
     pub fn_arg_data_pat: TokenStream,
     pub fn_stmts_extract_data: Option<TokenStream>,
@@ -35,8 +37,11 @@ pub fn detected_hooks_to_tokens(
             let ident_hooks_data = syn::Ident::new("__hooks_hook_data", span);
 
             let pat_hook_ids = {
-                let used_id = used_hooks.iter().map(|h| &h.ident);
-                quote_spanned!(span=> (#(#used_id,)*))
+                parened(map_to_tokens(&used_hooks, |used_hooks| {
+                    used_hooks
+                        .iter()
+                        .map(|h| (Chain(&h.ident, syn::Token![,](span))))
+                }))
             };
 
             let used_id = used_hooks.iter().map(|h| &h.ident);
