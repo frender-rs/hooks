@@ -1,5 +1,3 @@
-use std::task::{Context, Poll};
-
 use crate::ShareValue;
 
 use super::SharedState;
@@ -25,10 +23,6 @@ impl<T: PartialEq> SharedStateEq<T> {
     #[inline]
     pub fn inner(&self) -> &SharedState<T> {
         &self.0
-    }
-
-    pub(super) fn impl_poll_next_update(&mut self, cx: &mut Context<'_>) -> Poll<bool> {
-        self.0.impl_poll_next_update(cx)
     }
 }
 
@@ -110,10 +104,12 @@ hooks_core::impl_hook![
     fn unmount() {}
     #[inline]
     fn poll_next_update(self, cx: _) {
-        self.get_mut().impl_poll_next_update(cx)
+        self.get_mut().0.impl_poll_next_update(cx)
     }
     #[inline]
     fn use_hook(self) -> &'hook Self {
-        self.get_mut()
+        let this = self.get_mut();
+        this.0.mark_as_unregistered();
+        this
     }
 ];

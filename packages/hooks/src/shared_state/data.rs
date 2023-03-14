@@ -48,7 +48,7 @@ impl<T: std::fmt::Debug> std::fmt::Debug for SharedState<T> {
         let mut d = f.debug_tuple("SharedState");
         self.shared_ref.try_borrow(|v| {
             if let Some(v) = v {
-                d.field(&v.0);
+                d.field(&v.0).field(&v.1);
             } else {
                 d.field(&"borrowed");
             }
@@ -117,6 +117,13 @@ impl<T> SharedState<T> {
             }
         })
     }
+
+    #[inline]
+    pub(super) fn mark_as_unregistered(&mut self) {
+        self.shared_ref.borrow_mut(|(_, waker_status), _| {
+            *waker_status = WakerStatus::Unregistered;
+        });
+    }
 }
 
 impl<T> ShareValue<T> for SharedState<T> {
@@ -170,9 +177,7 @@ hooks_core::impl_hook![
     #[inline]
     fn use_hook(self) -> &'hook Self {
         let this = self.get_mut();
-        this.shared_ref.borrow_mut(|(_, waker_status), _| {
-            *waker_status = WakerStatus::Unregistered;
-        });
+        this.mark_as_unregistered();
         this
     }
 ];
