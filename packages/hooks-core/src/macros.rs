@@ -264,16 +264,22 @@ macro_rules! h {
 #[macro_export]
 macro_rules! hook_fn {
     (
+        $(@[$options:tt])?
         type Bounds = impl $hook_bound:lifetime $(+ $hook_bounds:lifetime)* ;
         $($rest:tt)*
     ) => {
         $crate::__impl_hook_fn_bounds_resolved! {
+            [$($options)?]
             { $hook_bound $(+ $hook_bounds)* }
             $($rest)*
         }
     };
-    ($($rest:tt)*) => {
+    (
+        $(@[$options:tt])?
+        $($rest:tt)*
+    ) => {
         $crate::__impl_hook_fn_bounds_resolved! {
+            [$($options)?]
             {}
             $($rest)*
         }

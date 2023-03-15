@@ -17,40 +17,65 @@ macro_rules! __expand_or {
 
 #[doc(hidden)]
 #[macro_export]
+macro_rules! __impl_fn_hook_body_finish_as_closure {
+    (
+        // options
+        [
+            $(append_args_pat! { $($append_args_pat:tt)+ })?
+        ]
+        [$($args_pat:tt)*]
+        $body:tt
+    ) => {
+        move |
+            $($args_pat)*
+            $(, $($append_args_pat)+ )?
+        | $body
+    };
+}
+
+#[doc(hidden)]
+#[macro_export]
 macro_rules! __impl_fn_hook_body_finish {
     (
         [
-            [] // options
+            $options:tt
             $rest_ids:tt
         ]
         [] // used_ids
         [$($transformed_code:tt)*]
     ) => {
-        move |_: ::core::pin::Pin<&mut $crate::HookTuple<()>>| {
-            $($transformed_code)*
+        $crate::__impl_fn_hook_body_finish_as_closure! {
+            $options
+            [_: ::core::pin::Pin<&mut $crate::HookTuple<()>>]
+            { $($transformed_code)* }
         }
     };
     (
         [
-            [] // options
+            $options:tt
             $rest_ids:tt
         ]
         [$used_id:ident] // used_ids
         [$($transformed_code:tt)*]
     ) => {
-        move |$used_id : ::core::pin::Pin<&mut _>| {
-            $($transformed_code)*
+        $crate::__impl_fn_hook_body_finish_as_closure! {
+            $options
+            [$used_id : ::core::pin::Pin<&mut _>]
+            { $($transformed_code)* }
         }
     };
     (
         [
-            [] // options
+            $options:tt
             $rest_ids:tt
         ]
         [$($used_id:ident)+] // used_ids
         [$($transformed_code:tt)*]
     ) => {
-        move |__hooks_hook_data: ::core::pin::Pin<&mut _>| {
+        $crate::__impl_fn_hook_body_finish_as_closure! {
+            $options
+            [__hooks_hook_data: ::core::pin::Pin<&mut _>]
+            {
             // SAFETY: pin projection
             let ($($used_id,)+) = unsafe {
                 let $crate::HookTuple(($($used_id,)+)) = ::core::pin::Pin::get_unchecked_mut(__hooks_hook_data);
@@ -60,6 +85,7 @@ macro_rules! __impl_fn_hook_body_finish {
             };
 
             $($transformed_code)*
+            }
         }
     };
 }
@@ -198,14 +224,16 @@ macro_rules! __impl_fn_hook_body_start {
 #[doc(hidden)]
 #[macro_export]
 macro_rules! __impl_hook_fn_bounds_resolved {
-    ($hook_bounds:tt #[hook $(($($options:tt)*))? ] $($rest:tt)*) => {
+    ($options:tt $hook_bounds:tt #[hook $(($($hook_options:tt)*))? ] $($rest:tt)*) => {
         $crate::__impl_hook_fn_bounds_and_options_resolved! {
-            $hook_bounds ($($($options)*)?)
+            $options
+            $hook_bounds ($($($hook_options)*)?)
             $($rest)*
         }
     };
-    ($hook_bounds:tt $($rest:tt)*) => {
+    ($options:tt $hook_bounds:tt $($rest:tt)*) => {
         $crate::__impl_hook_fn_bounds_and_options_resolved! {
+            $options
             $hook_bounds ()
             $($rest)*
         }
@@ -216,6 +244,16 @@ macro_rules! __impl_hook_fn_bounds_resolved {
 #[macro_export]
 macro_rules! __impl_hook_fn_bounds_and_options_resolved {
     (
+        []
+        $($rest:tt)*
+    ) => {
+        $crate::__impl_hook_fn_bounds_and_options_resolved! {
+            [[]]
+            $($rest)*
+        }
+    };
+    (
+        [$options:tt]
         { $($hook_bounds:tt)* } // { 'a + 'b }
         ($($method_path:ident),* $(,)?)
 
