@@ -1,6 +1,6 @@
-use std::pin::Pin;
+use std::{marker::PhantomData, pin::Pin};
 
-use hooks_core::{HookPollNextUpdate, HookUnmount, IntoHook, UpdateHook};
+use hooks_core::{Hook, HookPollNextUpdate, HookUnmount, IntoHook, UpdateHook};
 
 pin_project_lite::pin_project![
     #[derive(Debug)]
@@ -33,6 +33,17 @@ impl<H: HookPollNextUpdate + HookUnmount> LazyPinnedHook<H> {
         self.pin_project().as_pin_mut()
     }
 }
+impl<H: Hook> LazyPinnedHook<H> {
+    pub fn h(self: Pin<&mut Self>, into_hook: impl UpdateHook<Hook = H>) -> hooks_core::Value![H] {
+        self.pin_project()
+            .use_pin_or_insert_with_data(
+                into_hook,
+                |into_hook, hook| into_hook.update_hook(hook),
+                IntoHook::into_hook,
+            )
+            .use_hook()
+    }
+}
 
 hooks_core::impl_hook![
     type For<H: HookPollNextUpdate + HookUnmount> = LazyPinnedHook<H>;
@@ -48,25 +59,25 @@ hooks_core::impl_hook![
         if let Some(hook) = hook {
             <H as HookPollNextUpdate>::poll_next_update(hook, cx)
         } else {
-            std::task::Poll::Ready(true)
+            std::task::Poll::Ready(false)
         }
+    }
+
+    #[inline(always)]
+    fn use_hook(self) -> Pin<&'hook mut Self> {
+        self
     }
 ];
 
+pub struct UseLazyPinnedHook<H: Hook>(PhantomData<H>);
+
 /// Use another hook lazily so you can use hooks conditionally.
 ///
-/// [`#[hook]`](crate::hook) macro works by interpreting
-/// top level `use_*` method calls as hook calls.
-/// Thus, using hook in a `if` branch will not be interpreted by this macro.
+/// The following code compiles but `use_effect()` actually does nothing
+/// because `#[hook]` doesn't know the `use_effect` in `if` branch is a hook call.
 ///
-/// [`use_lazy_pinned_hook`] and [`use_default_pinned_hook`](crate::use_default_pinned_hook)
-/// can solve the above problem.
-///
-/// The following code fails to compile because `#[hook]` doesn't know
-/// `use_effect` in `if` branch is a hook call.
-///
-/// ```compile_fail
-/// # use hooks::{hook, use_effect, use_state};
+/// ```
+/// # use hooks::prelude::*;
 /// #[hook]
 /// fn use_demo() -> i32 {
 ///     let (state, updater) = use_state(0);
@@ -75,45 +86,52 @@ hooks_core::impl_hook![
 ///     }
 ///     *state
 /// }
+///
+/// # use futures_lite::StreamExt;
+/// # futures_lite::future::block_on(async {
+/// let values: Vec<_> = use_demo().into_hook_values().collect().await;
+/// assert_eq!(values, [0])
+/// # });
 /// ```
 ///
 /// With [`use_lazy_pinned_hook`], we can call `use_effect` conditionally:
 ///
 /// ```
-/// # use hooks::{hook, use_lazy_pinned_hook, use_effect, use_state, Hook};
+/// # use hooks::prelude::*;
 /// #[hook]
 /// fn use_demo() -> i32 {
 ///     let (state, updater) = use_state(0);
-///     let hook_effect = use_lazy_pinned_hook(use_effect);
+///     let hook_effect = use_lazy_pinned_hook();
 ///     if *state < 2 {
 ///         let updater = updater.clone();
-///         hook_effect.use_hook((move |v: &i32| updater.set(*v + 1), *state));
+///         hook_effect.h(use_effect(move |v: &i32| updater.set(*v + 1), *state));
 ///     }
 ///     *state
 /// }
+///
+/// # use futures_lite::StreamExt;
+/// # futures_lite::future::block_on(async {
+/// let values: Vec<_> = use_demo().into_hook_values().collect().await;
+/// assert_eq!(values, [0, 1, 2])
+/// # });
 /// ```
-pub struct UseLazyPinnedHook<I: IntoHook>(pub I);
-pub use UseLazyPinnedHook as use_lazy_pinned_hook;
+#[inline(always)]
+pub fn use_lazy_pinned_hook<H: Hook>() -> UseLazyPinnedHook<H> {
+    UseLazyPinnedHook(PhantomData)
+}
 
 hooks_core::impl_hook![
-    type For<I: IntoHook> = UseLazyPinnedHook<I>;
+    type For<H: Hook> = UseLazyPinnedHook<H>;
     #[inline]
-    fn into_hook(self) -> I::Hook {
-        I::into_hook(self.0)
-    }
-];
-
-hooks_core::impl_hook![
-    type For<I: UpdateHook> = UseLazyPinnedHook<I>;
-    #[inline]
-    fn update_hook(self, hook: _) {
-        I::update_hook(self.0, hook)
+    fn into_hook(self) -> LazyPinnedHook<H> {
+        LazyPinnedHook::default()
     }
 
-    fn h(self, hook: LazyPinnedHook<I::Hook>) {
-        let hook = hook
-            .pin_project()
-            .pin_project_or_insert_with(move || self.0.into_hook());
-        <I::Hook as hooks_core::Hook>::use_hook(hook)
+    #[inline]
+    fn update_hook(self, _hook: _) {}
+
+    #[inline]
+    fn h(self, hook: LazyPinnedHook<H>) {
+        hook
     }
 ];
