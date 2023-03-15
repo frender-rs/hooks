@@ -35,6 +35,7 @@ all = [
     "use_shared_ref",
     "use_shared_state",
     "use_state",
+    "use_uninitialized_hook",
 ]
 ShareValue = []
 use_debug = []
@@ -48,3 +49,4 @@ use_poll_next_update = []
 use_shared_ref = ["ShareValue"]
 use_shared_state = ["use_shared_ref"]
 use_state = []
+use_uninitialized_hook = []

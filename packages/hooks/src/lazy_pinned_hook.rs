@@ -73,6 +73,8 @@ pub struct UseLazyPinnedHook<H: Hook>(PhantomData<H>);
 
 /// Use another hook lazily so you can use hooks conditionally.
 ///
+/// See also [`use_uninitialized_hook`](crate::use_uninitialized_hook).
+///
 /// The following code compiles but `use_effect()` actually does nothing
 /// because `#[hook]` doesn't know the `use_effect` in `if` branch is a hook call.
 ///

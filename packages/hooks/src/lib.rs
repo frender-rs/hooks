@@ -44,6 +44,9 @@ pub mod shared_state;
 #[cfg(feature = "use_state")]
 pub mod state;
 
+#[cfg(feature = "use_uninitialized_hook")]
+pub mod uninitialized_hook;
+
 pub mod prelude {
     pub use hooks_core::prelude::*;
 
@@ -80,6 +83,8 @@ pub mod prelude {
         use_state_eq_default_n, use_state_eq_n, use_state_eq_n_with, use_state_eq_with,
         use_state_n, use_state_n_with, use_state_with,
     };
+    #[cfg(feature = "use_uninitialized_hook")]
+    pub use crate::uninitialized_hook::use_uninitialized_hook;
 
     #[cfg(feature = "ShareValue")]
     pub use crate::ShareValue;
