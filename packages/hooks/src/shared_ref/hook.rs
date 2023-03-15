@@ -72,7 +72,7 @@ impl<T> crate::ShareValue<T> for SharedRef<T> {
     }
 
     #[inline]
-    fn replace_with<F: FnOnce(&mut T) -> T>(&self, f: F) -> T {
+    fn replace_mut<F: FnOnce(&mut T) -> T>(&self, f: F) -> T {
         self.0.replace_with(f)
     }
 

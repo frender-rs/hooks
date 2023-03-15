@@ -70,16 +70,16 @@ impl<T: PartialEq> ShareValue<T> for SharedStateEq<T> {
     /// because the caller can mutate the value inside `f`.
     ///
     /// To notify changes only when `new_value != old_value`,
-    /// use [`replace_from_ref`](ShareValue::replace_from_ref) or
+    /// use [`replace_from_ref`](ShareValue::replace_with) or
     /// [`self.inner().map_mut_and_notify_if()`](SharedState::map_mut_and_notify_if)
     /// instead.
     #[inline]
-    fn replace_with<F: FnOnce(&mut T) -> T>(&self, f: F) -> T {
-        self.0.replace_with(f)
+    fn replace_mut<F: FnOnce(&mut T) -> T>(&self, f: F) -> T {
+        self.0.replace_mut(f)
     }
 
     #[inline]
-    fn replace_from_ref<F: FnOnce(&T) -> T>(&self, f: F) -> T {
+    fn replace_with<F: FnOnce(&T) -> T>(&self, f: F) -> T {
         self.0.map_mut_and_notify_if(move |v| {
             let new_value = f(v);
             let changed = new_value != *v;

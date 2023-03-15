@@ -26,11 +26,11 @@ pub trait ShareValue<T> {
     /// The old value is returned.
     #[inline]
     fn replace(&self, new_value: T) -> T {
-        self.replace_with(|_| new_value)
+        self.replace_mut(|_| new_value)
     }
     /// The old value is returned.
     #[inline]
-    fn replace_with<F: FnOnce(&mut T) -> T>(&self, f: F) -> T {
+    fn replace_mut<F: FnOnce(&mut T) -> T>(&self, f: F) -> T {
         self.map_mut(|old| {
             let new_value = f(old);
             std::mem::replace(old, new_value)
@@ -39,8 +39,8 @@ pub trait ShareValue<T> {
 
     /// The old value is returned.
     #[inline]
-    fn replace_from_ref<F: FnOnce(&T) -> T>(&self, f: F) -> T {
-        self.replace_with(move |v| f(v))
+    fn replace_with<F: FnOnce(&T) -> T>(&self, f: F) -> T {
+        self.replace_mut(move |v| f(v))
     }
 
     fn map<R>(&self, f: impl FnOnce(&T) -> R) -> R;

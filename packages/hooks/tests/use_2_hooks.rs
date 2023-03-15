@@ -14,7 +14,7 @@ test_many_async!(use_2_hooks(
         impl IncrementBoth<'_> {
             pub fn increment_both(&self) {
                 for state in self.0 {
-                    state.replace_with(|v| *v + 1);
+                    state.replace_mut(|v| *v + 1);
                 }
             }
         }
