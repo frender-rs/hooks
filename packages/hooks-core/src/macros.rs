@@ -1,4 +1,4 @@
-/// This macro should only be used in [`hook_fn`] or `#[hook]`.
+/// This macro should only be used in [`hook_fn`](crate::hook_fn) or `#[hook]`.
 #[macro_export]
 macro_rules! h {
     [] => {
@@ -8,7 +8,7 @@ macro_rules! h {
 
 /// Write hook fn without any proc-macro.
 ///
-/// A *hook fn* is a `fn` which returns [`impl UpdateHookUninitialized`](crate::UpdateHookUninitialized).
+/// A *hook fn* is a `fn` which returns [`impl UpdateHookUninitialized`](trait@crate::UpdateHookUninitialized).
 /// (Thus the output type is also [`UpdateHook`](crate::UpdateHook) + [`IntoHook`](crate::IntoHook)).
 ///
 /// Tips: `cargo fmt` supports formatting code inside `hook_fn!(...);` and `hook_fn![...];`, but not `hook_fn!{...}`.
