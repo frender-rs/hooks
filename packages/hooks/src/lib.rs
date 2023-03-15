@@ -50,7 +50,7 @@ pub mod uninitialized_hook;
 pub mod prelude {
     pub use hooks_core::prelude::*;
 
-    #[cfg(feature = "derive")]
+    #[cfg(feature = "proc-macro")]
     pub use hooks_macro::hook;
 
     #[cfg(feature = "use_debug")]
