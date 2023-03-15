@@ -23,7 +23,11 @@ jobs:
           cargo check --locked --all-targets
           cargo check -p hooks --no-default-features --locked
           cargo clippy --locked --all-targets -- --deny warnings
+          cargo test -p hooks-core
+          bash scripts/test-hooks.sh
+          cargo test -p hooks-test
           cargo test
+          cargo test --all-features
       - uses: google-github-actions/release-please-action@v3
         with:
           command: manifest
