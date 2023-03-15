@@ -20,9 +20,8 @@ jobs:
       - name: Test
         run: |
           cargo fmt --all --check
-          cargo check --locked --all-targets
-          cargo check -p hooks --no-default-features --locked
-          cargo clippy --locked --all-targets -- --deny warnings
+          cargo check --locked --all-targets --all-features
+          cargo clippy --locked --all-targets --all-features -- --deny warnings
           cargo test -p hooks-core
           bash scripts/test-hooks.sh
           cargo test -p hooks-test
