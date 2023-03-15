@@ -69,25 +69,35 @@ hooks_core::impl_hook![
 ///
 /// See also [`use_lazy_pinned_hook`](crate::use_lazy_pinned_hook).
 ///
-/// ```
-/// # use hooks::prelude::*;
-/// #[hook]
-/// fn use_demo() -> i32 {
-///     let (state, updater) = use_state(0);
-///     let hook_effect = use_uninitialized_hook();
-///     if *state < 2 {
-///         let updater = updater.clone();
-///         hook_effect.h(use_effect(move |v: &i32| updater.set(*v + 1), *state));
-///     }
-///     *state
-/// }
-///
-/// # use futures_lite::StreamExt;
-/// # futures_lite::future::block_on(async {
-/// let values: Vec<_> = use_demo().into_hook_values().collect().await;
-/// assert_eq!(values, [0, 1, 2])
-/// # });
-/// ```
+#[cfg_attr(
+    all(
+        feature = "futures-core",
+        feature = "proc-macro",
+        feature = "use_state",
+        feature = "use_effect",
+    ),
+    doc = r###"
+```
+# use hooks::prelude::*;
+#[hook]
+fn use_demo() -> i32 {
+    let (state, updater) = use_state(0);
+    let hook_effect = use_uninitialized_hook();
+    if *state < 2 {
+        let updater = updater.clone();
+        hook_effect.h(use_effect(move |v: &i32| updater.set(*v + 1), *state));
+    }
+    *state
+}
+
+# use futures_lite::StreamExt;
+# futures_lite::future::block_on(async {
+let values: Vec<_> = use_demo().into_hook_values().collect().await;
+assert_eq!(values, [0, 1, 2])
+# });
+```
+"###
+)]
 #[inline(always)]
 pub fn use_uninitialized_hook<U: HookPollNextUpdate + HookUnmount + Default>(
 ) -> UseUninitializedHook<U> {

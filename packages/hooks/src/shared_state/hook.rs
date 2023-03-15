@@ -34,17 +34,20 @@ hooks_core::impl_hook![
     }
 ];
 
+#[cfg(feature = "futures-core")]
 #[cfg(test)]
 mod tests {
     use futures_lite::StreamExt;
     use hooks_core::hook_fn;
 
-    use crate::{use_effect, use_shared_state, ShareValue};
+    use crate::{use_shared_state, ShareValue};
 
     #[test]
     #[cfg(feature = "use_effect")]
     fn shared_state() {
         use hooks_core::IntoHook;
+
+        use crate::use_effect;
 
         hook_fn!(
             fn use_test() -> i32 {

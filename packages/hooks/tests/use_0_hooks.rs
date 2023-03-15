@@ -1,5 +1,7 @@
+#![cfg(feature = "futures-core")]
+
 use futures_lite::StreamExt;
-use hooks_core::{prelude::*, HookExt};
+use hooks_core::prelude::*;
 
 mod utils;
 use utils::test_many_async;

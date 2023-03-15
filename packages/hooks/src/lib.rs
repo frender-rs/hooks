@@ -1,5 +1,5 @@
 #![deny(clippy::undocumented_unsafe_blocks)]
-#![doc = include_str!("../README.md")]
+#![cfg_attr(all(feature = "futures-core", feature = "all", feature = "proc-macro"), doc = include_str!("../README.md"))]
 
 #[cfg(feature = "use_effect")]
 pub mod effect;

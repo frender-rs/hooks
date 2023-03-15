@@ -1,4 +1,4 @@
-#![cfg(feature = "all")]
+#![cfg(all(feature = "futures-core", feature = "all"))]
 
 use futures_lite::StreamExt;
 use hooks::ShareValue;

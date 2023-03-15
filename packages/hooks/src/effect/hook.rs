@@ -85,18 +85,18 @@ impl<Dep, E: EffectFor<Dep>> Effect<Dep, E> {
 /// `effect` will be registered and run in the further [`poll_next_update`].
 ///
 /// ```
-/// # use hooks::{hook, use_effect}; fn do_some_effects() {} #[hook] fn use_demo() {
+/// # use hooks::{hook_fn, use_effect}; fn do_some_effects() {} hook_fn!( fn use_demo() {
 /// # let effect = |_: &_| {}; let dependency = ();
 /// use_effect(effect, dependency);
-/// # }
+/// # });
 /// ```
 ///
 /// ```
-/// # use hooks::{hook, use_effect}; fn do_some_effects() {} #[hook] fn use_demo() {
+/// # use hooks::{hook_fn, use_effect}; fn do_some_effects() {} hook_fn!( fn use_demo() {
 /// use_effect(|dep: &i32| {
 ///     do_some_effects();
 /// }, 0);
-/// # }
+/// # });
 /// ```
 ///
 /// `effect` can return a cleanup (which impl [`EffectCleanup`]).
@@ -107,12 +107,12 @@ impl<Dep, E: EffectFor<Dep>> Effect<Dep, E> {
 /// When the hook is [`unmount`](crate::HookUnmount::unmount)ed or dropped, the last cleanup will be run.
 ///
 /// ```
-/// # use hooks::{hook, use_effect}; fn do_some_effects() {} fn do_some_cleanup() {} #[hook] fn use_demo() {
+/// # use hooks::{hook_fn, use_effect}; fn do_some_effects() {} fn do_some_cleanup() {} hook_fn!( fn use_demo() {
 /// use_effect(|dep: &i32| {
 ///     do_some_effects();
 ///     || do_some_cleanup()
 /// }, 0);
-/// # }
+/// # });
 /// ```
 ///
 /// `use_effect(effect, dependency)` requires you to move the dependency
@@ -123,15 +123,16 @@ impl<Dep, E: EffectFor<Dep>> Effect<Dep, E> {
 ///
 /// ```
 /// # use hooks::prelude::*;
-/// #[hook]
-/// fn use_print_effect() {
-///     use_effect(|_: &_| {
-///         println!("do some effects");
+/// hook_fn!(
+///     fn use_print_effect() {
+///         h![use_effect(|_: &_| {
+///             println!("do some effects");
 ///
-///         // Return an optional cleanup function
-///         move || println!("cleaning up")
-///     }, ())
-/// }
+///             // Return an optional cleanup function
+///             move || println!("cleaning up")
+///         }, ())]
+///     }
+/// );
 ///
 /// # futures_lite::future::block_on(async {
 /// let mut hook = use_print_effect().into_hook();
@@ -145,9 +146,11 @@ impl<Dep, E: EffectFor<Dep>> Effect<Dep, E> {
 /// assert!(hook.next_value().await.is_none());
 ///
 /// println!("second next_value returned");
-/// # });
+///
+/// drop(hook);
 ///
 /// println!("hook is dropped");
+/// # });
 /// ```
 ///
 /// The above code would print:
@@ -191,20 +194,25 @@ pub struct UseEffectWith<Dep, E: EffectFor<Dep>, F: FnOnce(&mut Option<Dep>) -> 
 /// [`use_effect_with`] doesn't require Dependency to be [`PartialEq`],
 /// and also allows lazy initialization.
 ///
-/// ```
-/// # use hooks::{hook, use_effect_with};
-/// #[hook(bounds = "'a")]
-/// fn use_effect_print<'a>(value: &'a str) {
-///     use_effect_with(|old_dep| {
-///         if old_dep.as_deref() == Some(value) {
-///             None
-///         } else {
-///             *old_dep = Some(value.to_owned()); // lazily calling to_owned()
-///             Some(|v: &_| println!("{}", *v))
-///         }
-///     })
-/// }
-/// ```
+#[cfg_attr(
+    feature = "proc-macro",
+    doc = r###"
+```
+# use hooks::{hook, use_effect_with};
+#[hook(bounds = "'a")]
+fn use_effect_print<'a>(value: &'a str) {
+    use_effect_with(|old_dep| {
+        if old_dep.as_deref() == Some(value) {
+            None
+        } else {
+            *old_dep = Some(value.to_owned()); // lazily calling to_owned()
+            Some(|v: &_| println!("{}", *v))
+        }
+    })
+}
+```
+"###
+)]
 #[inline(always)]
 pub fn use_effect_with<Dep, E: EffectFor<Dep>>(
     get_effect: impl FnOnce(&mut Option<Dep>) -> Option<E>,

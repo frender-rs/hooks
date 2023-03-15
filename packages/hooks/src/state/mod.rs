@@ -12,7 +12,6 @@ pub use use_hook::*;
 mod tests {
     use futures_lite::StreamExt;
     use hooks_core::{hook_fn, Hook, HookPollNextUpdateExt};
-    use hooks_macro::hook;
 
     use super::{use_state, use_state_with};
 
@@ -37,6 +36,7 @@ mod tests {
         });
     }
 
+    #[cfg(feature = "futures-core")]
     #[cfg(feature = "use_effect")]
     #[test]
     fn hook_fn_state_2() {
@@ -73,10 +73,13 @@ mod tests {
         });
     }
 
+    #[cfg(feature = "futures-core")]
     #[cfg(feature = "use_effect")]
+    #[cfg(feature = "proc-macro")]
     #[test]
     fn state_2() {
         use hooks_core::IntoHook;
+        use hooks_macro::hook;
 
         #[hook(hooks_core_path = "::hooks_core")]
         fn use_state_2() -> (i32, i32) {

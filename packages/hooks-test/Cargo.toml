@@ -8,7 +8,7 @@ edition = "2021"
 [dependencies]
 
 [dev-dependencies]
-hooks = { path = "../hooks" }
+hooks = { path = "../hooks", features = ["proc-macro"] }
 insta = "1.21.0"
 prettyplease = "0.1.21"
 futures-lite = "1.12.0"

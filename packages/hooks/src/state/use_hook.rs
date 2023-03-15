@@ -75,14 +75,15 @@ pub fn use_state_n<'a, T, const N: usize>(initial_value: T) -> UseState<'a, T, N
 ///
 /// ```
 /// # use hooks::prelude::*;
-/// #[hook]
-/// fn use_demo_state_with() -> &'hook i32 {
-///     let (state, updater) = use_state_with(|| 1);
-///     if *state < 2 {
-///         updater.replace_with_fn_pointer(|v| *v + 1);
+/// hook_fn!(
+///     fn use_demo_state_with() -> &'hook i32 {
+///         let (state, updater) = h![use_state_with(|| 1)];
+///         if *state < 2 {
+///             updater.replace_with_fn_pointer(|v| *v + 1);
+///         }
+///         state
 ///     }
-///     state
-/// }
+/// );
 ///
 /// let mut running_hook = use_demo_state_with().into_hook();
 ///
