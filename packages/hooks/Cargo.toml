@@ -50,3 +50,6 @@ use_shared_ref = ["ShareValue"]
 use_shared_state = ["use_shared_ref"]
 use_state = []
 use_uninitialized_hook = []
+
+[package.metadata.docs.rs]
+all-features = true
