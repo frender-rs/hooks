@@ -88,7 +88,7 @@ pub mod prelude {
 pub use hooks_core as core;
 pub use hooks_core::{
     hook_fn, impl_hook, Hook, HookExt, HookPollNextUpdate, HookPollNextUpdateExt, HookUnmount,
-    IntoHook, UpdateHook, UpdateHookUninitialized,
+    HookValue, IntoHook, UpdateHook, UpdateHookUninitialized,
 };
 pub use prelude::*;
 
