@@ -206,6 +206,24 @@ pub struct UseEffectWith<Dep, E: EffectFor<Dep>, F: FnOnce(&mut Option<Dep>) -> 
     PhantomData<Dep>,
 );
 
+/// Conditionally register effects with a lazy initialized dependency.
+/// [`use_effect_with`] doesn't require Dependency to be [`PartialEq`],
+/// and also allows lazy initialization.
+///
+/// ```
+/// # use hooks::{hook, use_effect_with};
+/// #[hook(bounds = "'a")]
+/// fn use_effect_print<'a>(value: &'a str) {
+///     use_effect_with(|old_dep| {
+///         if old_dep.as_deref() == Some(value) {
+///             None
+///         } else {
+///             *old_dep = Some(value.to_owned()); // lazily calling to_owned()
+///             Some(|v: &_| println!("{}", *v))
+///         }
+///     })
+/// }
+/// ```
 #[inline(always)]
 pub fn use_effect_with<Dep, E: EffectFor<Dep>>(
     get_effect: impl FnOnce(&mut Option<Dep>) -> Option<E>,
@@ -244,7 +262,7 @@ mod tests {
     use futures_lite::future::block_on;
     use hooks_core::{hook_fn, HookPollNextUpdateExt, IntoHook, UpdateHookUninitialized};
 
-    use super::{effect_fn, get_new_dep_and_effect, use_effect, use_effect_with};
+    use super::{effect_fn, use_effect, use_effect_with};
 
     #[test]
     fn custom_hook() {
@@ -307,14 +325,14 @@ mod tests {
 
                 let v = "123".to_string();
 
-                use_effect_with(get_new_dep_and_effect(|old_v| {
+                use_effect_with(|old_v| {
                     if old_v.as_ref() == Some(&v) {
                         None
                     } else {
                         *old_v = Some(v.clone());
                         Some(|v: &String| values.push(v.clone()))
                     }
-                }))
+                })
                 .h(hook.as_mut());
 
                 assert!(!hook.next_update().await);
@@ -329,47 +347,7 @@ mod tests {
     }
 }
 
-/// An identity method for defining `get_new_dep_and_effect` closure with proper lifetime generics.
-///
-/// Without this, you have to annotate each argument type in closure to make it compile.
-///
-/// ```
-/// # use hooks::{hook, use_effect};
-/// #[hook]
-/// fn use_some_effect() {
-///     use_effect(|old_dep: Option<&i32>| {
-///         if old_dep == Some(&1) {
-///             None
-///         } else {
-///             Some((1, |v: &_| println!("{}", *v)))
-///         }
-///     })
-/// }
-/// ```
-///
-/// With this, you can let the compiler infer the lifetimes.
-///
-/// ```
-/// # use hooks::{hook, use_effect, get_new_dep_and_effect, effect_fn};
-/// #[hook]
-/// fn use_some_effect() {
-///     use_effect(get_new_dep_and_effect(|old_dep| {
-///         if old_dep == Some(&1) {
-///             None
-///         } else {
-///             Some((1, effect_fn(|v| println!("{}", *v))))
-///         }
-///     }))
-/// }
-/// ```
-#[inline]
-pub fn get_new_dep_and_effect<Dep, E: EffectFor<Dep>, F: FnOnce(&mut Option<Dep>) -> Option<E>>(
-    f: F,
-) -> F {
-    f
-}
-
-/// Please see [`get_new_dep_and_effect`] for how this works.
+/// An identity function which asserts argument is an [`effect fn`](EffectFor).
 #[inline]
 pub fn effect_fn<Dep, C: EffectCleanup, F: FnOnce(&Dep) -> C>(f: F) -> F {
     f

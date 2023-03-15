@@ -5,7 +5,7 @@
 pub mod effect;
 
 #[cfg(feature = "use_effect")]
-pub use effect::{effect_fn, get_new_dep_and_effect};
+pub use effect::effect_fn;
 
 #[cfg(feature = "use_mut")]
 pub mod hook_mut;
