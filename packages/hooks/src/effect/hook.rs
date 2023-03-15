@@ -73,7 +73,7 @@ impl<Dep, E: EffectFor<Dep>> Effect<Dep, E> {
 
 /// Register an effect for a dependency.
 /// The effect will be run in the [`poll_next_update`]
-/// after [`use_effect`] or [`use_effect_with`] registers a new effect.
+/// after a new effect is registered.
 ///
 /// [`use_hook`]: crate::Hook::use_hook
 /// [`poll_next_update`]: crate::HookPollNextUpdate::poll_next_update
@@ -104,7 +104,7 @@ impl<Dep, E: EffectFor<Dep>> Effect<Dep, E> {
 /// If further [`use_hook`] registers new dependency and new effect,
 /// in the further [`poll_next_update`],
 /// the cleanup will be run and then the new effect will be run.
-/// When the hook is dropped, the last cleanup will be run.
+/// When the hook is [`unmount`](crate::HookUnmount::unmount)ed or dropped, the last cleanup will be run.
 ///
 /// ```
 /// # use hooks::{hook, use_effect}; fn do_some_effects() {} fn do_some_cleanup() {} #[hook] fn use_demo() {
@@ -117,31 +117,12 @@ impl<Dep, E: EffectFor<Dep>> Effect<Dep, E> {
 ///
 /// `use_effect(effect, dependency)` requires you to move the dependency
 /// even it may be equal to the old dependency.
-/// You can return new dependency and new effect conditionally with the following code:
-///
-/// ```
-/// # use hooks::{hook, use_effect, effect_fn, get_new_dep_and_effect}; #[hook] fn use_demo() {
-/// use_effect(get_new_dep_and_effect(|old_dep| {
-///     if old_dep == Some(&1) {
-///         None
-///     } else {
-///         let new_dep = 1;
-///         let effect = effect_fn(|v| println!("{}", *v));
-///         Some((new_dep, effect))
-///     }
-/// }))
-/// # }
-/// ```
-///
-/// In the above code, [`get_new_dep_and_effect`] and [`effect_fn`] are two fns
-/// which just return the passed value. Without them, you will have to
-/// annotate lifetimes in closure arguments.
-/// For more details, see [`get_new_dep_and_effect`].
+/// You can conditionally register new dependency and new effect with [`use_effect_with`].
 ///
 /// ## Examples
 ///
 /// ```
-/// # use hooks::{hook, use_effect, HookExt};
+/// # use hooks::prelude::*;
 /// #[hook]
 /// fn use_print_effect() {
 ///     use_effect(|_: &_| {
@@ -153,15 +134,15 @@ impl<Dep, E: EffectFor<Dep>> Effect<Dep, E> {
 /// }
 ///
 /// # futures_lite::future::block_on(async {
-/// let mut hook = use_print_effect();
+/// let mut hook = use_print_effect().into_hook();
 ///
 /// println!("hook created");
 ///
-/// assert!(hook.next_value(()).await.is_some());
+/// assert!(hook.next_value().await.is_some());
 ///
 /// println!("first next_value returned");
 ///
-/// assert!(hook.next_value(()).await.is_none());
+/// assert!(hook.next_value().await.is_none());
 ///
 /// println!("second next_value returned");
 /// # });

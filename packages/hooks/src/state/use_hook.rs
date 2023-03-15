@@ -74,7 +74,7 @@ pub fn use_state_n<'a, T, const N: usize>(initial_value: T) -> UseState<'a, T, N
 /// [`use_state`] with a lazy initializer.
 ///
 /// ```
-/// # use hooks::{hook, HookExt, use_state_with};
+/// # use hooks::prelude::*;
 /// #[hook]
 /// fn use_demo_state_with() -> &'hook i32 {
 ///     let (state, updater) = use_state_with(|| 1);
@@ -84,12 +84,12 @@ pub fn use_state_n<'a, T, const N: usize>(initial_value: T) -> UseState<'a, T, N
 ///     state
 /// }
 ///
-/// let mut running_hook = use_demo_state_with();
+/// let mut running_hook = use_demo_state_with().into_hook();
 ///
 /// # futures_lite::future::block_on(async {
-/// assert_eq!(running_hook.next_value(()).await, Some(&1));
-/// assert_eq!(running_hook.next_value(()).await, Some(&2));
-/// assert_eq!(running_hook.next_value(()).await, None);
+/// assert_eq!(running_hook.next_value().await, Some(&1));
+/// assert_eq!(running_hook.next_value().await, Some(&2));
+/// assert_eq!(running_hook.next_value().await, None);
 /// # })
 /// ```
 #[inline(always)]

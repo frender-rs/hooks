@@ -71,7 +71,7 @@ impl<T: PartialEq> ShareValue<T> for SharedStateEq<T> {
     ///
     /// To notify changes only when `new_value != old_value`,
     /// use [`replace_from_ref`](ShareValue::replace_from_ref) or
-    /// [`self.inner().map_mut_and_notify_if()`](SharedStateData::map_mut_and_notify_if)
+    /// [`self.inner().map_mut_and_notify_if()`](SharedState::map_mut_and_notify_if)
     /// instead.
     #[inline]
     fn replace_with<F: FnOnce(&mut T) -> T>(&self, f: F) -> T {
