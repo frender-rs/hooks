@@ -279,10 +279,16 @@ fn replace_impl_trait_in_type(
             let is_impl_trait = matches!(&*p.elem, syn::Type::ImplTrait(_));
             replace_impl_trait_in_type(&mut p.elem, f);
 
+            const DUMMY_TYPE: syn::Type = syn::Type::Path(syn::TypePath {
+                qself: None,
+                path: syn::Path {
+                    leading_colon: None,
+                    segments: syn::punctuated::Punctuated::new(),
+                },
+            });
             // also remove the paren for (HookImplTrait0)
             if is_impl_trait {
-                let new_ty =
-                    std::mem::replace(&mut *p.elem, syn::Type::Verbatim(Default::default()));
+                let new_ty = std::mem::replace(&mut *p.elem, DUMMY_TYPE);
                 *ty = new_ty;
             }
         }
