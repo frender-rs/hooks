@@ -14,6 +14,6 @@ prettyplease = "0.1.21"
 futures-lite = "1.12.0"
 smol = "1.2.5"
 
-[dev-dependencies.hooks-derive-core]
-path = "../hooks-derive-core"
+[dev-dependencies.hooks-macro-core]
+path = "../hooks-macro-core"
 features = ["extra-traits"]

@@ -1,6 +1,6 @@
 use proc_macro::TokenStream;
 
-use hooks_derive_core::{
+use hooks_macro_core::{
     darling::FromMeta,
     proc_macro2,
     quote::ToTokens,
@@ -11,7 +11,7 @@ use hooks_derive_core::{
 pub fn hook(args: TokenStream, input: TokenStream) -> TokenStream {
     let attr_args = parse_macro_input!(args as AttributeArgs);
 
-    let args = match ::hooks_derive_core::HookArgs::from_list(&attr_args) {
+    let args = match ::hooks_macro_core::HookArgs::from_list(&attr_args) {
         Ok(v) => v,
         Err(e) => {
             return TokenStream::from(e.write_errors());

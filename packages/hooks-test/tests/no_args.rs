@@ -17,7 +17,7 @@ fn no_return_ty_no_hooks() {
 
     assert_eq!(
         use_tuple_0::hook_args(),
-        hooks_derive_core::HookArgs::default()
+        hooks_macro_core::HookArgs::default()
     );
 
     let mut hook = use_tuple_0().into_hook();
@@ -50,7 +50,7 @@ fn no_hooks() {
 
     assert_eq!(
         use_return::hook_args(),
-        hooks_derive_core::HookArgs::default()
+        hooks_macro_core::HookArgs::default()
     );
 
     {
@@ -81,7 +81,7 @@ fn no_hooks() {
 
     assert_eq!(
         use_type_param::hook_args(),
-        hooks_derive_core::HookArgs::default()
+        hooks_macro_core::HookArgs::default()
     );
 
     {
@@ -116,7 +116,7 @@ fn no_hooks_borrow_hook() {
 
     assert_eq!(
         use_hook_lt::hook_args(),
-        hooks_derive_core::HookArgs::default()
+        hooks_macro_core::HookArgs::default()
     );
 
     {
@@ -151,7 +151,7 @@ fn one_hook() {
 
     assert_eq!(
         use_one_hook::hook_args(),
-        hooks_derive_core::HookArgs::default()
+        hooks_macro_core::HookArgs::default()
     );
 
     {
@@ -205,7 +205,7 @@ fn one_state() {
 
     assert_eq!(
         use_str_state::hook_args(),
-        hooks_derive_core::HookArgs::default()
+        hooks_macro_core::HookArgs::default()
     );
 
     {
@@ -262,7 +262,7 @@ fn two_hooks() {
 
     assert_eq!(
         use_state_effect::hook_args(),
-        hooks_derive_core::HookArgs::default()
+        hooks_macro_core::HookArgs::default()
     );
 
     {

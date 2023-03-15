@@ -12,7 +12,7 @@ pub use use_hook::*;
 mod tests {
     use futures_lite::StreamExt;
     use hooks_core::{hook_fn, Hook, HookPollNextUpdateExt};
-    use hooks_derive::hook;
+    use hooks_macro::hook;
 
     use super::{use_state, use_state_with};
 

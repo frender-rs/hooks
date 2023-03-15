@@ -17,7 +17,7 @@ fn no_return_ty_no_hooks() {
 
     assert_eq!(
         use_tuple_0::hook_args(),
-        hooks_derive_core::HookArgs::default(),
+        hooks_macro_core::HookArgs::default(),
     );
 
     let mut hook = use_tuple_0(&()).into_hook();
@@ -48,7 +48,7 @@ fn no_return_ty_no_hooks_elided() {
 
     assert_eq!(
         use_tuple_0_elided::hook_args(),
-        hooks_derive_core::HookArgs::default(),
+        hooks_macro_core::HookArgs::default(),
     );
 
     let mut hook = use_tuple_0_elided(&()).into_hook();
@@ -85,8 +85,8 @@ fn type_param() {
     };
 
     assert_eq!(use_hooked::hook_args(), {
-        let mut args = hooks_derive_core::HookArgs::default();
-        args.bounds = Some(hooks_derive_core::syn::parse_quote!('a));
+        let mut args = hooks_macro_core::HookArgs::default();
+        args.bounds = Some(hooks_macro_core::syn::parse_quote!('a));
         args
     });
 

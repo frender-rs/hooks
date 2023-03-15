@@ -1,6 +1,6 @@
 [package]
-name = "hooks-derive-core"
-version = "1.1.0-alpha.8"
+name = "hooks-macro"
+version = "1.0.1-alpha.8"
 edition = "2021"
 description = "Compile-time, async hooks"
 license = "MIT"
@@ -9,14 +9,8 @@ repository = "https://github.com/frender-rs/hooks"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[lib]
+proc-macro = true
+
 [dependencies]
-proc-macro2 = "1.0.47"
-quote = "1.0.21"
-syn = "1.0.102"
-darling = "0.14.1"
-
-[dev-dependencies]
-hooks_dev = { path = "../hooks", package = "hooks" }
-
-[features]
-extra-traits = []
+hooks-macro-core = { path = "../hooks-macro-core", version = "1.1.0-alpha.8" }

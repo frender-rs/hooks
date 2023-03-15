@@ -22,7 +22,7 @@ fn no_hooks() {
 
     assert_eq!(
         use_return::hook_args(),
-        hooks_derive_core::HookArgs::default()
+        hooks_macro_core::HookArgs::default()
     );
 
     {
@@ -53,7 +53,7 @@ fn no_hooks() {
 
     assert_eq!(
         use_type_param::hook_args(),
-        hooks_derive_core::HookArgs::default()
+        hooks_macro_core::HookArgs::default()
     );
 
     {
@@ -79,9 +79,9 @@ fn no_hooks() {
     );
 
     assert_eq!(use_lt::hook_args(), {
-        let mut args = hooks_derive_core::HookArgs::default();
+        let mut args = hooks_macro_core::HookArgs::default();
 
-        args.bounds = Some(hooks_derive_core::syn::parse_quote!('a));
+        args.bounds = Some(hooks_macro_core::syn::parse_quote!('a));
 
         args
     });
@@ -133,7 +133,7 @@ fn no_hooks_borrow_hook() {
 
     assert_eq!(
         use_hook_lt::hook_args(),
-        hooks_derive_core::HookArgs::default()
+        hooks_macro_core::HookArgs::default()
     );
 
     {
@@ -168,7 +168,7 @@ fn one_hook() {
 
     assert_eq!(
         use_one_hook::hook_args(),
-        hooks_derive_core::HookArgs::default()
+        hooks_macro_core::HookArgs::default()
     );
 
     {
@@ -222,7 +222,7 @@ fn one_state() {
 
     assert_eq!(
         use_str_state::hook_args(),
-        hooks_derive_core::HookArgs::default()
+        hooks_macro_core::HookArgs::default()
     );
 
     fn assert_string<T: Any>(t: &T) -> &String {
@@ -293,7 +293,7 @@ fn two_hooks() {
 
     assert_eq!(
         use_state_effect::hook_args(),
-        hooks_derive_core::HookArgs::default()
+        hooks_macro_core::HookArgs::default()
     );
 
     {

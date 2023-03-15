@@ -1,10 +1,10 @@
 #![allow(dead_code)]
 
-use hooks_derive_core::{quote::ToTokens, syn};
+use hooks_macro_core::{quote::ToTokens, syn};
 
 pub fn pretty_item_fn(item_fn: syn::ItemFn) -> String {
     // re-parse code due to usage of Expr::Verbatim and Type::Verbatim
-    // TODO: remove Verbatim in hooks-derive-core or support formatting Verbatim
+    // TODO: remove Verbatim in hooks-macro-core or support formatting Verbatim
     let item_fn: syn::ItemFn = syn::parse2(item_fn.into_token_stream()).unwrap();
     prettyplease::unparse(&syn::File {
         shebang: None,
@@ -36,17 +36,17 @@ macro_rules! impl_hook_macro {
                 $crate::utils::pretty_item_fn(Self::hook_macro_output())
             }
 
-            fn hook_args() -> ::hooks_derive_core::HookArgs {
-                ::hooks_derive_core::HookArgs::from_punctuated_meta_list(
-                    ::hooks_derive_core::syn::parse_quote! {
+            fn hook_args() -> ::hooks_macro_core::HookArgs {
+                ::hooks_macro_core::HookArgs::from_punctuated_meta_list(
+                    ::hooks_macro_core::syn::parse_quote! {
                         $( $($meta)* )?
                     }
                 ).unwrap()
             }
 
-            fn hook_macro_output() -> ::hooks_derive_core::syn::ItemFn {
+            fn hook_macro_output() -> ::hooks_macro_core::syn::ItemFn {
                 let (target, error) = Self::hook_args().transform_item_fn(
-                    ::hooks_derive_core::syn::parse_quote! {
+                    ::hooks_macro_core::syn::parse_quote! {
                         fn $fn_name $($tt)+
                     }
                 );

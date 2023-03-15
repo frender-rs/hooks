@@ -1,8 +1,8 @@
 [workspace]
 members = [
     "packages/hooks-core",
-    "packages/hooks-derive-core",
-    "packages/hooks-derive",
+    "packages/hooks-macro-core",
+    "packages/hooks-macro",
     "packages/hooks",
     "packages/hooks-test",
 ]

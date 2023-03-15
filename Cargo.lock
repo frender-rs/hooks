@@ -267,7 +267,7 @@ version = "1.0.1-alpha.21"
 dependencies = [
  "futures-lite",
  "hooks-core",
- "hooks-derive",
+ "hooks-macro",
  "lazy-pinned",
  "pin-project-lite",
  "smallvec",
@@ -283,14 +283,14 @@ dependencies = [
 ]
 
 [[package]]
-name = "hooks-derive"
+name = "hooks-macro"
 version = "1.0.1-alpha.8"
 dependencies = [
- "hooks-derive-core",
+ "hooks-macro-core",
 ]
 
 [[package]]
-name = "hooks-derive-core"
+name = "hooks-macro-core"
 version = "1.1.0-alpha.8"
 dependencies = [
  "darling",
@@ -306,7 +306,7 @@ version = "0.1.1"
 dependencies = [
  "futures-lite",
  "hooks",
- "hooks-derive-core",
+ "hooks-macro-core",
  "insta",
  "prettyplease",
  "smol",

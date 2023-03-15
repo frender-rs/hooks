@@ -51,7 +51,7 @@ pub mod prelude {
     pub use hooks_core::prelude::*;
 
     #[cfg(feature = "derive")]
-    pub use hooks_derive::hook;
+    pub use hooks_macro::hook;
 
     #[cfg(feature = "use_debug")]
     pub use crate::debug::use_debug;
