@@ -35,7 +35,6 @@ pub struct HookArgs {
     /// ```compile_fail
     /// # extern crate hooks_dev as hooks;
     /// # use hooks::prelude::*;
-    ///
     /// #[hook]
     /// fn use_borrow<'a>(v: &'a str) -> usize {
     ///     v.len()
@@ -51,9 +50,12 @@ pub struct HookArgs {
     /// }
     /// ```
     ///
-    /// This is equivalent to `type Bounds = impl ...` in [`hook_fn!(...);`](hooks_dev::hook_fn);
+    /// This is equivalent to `type Bounds = impl ...` in
+    /// [`hook_fn!(...);`](https://docs.rs/hooks-core/1.0.0-alpha.10/hooks_core/macro.hook_fn.html)
     ///
     /// ```
+    /// # extern crate hooks_dev as hooks;
+    /// # use hooks::prelude::*;
     /// hook_fn!(
     ///     type Bounds = impl 'a;
     ///     fn use_borrow<'a>(v: &'a str) -> usize {
