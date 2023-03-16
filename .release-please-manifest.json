@@ -1,5 +1,6 @@
 {
   "packages/hooks-core": "1.0.0-alpha.10",
   "packages/hooks": "1.0.1-alpha.21",
-  "packages/hooks-test": "0.1.1"
+  "packages/hooks-test": "0.1.1",
+  ".": "0.0.0"
 }
