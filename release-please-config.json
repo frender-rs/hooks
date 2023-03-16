@@ -3,8 +3,12 @@
     "packages/hooks-core": {
       "release-as": "2.0.0-alpha"
     },
-    "packages/hooks-macro-core": {},
-    "packages/hooks-macro": {},
+    "packages/hooks-macro-core": {
+      "release-as": "0.1.0"
+    },
+    "packages/hooks-macro": {
+      "release-as": "0.1.0"
+    },
     "packages/hooks": {
       "release-as": "2.0.0-alpha"
     }
