@@ -28,6 +28,7 @@ jobs:
           cargo test
           cargo test --all-features
       - uses: google-github-actions/release-please-action@v3
+        id: release
         with:
           command: manifest
           default-branch: alpha
