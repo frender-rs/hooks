@@ -1,10 +1,11 @@
 {
   "packages": {
     "packages/hooks-core": {},
-    "packages/hooks-derive-core": {},
-    "packages/hooks-derive": {},
+    "packages/hooks-macro-core": {},
+    "packages/hooks-macro": {},
     "packages/hooks": {}
   },
+  "release-as": "2.0.0",
   "plugins": ["cargo-workspace"],
   "release-type": "rust",
   "prerelease": true
