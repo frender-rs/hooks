@@ -1,11 +1,14 @@
 {
   "packages": {
-    "packages/hooks-core": {},
+    "packages/hooks-core": {
+      "release-as": "2.0.0-alpha"
+    },
     "packages/hooks-macro-core": {},
     "packages/hooks-macro": {},
-    "packages/hooks": {}
+    "packages/hooks": {
+      "release-as": "2.0.0-alpha"
+    }
   },
-  "release-as": "2.0.0-alpha",
   "bootstrap-sha": "957bf40238d3955b5e7e3d2c1e708c25b5d62bd2",
   "last-release-sha": "957bf40238d3955b5e7e3d2c1e708c25b5d62bd2",
   "plugins": ["cargo-workspace"],
