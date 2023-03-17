@@ -34,7 +34,7 @@ jobs:
           default-branch: alpha
       - name: Publish
         run: |
-          echo $PATHS_RELEASED | while read -r $dir_path
+          echo $PATHS_RELEASED | while read -r dir_path
           do
             if [[ $dir_path -ef packages/hooks-test ]]; then
               continue
