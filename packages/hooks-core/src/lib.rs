@@ -21,8 +21,8 @@ pub(crate) mod utils;
 
 pub mod prelude {
     pub use crate::{
-        fn_hook, hook_fn, Hook, HookExt as _, HookPollNextUpdate, HookPollNextUpdateExt as _,
-        IntoHook as _, NonLendingHook,
+        hook_fn, Hook, HookExt as _, HookPollNextUpdate, HookPollNextUpdateExt as _, IntoHook as _,
+        NonLendingHook,
     };
 }
 
