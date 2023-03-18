@@ -280,6 +280,278 @@ macro_rules! hook_fn {
     };
 }
 
+/// ```
+/// # extern crate hooks_dev as hooks;
+/// # use hooks::prelude::*;
+/// let closure = hooks_core::transform_hook_fn_body_as_closure! {
+///     // options
+///     []
+///     // code
+///     {
+///         let (state, _updater) = h![use_state(3)];
+///         *state
+///     }
+/// };
+///
+/// let mut inner_hook = Default::default();
+/// let value = closure(std::pin::Pin::new(&mut inner_hook));
+/// assert_eq!(value, 3);
+/// ```
+#[macro_export]
+macro_rules! transform_hook_fn_body_as_closure {
+    ( $options:tt $code:tt ) => {
+        $crate::__impl_fn_hook_body! {
+            // state
+            [
+                $options
+                [
+                    __hooks_hook_0
+                    __hooks_hook_1
+                    __hooks_hook_2
+                    __hooks_hook_3
+                    __hooks_hook_4
+                    __hooks_hook_5
+                    __hooks_hook_6
+                    __hooks_hook_7
+                    __hooks_hook_8
+                    __hooks_hook_9
+                ]
+            ]
+            [] // used_ids
+            [] // transformed_code
+            $code
+            $code
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! parse_generics {
+    (
+        $([ $($before:tt)* ])?
+        {
+            <$(
+                $($lt:lifetime)?
+                $($tp1:ident $($tp2:ident)?)?
+                $(
+                    :
+                    $($bound_lt:lifetime)?
+                    $(+ $bounds_lt:lifetime)*
+                    $(
+                        $( + $({$plus_ignore:tt })? )?
+                        $( ? $([$relax_ignore:tt])? )?
+                        $bounds:path
+                    )*
+                )?
+                $(
+                    =
+                    $({ $($default_const_block:tt)* })?
+                    $($default_ty:ty)?
+                )?
+            ),+ >
+            $($rest:tt)*
+        }
+        $([ $($after:tt)* ])?
+        => $($out_macro_and_bang:tt)+
+    ) => {
+        $($out_macro_and_bang)+ {
+            $( $($before)* )?
+            generics! {
+                params! {$(
+                    $($lt)?
+                    $($tp1 $($tp2)?)?
+                    $(
+                        :
+                        $($bound_lt)?
+                        $(+ $bounds_lt)*
+                        $(
+                            $( + $({$plus_ignore })? )?
+                            $( ? $([$relax_ignore])? )?
+                            $bounds
+                        )*
+                    )?
+                    $(
+                        =
+                        $({ $($default_const_block)* })?
+                        $($default_ty)?
+                    )?
+                ),+}
+                impl_generics! {$(
+                    $($lt)?
+                    $($tp1 $($tp2)?)?
+                    $(
+                        :
+                        $($bound_lt)?
+                        $(+ $bounds_lt)*
+                        $(
+                            $( + $({$plus_ignore })? )?
+                            $( ? $([$relax_ignore])? )?
+                            $bounds
+                        )*
+                    )?
+                ),+}
+                type_generics! { $( $($lt)? $($tp1 $($tp2)?)? ),+ }
+            }
+            rest! { $($rest)* }
+            $( $($after)* )?
+        }
+    };
+    (
+        $([ $($before:tt)* ])?
+        {
+            $(<>)? // TODO: in fact `<>` is parsed in the above branch because inner tokens can be empty.
+            $($rest:tt)*
+        }
+        $([ $($after:tt)* ])?
+        => $($out_macro_and_bang:tt)+
+    ) => {
+        $($out_macro_and_bang)+ {
+            $( $($before)* )?
+            generics! {
+                params! {}
+                impl_generics! {}
+                type_generics! {}
+            }
+            rest! { $($rest)* }
+            $( $($after)* )?
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! __impl_parse_item_fn_finish {
+    (
+        [
+            output_macro_and_bang! { $($out_macro_and_bang:tt)+ }
+            before! { $($before:tt)* }
+            after! { $($after:tt)* }
+        ]
+        item_fn_part_1! { $($item_fn_part_1:tt)* }
+        rest! $rest:tt // rest tokens after ItemFn
+        inner_attrs! $inner_attrs:tt
+        rest! $stmts:tt // rest tokens after inner_attrs, namely stmts
+    ) => {
+        $($out_macro_and_bang)+ {
+            $($before)*
+            item_fn! {
+                $($item_fn_part_1)*
+                inner_attrs! $inner_attrs
+                stmts! $stmts
+            }
+            rest! $rest
+            $($after)*
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! parse_inner_attrs {
+    (
+        $([ $($before:tt)* ])?
+        {
+            $(#!$inner_attr:tt)+
+            $($rest:tt)*
+        }
+        $([ $($after:tt)* ])?
+        => $($out_macro_and_bang:tt)+
+    ) => {
+        $($out_macro_and_bang)+ {
+            $($($before)*)?
+            inner_attrs! { $(#!$inner_attr)+ }
+            rest! { $($rest)* }
+            $($($after)*)?
+        }
+    };
+    (
+        $([ $($before:tt)* ])?
+        { $($rest:tt)* }
+        $([ $($after:tt)* ])?
+        => $($out_macro_and_bang:tt)+
+    ) => {
+        $($out_macro_and_bang)+ {
+            $($($before)*)?
+            inner_attrs! {}
+            rest! { $($rest)* }
+            $($($after)*)?
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! __impl_parse_item_fn_generics_parsed {
+    (
+        $output_info:tt
+        before_sig! { $($before_sig:tt)* }
+        sig_before_generics! { $($sig_before_generics:tt)* }
+        generics! { $($sig_generics:tt)* }
+        rest! {
+            ($($inputs:tt)*)
+            $( -> $output_ty:ty )?
+            $( where
+                __![$($where_clause:tt)*]: __
+                $(,)?
+            )?
+            { $($fn_body:tt)* }
+            $($rest:tt)*
+        }
+    ) => {
+        $crate::parse_inner_attrs! {
+            [
+                $output_info
+                item_fn_part_1! {
+                    $($before_sig)*
+                    sig! {
+                        $($sig_before_generics)*
+                        generics! {
+                            $($sig_generics)*
+                            where_clause! { $($($where_clause)*)? }
+                        }
+                        inputs! { $($inputs)* }
+                        output! { $( -> $output_ty )? }
+                    }
+                }
+                rest! { $($rest)* }
+            ]
+            { $($fn_body)* }
+            => $crate::__impl_parse_item_fn_finish!
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! parse_item_fn {
+    (
+        $([ $($before:tt)* ])?
+        {
+            $(#$attr:tt)*
+            $vis:vis fn $name:ident
+            $($rest:tt)*
+        }
+        $([ $($after:tt)* ])?
+        => $($out_macro_and_bang:tt)+
+    ) => {
+        $crate::parse_generics! {
+            [
+                [
+                    output_macro_and_bang! { $($out_macro_and_bang)+ }
+                    before! { $($($before)*)? }
+                    after! { $($($after)*)? }
+                ]
+                before_sig! {
+                    outer_attrs! { $(#$attr)* }
+                    vis! { $vis }
+                }
+                sig_before_generics! {
+                    ident! { $name }
+                }
+            ]
+            { $($rest)* }
+            []
+            => $crate::__impl_parse_item_fn_generics_parsed!
+        }
+    };
+}
+
 /// Easily impl traits.
 ///
 /// For example:

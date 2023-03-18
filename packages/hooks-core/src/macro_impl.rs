@@ -17,40 +17,65 @@ macro_rules! __expand_or {
 
 #[doc(hidden)]
 #[macro_export]
+macro_rules! __impl_fn_hook_body_finish_as_closure {
+    (
+        // options
+        [
+            $(append_args_pat! { $($append_args_pat:tt)+ })?
+        ]
+        [$($args_pat:tt)*]
+        $body:tt
+    ) => {
+        move |
+            $($args_pat)*
+            $(, $($append_args_pat)+ )?
+        | $body
+    };
+}
+
+#[doc(hidden)]
+#[macro_export]
 macro_rules! __impl_fn_hook_body_finish {
     (
         [
-            [] // options
+            $options:tt
             $rest_ids:tt
         ]
         [] // used_ids
         [$($transformed_code:tt)*]
     ) => {
-        move |_: ::core::pin::Pin<&mut $crate::HookTuple<()>>| {
-            $($transformed_code)*
+        $crate::__impl_fn_hook_body_finish_as_closure! {
+            $options
+            [_: ::core::pin::Pin<&mut $crate::HookTuple<()>>]
+            { $($transformed_code)* }
         }
     };
     (
         [
-            [] // options
+            $options:tt
             $rest_ids:tt
         ]
         [$used_id:ident] // used_ids
         [$($transformed_code:tt)*]
     ) => {
-        move |$used_id : ::core::pin::Pin<&mut _>| {
-            $($transformed_code)*
+        $crate::__impl_fn_hook_body_finish_as_closure! {
+            $options
+            [$used_id : ::core::pin::Pin<&mut _>]
+            { $($transformed_code)* }
         }
     };
     (
         [
-            [] // options
+            $options:tt
             $rest_ids:tt
         ]
         [$($used_id:ident)+] // used_ids
         [$($transformed_code:tt)*]
     ) => {
-        move |__hooks_hook_data: ::core::pin::Pin<&mut _>| {
+        $crate::__impl_fn_hook_body_finish_as_closure! {
+            $options
+            [__hooks_hook_data: ::core::pin::Pin<&mut _>]
+            {
             // SAFETY: pin projection
             let ($($used_id,)+) = unsafe {
                 let $crate::HookTuple(($($used_id,)+)) = ::core::pin::Pin::get_unchecked_mut(__hooks_hook_data);
@@ -60,6 +85,7 @@ macro_rules! __impl_fn_hook_body_finish {
             };
 
             $($transformed_code)*
+            }
         }
     };
 }
@@ -132,7 +158,7 @@ macro_rules! __impl_fn_hook_body {
         $state:tt
         $used_ids:tt
         $transformed_code:tt
-        [][] // code is empty
+        {}{} // code is empty
     ) => {
         $crate::__impl_fn_hook_body_finish! {
             $state
@@ -142,7 +168,7 @@ macro_rules! __impl_fn_hook_body {
     };
     (
         $state:tt $used_ids:tt $transformed_code:tt
-        [h ! $e:tt $($code:tt)*] [ $hook_ident:ident ! $_e:tt $($_code:tt)* ] // code
+        {h ! $e:tt $($code:tt)*} { $hook_ident:ident ! $_e:tt $($_code:tt)* } // code
     ) => {
         $crate::__impl_fn_hook_body_hook_resolved! {
             $e
@@ -150,47 +176,96 @@ macro_rules! __impl_fn_hook_body {
             $used_ids
             $hook_ident
             $transformed_code
-            [$($code)*] // code
+            {$($code)*} // code
+        }
+    };
+    // + h![]
+    (
+        $state:tt $used_ids:tt [$($transformed_code:tt)*]
+        {$t0:tt h ! $e:tt $($code:tt)*} {$_t0:tt $hook_ident:ident ! $_e:tt $($_code:tt)* } // code
+    ) => {
+        $crate::__impl_fn_hook_body_hook_resolved! {
+            $e
+            $state
+            $used_ids
+            $hook_ident
+            [$($transformed_code)* $t0]
+            {$($code)*} // code
+        }
+    };
+    // 1 + h![]
+    (
+        $state:tt $used_ids:tt [$($transformed_code:tt)*]
+        {$t0:tt $t1:tt h ! $e:tt $($code:tt)*} {$_t0:tt $_t1:tt $hook_ident:ident ! $_e:tt $($_code:tt)* } // code
+    ) => {
+        $crate::__impl_fn_hook_body_hook_resolved! {
+            $e
+            $state
+            $used_ids
+            $hook_ident
+            [$($transformed_code)* $t0 $t1]
+            {$($code)*} // code
+        }
+    };
+    // + 1 + h![]
+    (
+        $state:tt $used_ids:tt [$($transformed_code:tt)*]
+        {$t0:tt $t1:tt $t2:tt h ! $e:tt $($code:tt)*} {$_t0:tt $_t1:tt $_t2:tt $hook_ident:ident ! $_e:tt $($_code:tt)* } // code
+    ) => {
+        $crate::__impl_fn_hook_body_hook_resolved! {
+            $e
+            $state
+            $used_ids
+            $hook_ident
+            [$($transformed_code)* $t0 $t1 $t2]
+            {$($code)*} // code
+        }
+    };
+    // 4
+    (
+        $state:tt $used_ids:tt
+        [$($transformed_code:tt)*]
+        {$t0:tt $t1:tt $t2:tt $t3:tt $($code:tt)*} $_code:tt // code
+    ) => {
+        $crate::__impl_fn_hook_body! {
+            $state $used_ids
+            [$($transformed_code)* $t0 $t1 $t2 $t3]
+            {$($code)*} {$($code)*}
+        }
+    };
+    // 3
+    (
+        $state:tt $used_ids:tt
+        [$($transformed_code:tt)*]
+        {$t0:tt $t1:tt $t2:tt $($code:tt)*} $_code:tt // code
+    ) => {
+        $crate::__impl_fn_hook_body! {
+            $state $used_ids
+            [$($transformed_code)* $t0 $t1 $t2]
+            {$($code)*} {$($code)*}
+        }
+    };
+    // 2
+    (
+        $state:tt $used_ids:tt
+        [$($transformed_code:tt)*]
+        {$t0:tt $t1:tt $($code:tt)*} $_code:tt // code
+    ) => {
+        $crate::__impl_fn_hook_body! {
+            $state $used_ids
+            [$($transformed_code)* $t0 $t1]
+            {$($code)*} {$($code)*}
         }
     };
     (
         $state:tt $used_ids:tt
         [$($transformed_code:tt)*]
-        [$t0:tt $($code:tt)*] $_code:tt // code
+        {$t0:tt $($code:tt)*} $_code:tt // code
     ) => {
         $crate::__impl_fn_hook_body! {
             $state $used_ids
             [$($transformed_code)* $t0]
-            [$($code)*] [$($code)*]
-        }
-    };
-}
-
-#[doc(hidden)]
-#[macro_export]
-macro_rules! __impl_fn_hook_body_start {
-    ( $options:tt $code:tt ) => {
-        $crate::__impl_fn_hook_body! {
-            // state
-            [
-                $options
-                [
-                    __hooks_hook_0
-                    __hooks_hook_1
-                    __hooks_hook_2
-                    __hooks_hook_3
-                    __hooks_hook_4
-                    __hooks_hook_5
-                    __hooks_hook_6
-                    __hooks_hook_7
-                    __hooks_hook_8
-                    __hooks_hook_9
-                ]
-            ]
-            [] // used_ids
-            [] // transformed_code
-            $code
-            $code
+            {$($code)*} {$($code)*}
         }
     };
 }
@@ -334,9 +409,9 @@ macro_rules! __impl_hook_fn_bounds_and_options_resolved {
                 , _, _
             >
             (
-                $crate::__impl_fn_hook_body_start!(
+                $crate::transform_hook_fn_body_as_closure!(
                     []
-                    [$($code)*]
+                    {$($code)*}
                 )
             )
         }
