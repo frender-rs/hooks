@@ -43,10 +43,10 @@ pin_project_lite::pin_project![
 
 crate::impl_hook![
     type For<InnerHook, U, I: sealed::Initialized> = FnHook<InnerHook, U, I>
-        where __![
-            InnerHook: Default + HookPollNextUpdate + HookUnmount,
-            U: for<'hook> FnMutOneArg<Pin<&'hook mut InnerHook>>,
-        ]: __;
+    where
+        InnerHook: Default + HookPollNextUpdate + HookUnmount,
+        for<'hook> U: FnMutOneArg<Pin<&'hook mut InnerHook>>;
+
     fn poll_next_update(self, cx: _) {
         let this = self.project();
         if I::is_initialized(this.initialized) {
@@ -108,10 +108,10 @@ impl<InnerHook: Default, U> Default for FnHookUninitialized<InnerHook, U> {
 
 crate::impl_hook![
     type For<InnerHook, U> = FnHookUninitialized<InnerHook, U>
-        where __![
-            InnerHook: Default + HookPollNextUpdate + HookUnmount,
-            U: for<'hook> FnMutOneArg<Pin<&'hook mut InnerHook>>,
-        ]: __;
+    where
+        InnerHook: Default + HookPollNextUpdate + HookUnmount,
+        for<'hook> U: FnMutOneArg<Pin<&'hook mut InnerHook>>;
+
     fn poll_next_update(self, cx: _) {
         let this = self.project();
         if this.use_hook.is_some() {
@@ -139,10 +139,9 @@ pub mod use_fn_hook {
 
         crate::impl_hook![
             type For<InnerHook, U> = UseFnHook<InnerHook, U>
-                where __![
-                    InnerHook: Default + HookPollNextUpdate + HookUnmount,
-                    U: for<'hook> FnMutOneArg<Pin<&'hook mut InnerHook>>,
-                ]: __;
+            where
+                InnerHook: Default + HookPollNextUpdate + HookUnmount,
+                for<'hook> U: FnMutOneArg<Pin<&'hook mut InnerHook>>;
 
             fn into_hook(self) -> FnHook<InnerHook, U, bool> {
                 FnHook {

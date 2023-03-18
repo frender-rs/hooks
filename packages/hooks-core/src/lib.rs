@@ -33,5 +33,5 @@ pub mod prelude_h {
 
 #[doc(hidden)]
 pub mod __private {
-    pub use syn_lite::{expand_or, parse_generics, parse_item_fn, parse_where_clause};
+    pub use syn_lite::{self, expand_or, parse_generics, parse_item_fn, parse_where_clause};
 }

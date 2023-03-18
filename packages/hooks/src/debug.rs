@@ -17,7 +17,7 @@ hooks_core::impl_hook![
 
 hooks_core::impl_hook![
     type For<I: UpdateHook> = UseDebug<I>
-        where __![I::Hook: Debug]: __;
+        where I::Hook: Debug;
 
     fn update_hook(self, mut hook: _) {
         eprintln!("[update_hook][start] {:?}", hook.as_mut());
@@ -28,7 +28,9 @@ hooks_core::impl_hook![
 
 hooks_core::impl_hook![
     type For<I: UpdateHookUninitialized> = UseDebug<I>
-        where __![I::Hook: Debug + NonLendingHook, I::Uninitialized: Debug]: __;
+    where
+        I::Hook: Debug + NonLendingHook,
+        I::Uninitialized: Debug;
 
     fn h(self, mut hook: I::Uninitialized) {
         eprintln!("[h][start] {:?}", hook.as_mut());
