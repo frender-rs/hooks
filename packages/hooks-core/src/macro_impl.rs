@@ -274,144 +274,86 @@ macro_rules! __impl_fn_hook_body {
 #[macro_export]
 macro_rules! __impl_hook_fn_bounds_resolved {
     ($hook_bounds:tt #[hook $(($($options:tt)*))? ] $($rest:tt)*) => {
-        $crate::__impl_hook_fn_bounds_and_options_resolved! {
-            $hook_bounds ($($($options)*)?)
-            $($rest)*
+        $crate::__private::parse_item_fn! {
+            [$hook_bounds ($($($options)*)?)]
+            {$($rest)*} => $crate::__impl_hook_fn_item_fn_parsed!
         }
     };
     ($hook_bounds:tt $($rest:tt)*) => {
-        $crate::__impl_hook_fn_bounds_and_options_resolved! {
-            $hook_bounds ()
-            $($rest)*
+        $crate::__private::parse_item_fn! {
+            [$hook_bounds ()]
+            {$($rest)*} => $crate::__impl_hook_fn_item_fn_parsed!
         }
     };
 }
 
 #[doc(hidden)]
 #[macro_export]
-macro_rules! __impl_hook_fn_bounds_and_options_resolved {
+macro_rules! __impl_hook_fn_item_fn_parsed {
     (
         { $($hook_bounds:tt)* } // { 'a + 'b }
         ($($method_path:ident),* $(,)?)
-
-        $(#$attr:tt)*
-        $vis:vis fn $name:ident
-        $(<$(
-            $($lt:lifetime)?
-            $($tp1:ident $($tp2:ident)?)?
-            $(
-                :
-                $($bound_lt:lifetime)?
-                $(+ $bounds_lt:lifetime)*
-                $(
-                    $( + $({$plus_ignore:tt })? )?
-                    $( ? $([$relax_ignore:tt])? )?
-                    $bounds:path
-                )*
-            )?
-        ),* >)?
-        ($($args:tt)*)
-        $( -> $ret_ty:ty )?
-        $( where
-            __![$($where_clause:tt)*]: __
-            $(,)?
-        )?
-        {
-            $(#!$inner_attr:tt)*
-            $($code:tt)*
+        item_fn! {
+            outer_attrs! { $($outer_attrs:tt)* }
+            vis! { $vis:vis }
+            sig! {
+                ident! { $name:ident }
+                generics! {
+                    params! { $($generic_params:tt)* }
+                    impl_generics! $impl_generics:tt
+                    type_generics! { $($type_generics:tt)* }
+                    params_name! $params_name:tt
+                }
+                paren_inputs! { $paren_inputs:tt }
+                output! { $(-> $ret_ty:ty)? }
+                where_clause! { $($where_clause:tt)* }
+            }
+            inner_attrs! { $($inner_attrs:tt)* }
+            stmts! { $($stmts:tt)* }
         }
+        rest! {}
     ) => {
-        $(#$attr)*
+        $($outer_attrs)*
         $vis fn $name
-        $(<$(
-            $($lt)?
-            $($tp1 $($tp2)?)?
-            $(
-                :
-                $($bound_lt)?
-                $(+ $bounds_lt)*
-                $(
-                    $( + $({$plus_ignore })? )?
-                    $( ? $([$relax_ignore])? )?
-                    $bounds
-                )*
-            )?
-        ),* >)?
-        ($($args)*)
-        -> $crate::UpdateHookUninitialized![ $crate::__expand_or![[$($ret_ty)?]()], $($hook_bounds)* ]
-        $(
-            where $($where_clause)*
-        )?
+        <$($generic_params)*>
+        $paren_inputs
+        -> $crate::UpdateHookUninitialized![ $crate::__private::expand_or![[$($ret_ty)?]()], $($hook_bounds)* ]
+        $($where_clause)*
         {
-            $(#!$inner_attr)*
+            $($inner_attrs)*
 
             #[allow(unused_imports)]
             use $crate::prelude_h::*;
 
             enum __HooksImplNever {}
 
-            struct __HooksValueOfThisHook $(<$(
-                $($lt)?
-                $($tp1 $($tp2)?)?
-                $(
-                    :
-                    $($bound_lt)?
-                    $(+ $bounds_lt)*
-                    $(
-                        $( + $({$plus_ignore })? )?
-                        $( ? $([$relax_ignore])? )?
-                        $bounds
-                    )*
-                )?
-            ),* >)?
-            $( where $($where_clause)* )?
+            struct __HooksValueOfThisHook <$($generic_params)*>
+            $($where_clause)*
             {
-                __: (
+                __: $crate::__impl_phantoms![
                     __HooksImplNever,
-                    $($(
-                        $crate::__impl_phantom![
-                            $($lt)?
-                            $($tp1 $($tp2)?)?
-                        ],
-                    )*)?
-                )
+                    $params_name
+                ]
             }
 
             impl<
                 'hook,
-                $($(
-                    $($lt)?
-                    $($tp1 $($tp2)?)?
-                    $(
-                        :
-                        $($bound_lt)?
-                        $(+ $bounds_lt)*
-                        $(
-                            $( + $({$plus_ignore })? )?
-                            $( ? $([$relax_ignore])? )?
-                            $bounds
-                        )*
-                    )?
-                ),*)?
-            > $crate::HookValue<'hook> for __HooksValueOfThisHook $(<$(
-                $($lt)?
-                $($tp1 $($tp2)?)?
-            ),*>)? {
-                type Value = $crate::__expand_or![[$($ret_ty)?]()];
+                $($generic_params)*
+            > $crate::HookValue<'hook> for __HooksValueOfThisHook <$($type_generics)*>
+            $($where_clause)*
+            {
+                type Value = $crate::__private::expand_or![[$($ret_ty)?]()];
             }
 
             $crate::fn_hook::use_fn_hook $(::$method_path)*
             ::<
-                __HooksValueOfThisHook $(<$(
-                    $($lt)?
-                    $($tp1 $($tp2)?)?
-                ),*>)?
+                __HooksValueOfThisHook <$($type_generics)*>
                 , _, _
             >
             (
                 $crate::transform_hook_fn_body_as_closure!(
                     []
-                    {$($code)*}
+                    {$($stmts)*}
                 )
             )
         }
@@ -609,6 +551,26 @@ macro_rules! __impl_hook_methods {
             $fn_data
         }
     )*};
+}
+
+#[doc(hidden)]
+#[macro_export]
+macro_rules! __impl_phantoms {
+    (
+        $ty:ty,
+        {$(
+            $($lt:lifetime)?
+            $($tp0:ident $($tp1:ident)?)?
+        ),+}
+    ) => {
+        (
+            $ty,
+            $(
+                $( $crate::__impl_phantom![$lt] )?
+                $( $crate::__impl_phantom![$tp0 $($tp1)?] )?
+            ),*
+        )
+    };
 }
 
 #[doc(hidden)]
