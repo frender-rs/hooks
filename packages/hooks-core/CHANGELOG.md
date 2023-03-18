@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.0-alpha](https://github.com/frender-rs/hooks/compare/hooks-core-v2.0.1-alpha...hooks-core-v2.1.0-alpha) (2023-03-18)
+
+
+### Features
+
+* impl parsing in macros with `syn-lite`. ([0471573](https://github.com/frender-rs/hooks/commit/04715738fd4f7de69687ed1c723e42c5b00b4c0c))
+
 ## [2.0.1-alpha](https://github.com/frender-rs/hooks/compare/hooks-core-v2.0.0-alpha...hooks-core-v2.0.1-alpha) (2023-03-17)
 
 
