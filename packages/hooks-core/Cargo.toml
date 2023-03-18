@@ -12,6 +12,7 @@ repository = "https://github.com/frender-rs/hooks"
 [dependencies]
 pin-project-lite = "0.2.9"
 futures-core = { version = "0.3.25", optional = true }
+syn-lite = "0.1.0"
 
 [dev-dependencies]
 hooks_dev = { path = "../hooks", package = "hooks", features = ["proc-macro"] }

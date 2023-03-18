@@ -280,6 +280,7 @@ dependencies = [
  "futures-core",
  "hooks",
  "pin-project-lite",
+ "syn-lite",
 ]
 
 [[package]]
@@ -518,6 +519,12 @@ dependencies = [
  "quote",
  "unicode-ident",
 ]
+
+[[package]]
+name = "syn-lite"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1a5f753fd99e0542b34bf88c9c2e0f7846e1773d46c5b1bf320e319979456eec"
 
 [[package]]
 name = "unicode-ident"
