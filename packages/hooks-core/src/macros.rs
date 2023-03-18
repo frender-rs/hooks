@@ -570,60 +570,19 @@ macro_rules! transform_hook_fn_body_as_closure {
 #[macro_export]
 macro_rules! impl_hook {
     (
-        type For
-            $(<$(
-                $($lt:lifetime)?
-                $($tp1:ident $($tp2:ident)?)?
-                $(
-                    :
-                    $($bound_lt:lifetime)?
-                    $(+ $bounds_lt:lifetime)*
-                    $(
-                        $( + $({$plus_ignore:tt })? )?
-                        $( ? $([$relax_ignore:tt])? )?
-                        $bounds:path
-                    )*
-                )?
-            ),* >)?
-            = $ty:ty
-            $(
-                where
-                __![$($($where_clause:tt)+)?]: __
-                $(,)?
-            )?
-        ;
-        $(
-            $(#$fn_attr:tt)*
-            fn $fn_name:ident $args:tt $(-> $fn_ret_ty:ty)?
-            {$($impl_hook:tt)*}
-        )*
+        type For $(<>)? = $($rest:tt)*
     ) => {
-        $crate::__impl_hook_methods! {
-            (
-                [$($(
-                    $($lt)?
-                    $($tp1 $($tp2)?)?
-                    $(
-                        :
-                        $($bound_lt)?
-                        $(+ $bounds_lt)*
-                        $(
-                            $( + $({$plus_ignore})?  )?
-                            $( ? $([$relax_ignore])? )?
-                            $bounds
-                        )*
-                    )?
-                ),*)?]
-                [$ty]
-                [$($($($where_clause)+)?)?]
-            )
-            $(
-                $fn_name [
-                    $(#$fn_attr)*
-                    $fn_name $args $(-> $fn_ret_ty)?
-                    {$($impl_hook)*}
-                ]
-            )*
+        $crate::__impl_impl_hook_generics_parsed! {
+            generics! { params! {}  }
+            rest!     { = $($rest)* }
+        }
+    };
+    (
+        type For < $($rest:tt)*
+    ) => {
+        $crate::__private::parse_generics! {
+            {< $($rest)*}
+            => $crate::__impl_impl_hook_generics_parsed!
         }
     };
 }

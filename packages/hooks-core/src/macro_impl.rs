@@ -586,3 +586,70 @@ macro_rules! __impl_phantom {
         ::core::marker::PhantomData::<$tp>
     };
 }
+
+#[doc(hidden)]
+#[macro_export]
+macro_rules! __impl_impl_hook {
+    (
+        generics! { params! { $($generic_params:tt)* } $($generics_other:tt)* }
+        for_ty! { $ty:ty }
+        where_clause! { $( where $($where_clause:tt)*)? }
+        rest! {
+            ;
+            $(
+                $(#$fn_attr:tt)*
+                fn $fn_name:ident $args:tt $(-> $fn_ret_ty:ty)?
+                {$($impl_hook:tt)*}
+            )*
+        }
+    ) => {
+        $crate::__impl_hook_methods! {
+            (
+                [$($generic_params)*]
+                [$ty]
+                [$($($where_clause)*)?]
+            )
+            $(
+                $fn_name [
+                    $(#$fn_attr)*
+                    $fn_name $args $(-> $fn_ret_ty)?
+                    {$($impl_hook)*}
+                ]
+            )*
+        }
+    };
+}
+
+#[doc(hidden)]
+#[macro_export]
+macro_rules! __impl_impl_hook_generics_parsed {
+    (
+        generics! $generics:tt
+        rest! {
+            = $ty:ty ;
+            $($rest:tt)*
+        }
+    ) => {
+        $crate::__impl_impl_hook! {
+            generics! $generics
+            for_ty! { $ty }
+            where_clause! {}
+            rest! { ; $($rest)* }
+        }
+    };
+    (
+        generics! $generics:tt
+        rest! {
+            = $ty:ty where $($rest:tt)*
+        }
+    ) => {
+        $crate::__private::parse_where_clause! {
+            [
+                generics! $generics
+                for_ty! { $ty }
+            ]
+            { where $($rest)* }
+            => $crate::__impl_impl_hook!
+        }
+    };
+}
