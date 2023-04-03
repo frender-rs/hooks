@@ -1,4 +1,5 @@
 pub mod debug_pointer;
+pub mod pin;
 
 mod uninitialized_hook;
 pub use uninitialized_hook::*;

@@ -1,6 +1,6 @@
 use std::{marker::PhantomData, pin::Pin};
 
-use hooks_core::{Hook, HookPollNextUpdate, HookUnmount, IntoHook, UpdateHook};
+use hooks_core::{Hook, HookPollNextUpdate, HookUnmount, UpdateHook};
 
 pin_project_lite::pin_project![
     #[derive(Debug)]
@@ -10,21 +10,19 @@ pin_project_lite::pin_project![
         H: HookUnmount,
     {
         #[pin]
-        hook: lazy_pinned::LazyPinned<H>,
+        hook: Option<H>,
     }
 ];
 
 impl<H: HookPollNextUpdate + HookUnmount> Default for LazyPinnedHook<H> {
     fn default() -> Self {
-        Self {
-            hook: Default::default(),
-        }
+        Self { hook: None }
     }
 }
 
 impl<H: HookPollNextUpdate + HookUnmount> LazyPinnedHook<H> {
     #[inline]
-    pub fn pin_project(self: Pin<&mut Self>) -> Pin<&mut lazy_pinned::LazyPinned<H>> {
+    pub fn pin_project(self: Pin<&mut Self>) -> Pin<&mut Option<H>> {
         self.project().hook
     }
 
@@ -34,14 +32,17 @@ impl<H: HookPollNextUpdate + HookUnmount> LazyPinnedHook<H> {
     }
 }
 impl<H: Hook> LazyPinnedHook<H> {
-    pub fn h(self: Pin<&mut Self>, into_hook: impl UpdateHook<Hook = H>) -> hooks_core::Value![H] {
-        self.pin_project()
-            .use_pin_or_insert_with_data(
-                into_hook,
-                |into_hook, hook| into_hook.update_hook(hook),
-                IntoHook::into_hook,
-            )
-            .use_hook()
+    pub fn h(
+        mut self: Pin<&mut Self>,
+        into_hook: impl UpdateHook<Hook = H>,
+    ) -> hooks_core::Value![H] {
+        if let Some(hook) = self.as_mut().pin_project_hook() {
+            into_hook.update_hook(hook)
+        } else {
+            self.as_mut().pin_project().set(Some(into_hook.into_hook()))
+        }
+
+        H::use_hook(self.pin_project_hook().unwrap())
     }
 }
 

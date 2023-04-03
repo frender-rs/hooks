@@ -13,7 +13,6 @@ repository = "https://github.com/frender-rs/hooks"
 hooks-macro = { path = "../hooks-macro", version = "0.1.0", optional = true }
 hooks-core = { path = "../hooks-core", version = "2.1.0-alpha", default-features = false }
 pin-project-lite = "0.2.9"
-lazy-pinned = { version = "0.1.0", optional = true }
 
 [dependencies.smallvec]
 version = "1.10.0"
@@ -45,8 +44,8 @@ ShareValue = []
 use_debug = []
 use_default_pinned = []
 use_effect = []
-use_lazy_pinned = ["lazy-pinned", "use_default_pinned"]
-use_lazy_pinned_hook = ["lazy-pinned"]
+use_lazy_pinned = ["use_default_pinned"]
+use_lazy_pinned_hook = []
 use_memo = []
 use_mut = []
 use_poll_next_update = []
