@@ -76,6 +76,10 @@ macro_rules! __impl_fn_hook_body_finish {
             $options
             [__hooks_hook_data: ::core::pin::Pin<&mut _>]
             {
+            // The following statement could be changed to:
+            // $crate::__impl_pin_project_hook_tuple!(__hooks_hook_data, $($used_id,)+);
+            // But this would reduce max tokens and might cause recursion limit to user code.
+
             // SAFETY: pin projection
             let ($($used_id,)+) = unsafe {
                 let $crate::HookTuple(($($used_id,)+)) = ::core::pin::Pin::get_unchecked_mut(__hooks_hook_data);
@@ -651,5 +655,19 @@ macro_rules! __impl_impl_hook_generics_parsed {
             { where $($rest)* }
             => $crate::__impl_impl_hook!
         }
+    };
+}
+
+#[doc(hidden)]
+#[macro_export]
+macro_rules! __impl_pin_project_hook_tuple {
+    ($hook_tuple:ident, $($used_id:ident),+ $(,)?) => {
+        // SAFETY: pin projection
+        let ($($used_id,)+) = unsafe {
+            let $crate::HookTuple(($($used_id,)+)) = ::core::pin::Pin::get_unchecked_mut($hook_tuple);
+            ($(
+                ::core::pin::Pin::new_unchecked($used_id),
+            )+)
+        };
     };
 }

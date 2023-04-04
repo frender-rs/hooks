@@ -36,24 +36,11 @@ pub fn detected_hooks_to_tokens(
         _ => {
             let ident_hooks_data = syn::Ident::new("__hooks_hook_data", span);
 
-            let pat_hook_ids = {
-                parened(map_to_tokens(&used_hooks, |used_hooks| {
-                    used_hooks
-                        .iter()
-                        .map(|h| (Chain(&h.ident, syn::Token![,](span))))
-                }))
-            };
-
             let used_id = used_hooks.iter().map(|h| &h.ident);
 
             let impl_extract_hooks_data = quote_spanned! {span=>
                 // SAFETY: pin projection
-                let #pat_hook_ids = unsafe {
-                    let #hooks_core_path::HookTuple(#pat_hook_ids) = ::core::pin::Pin::get_unchecked_mut(#ident_hooks_data);
-                    (#(
-                        ::core::pin::Pin::new_unchecked(#used_id),
-                    )*)
-                };
+                #hooks_core_path::__impl_pin_project_hook_tuple!(#ident_hooks_data, #(#used_id,)*);
             };
 
             DetectedHooksTokens {

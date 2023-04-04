@@ -20,15 +20,9 @@ fn use_state_effect() -> impl ::hooks::core::UpdateHookUninitialized<
         _,
         _,
     >(move |__hooks_hook_data: ::core::pin::Pin<&mut _>| {
-        let (__hooks_hook_0, __hooks_hook_1) = unsafe {
-            let ::hooks::core::HookTuple((__hooks_hook_0, __hooks_hook_1)) = ::core::pin::Pin::get_unchecked_mut(
-                __hooks_hook_data,
-            );
-            (
-                ::core::pin::Pin::new_unchecked(__hooks_hook_0),
-                ::core::pin::Pin::new_unchecked(__hooks_hook_1),
-            )
-        };
+        ::hooks::core::__impl_pin_project_hook_tuple!(
+            __hooks_hook_data, __hooks_hook_0, __hooks_hook_1,
+        );
         let (state, updater) = ::hooks::core::UpdateHookUninitialized::h(
             ::hooks::use_state_with(Default::default),
             __hooks_hook_0,
