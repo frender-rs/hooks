@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.2.0-alpha](https://github.com/frender-rs/hooks/compare/hooks-core-v2.1.0-alpha...hooks-core-v2.2.0-alpha) (2023-04-04)
+
+
+### Features
+
+* use declarative macro to pin project `HookTuple` so that `hook` macro doesn't expand unsafe code ([391794a](https://github.com/frender-rs/hooks/commit/391794adb84f9498fb076646ef26d759fa3a1e30))
+
 ## [2.1.0-alpha](https://github.com/frender-rs/hooks/compare/hooks-core-v2.0.1-alpha...hooks-core-v2.1.0-alpha) (2023-03-18)
 
 

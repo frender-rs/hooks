@@ -1,6 +1,6 @@
 [package]
 name = "hooks-macro"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 description = "Compile-time, async hooks"
 license = "MIT"
@@ -13,4 +13,4 @@ repository = "https://github.com/frender-rs/hooks"
 proc-macro = true
 
 [dependencies]
-hooks-macro-core = { path = "../hooks-macro-core", version = "0.1.0" }
+hooks-macro-core = { path = "../hooks-macro-core", version = "0.2.0" }
