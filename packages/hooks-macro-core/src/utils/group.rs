@@ -38,8 +38,3 @@ impl<T: ToTokens> ToTokens for Grouped<T> {
         Group::new(self.0, ts).into_token_stream()
     }
 }
-
-#[inline]
-pub fn parened<T>(v: T) -> Grouped<T> {
-    Grouped(Delimiter::Parenthesis, v)
-}

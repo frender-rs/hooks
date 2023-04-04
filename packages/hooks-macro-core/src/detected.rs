@@ -1,8 +1,6 @@
 use proc_macro2::{Span, TokenStream};
 use quote::{quote_spanned, ToTokens};
 
-use crate::utils::{chain::Chain, group::parened, map::map_to_tokens};
-
 pub struct DetectedHooksTokens {
     pub fn_arg_data_pat: TokenStream,
     pub fn_stmts_extract_data: Option<TokenStream>,
