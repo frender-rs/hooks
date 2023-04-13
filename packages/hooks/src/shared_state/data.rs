@@ -1,6 +1,10 @@
-use std::task::{Context, Poll, Waker};
+use std::{
+    cell::RefCell,
+    rc::Rc,
+    task::{Context, Poll, Waker},
+};
 
-use crate::{ShareValue, SharedRef};
+use crate::{utils::RcStatus, ShareValue};
 
 #[derive(Debug)]
 enum WakerStatus {
@@ -19,16 +23,34 @@ impl WakerStatus {
     }
 }
 
+struct SharedStateInner<T> {
+    value: RefCell<T>,
+    waker_status: RefCell<WakerStatus>,
+}
+
+impl<T> SharedStateInner<T> {
+    fn borrow_mut_waker_status<R>(
+        self: &mut Rc<Self>,
+        f: impl FnOnce(&mut WakerStatus, RcStatus) -> R,
+    ) -> R {
+        if let Some(this) = Rc::get_mut(self) {
+            f(this.waker_status.get_mut(), RcStatus::Owned)
+        } else {
+            f(&mut self.waker_status.borrow_mut(), RcStatus::Shared)
+        }
+    }
+}
+
 pub struct SharedState<T> {
-    shared_ref: SharedRef<(T, WakerStatus)>,
+    inner: Rc<SharedStateInner<T>>,
 }
 
 impl<T> Drop for SharedState<T> {
     fn drop(&mut self) {
         // This is the last rc.
         // Or, after this is dropped, rc will be no longer shared
-        if self.shared_ref.shared_count() <= 2 {
-            self.shared_ref.borrow_mut(|(_, waker), _| match waker {
+        if Rc::strong_count(&self.inner) <= 2 {
+            self.inner.borrow_mut_waker_status(|waker, _| match waker {
                 WakerStatus::Unregistered => {}
                 WakerStatus::Registered(_) => {
                     if let WakerStatus::Registered(w) =
@@ -46,13 +68,14 @@ impl<T> Drop for SharedState<T> {
 impl<T: std::fmt::Debug> std::fmt::Debug for SharedState<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut d = f.debug_tuple("SharedState");
-        self.shared_ref.try_borrow(|v| {
-            if let Some(v) = v {
-                d.field(&v.0).field(&v.1);
-            } else {
+        match self.inner.value.try_borrow() {
+            Ok(v) => {
+                d.field(&v);
+            }
+            Err(_) => {
                 d.field(&"borrowed");
             }
-        });
+        }
 
         d.finish()
     }
@@ -61,7 +84,7 @@ impl<T: std::fmt::Debug> std::fmt::Debug for SharedState<T> {
 impl<T> Clone for SharedState<T> {
     fn clone(&self) -> Self {
         Self {
-            shared_ref: self.shared_ref.clone(),
+            inner: self.inner.clone(),
         }
     }
 }
@@ -70,29 +93,30 @@ impl<T> SharedState<T> {
     #[inline]
     pub fn new(initial_value: T) -> Self {
         Self {
-            shared_ref: SharedRef::new((initial_value, WakerStatus::Updated)),
+            inner: Rc::new(SharedStateInner {
+                value: RefCell::new(initial_value),
+                waker_status: RefCell::new(WakerStatus::Updated),
+            }),
         }
     }
 
     #[inline]
     pub fn notify_changed(&self) {
-        self.shared_ref.map_mut(|(_, w)| w.notify_changed());
+        self.inner.waker_status.borrow_mut().notify_changed();
     }
 
     pub fn map_mut_and_notify_if<R>(&self, f: impl FnOnce(&mut T) -> (R, bool)) -> R {
-        self.shared_ref.map_mut(move |(v, w)| {
-            let (r, changed) = f(v);
+        let (r, changed) = f(&mut self.inner.value.borrow_mut());
 
-            if changed {
-                w.notify_changed();
-            }
+        if changed {
+            self.notify_changed();
+        }
 
-            r
-        })
+        r
     }
 
     pub(super) fn impl_poll_next_update(&mut self, cx: &mut Context<'_>) -> Poll<bool> {
-        self.shared_ref.borrow_mut(|(_, waker), status| {
+        self.inner.borrow_mut_waker_status(|waker, status| {
             match waker {
                 WakerStatus::Unregistered => {
                     if status.is_owned() {
@@ -120,7 +144,7 @@ impl<T> SharedState<T> {
 
     #[inline]
     pub(super) fn mark_as_unregistered(&mut self) {
-        self.shared_ref.borrow_mut(|(_, waker_status), _| {
+        self.inner.borrow_mut_waker_status(|waker_status, _| {
             *waker_status = WakerStatus::Unregistered;
         });
     }
@@ -129,7 +153,7 @@ impl<T> SharedState<T> {
 impl<T> ShareValue<T> for SharedState<T> {
     #[inline]
     fn is_shared(&self) -> bool {
-        self.shared_ref.is_shared()
+        Rc::strong_count(&self.inner) != 0
     }
 
     #[inline]
@@ -137,7 +161,7 @@ impl<T> ShareValue<T> for SharedState<T> {
     where
         T: Copy,
     {
-        self.shared_ref.map(|(v, _)| *v)
+        *self.inner.value.borrow()
     }
 
     #[inline]
@@ -145,7 +169,7 @@ impl<T> ShareValue<T> for SharedState<T> {
     where
         T: Clone,
     {
-        self.shared_ref.map(|(v, _)| v.clone())
+        self.inner.value.borrow().clone()
     }
 
     #[inline]
@@ -155,15 +179,13 @@ impl<T> ShareValue<T> for SharedState<T> {
 
     #[inline]
     fn map<R>(&self, f: impl FnOnce(&T) -> R) -> R {
-        self.shared_ref.map(|(v, _)| f(v))
+        f(&self.inner.value.borrow())
     }
 
     #[inline]
     fn map_mut<R>(&self, f: impl FnOnce(&mut T) -> R) -> R {
-        self.shared_ref.map_mut(|(v, w)| {
-            w.notify_changed();
-            f(v)
-        })
+        self.notify_changed();
+        f(&mut self.inner.value.borrow_mut())
     }
 }
 
