@@ -25,7 +25,9 @@ impl<T> SharedRef<T> {
     }
 }
 
-impl<T> crate::ShareValue<T> for SharedRef<T> {
+impl<T> crate::ShareValue for SharedRef<T> {
+    type Value = T;
+
     #[inline]
     fn is_shared(&self) -> bool {
         self.shared_count() != 0

@@ -26,7 +26,9 @@ impl<T: PartialEq> SharedStateEq<T> {
     }
 }
 
-impl<T: PartialEq> ShareValue<T> for SharedStateEq<T> {
+impl<T: PartialEq> ShareValue for SharedStateEq<T> {
+    type Value = T;
+
     #[inline]
     fn is_shared(&self) -> bool {
         self.0.is_shared()

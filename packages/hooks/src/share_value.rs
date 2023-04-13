@@ -1,36 +1,38 @@
 /// Common behaviors of types that share a value with inner mutability.
-pub trait ShareValue<T> {
+pub trait ShareValue {
+    type Value;
+
     fn is_shared(&self) -> bool;
 
     #[inline]
-    fn get(&self) -> T
+    fn get(&self) -> Self::Value
     where
-        T: Copy,
+        Self::Value: Copy,
     {
         self.map(|v| *v)
     }
 
     #[inline]
-    fn get_cloned(&self) -> T
+    fn get_cloned(&self) -> Self::Value
     where
-        T: Clone,
+        Self::Value: Clone,
     {
-        self.map(T::clone)
+        self.map(<_>::clone)
     }
 
     #[inline]
-    fn set(&self, new_value: T) {
+    fn set(&self, new_value: Self::Value) {
         self.replace(new_value);
     }
 
     /// The old value is returned.
     #[inline]
-    fn replace(&self, new_value: T) -> T {
+    fn replace(&self, new_value: Self::Value) -> Self::Value {
         self.replace_mut(|_| new_value)
     }
     /// The old value is returned.
     #[inline]
-    fn replace_mut<F: FnOnce(&mut T) -> T>(&self, f: F) -> T {
+    fn replace_mut<F: FnOnce(&mut Self::Value) -> Self::Value>(&self, f: F) -> Self::Value {
         self.map_mut(|old| {
             let new_value = f(old);
             std::mem::replace(old, new_value)
@@ -39,10 +41,10 @@ pub trait ShareValue<T> {
 
     /// The old value is returned.
     #[inline]
-    fn replace_with<F: FnOnce(&T) -> T>(&self, f: F) -> T {
+    fn replace_with<F: FnOnce(&Self::Value) -> Self::Value>(&self, f: F) -> Self::Value {
         self.replace_mut(move |v| f(v))
     }
 
-    fn map<R>(&self, f: impl FnOnce(&T) -> R) -> R;
-    fn map_mut<R>(&self, f: impl FnOnce(&mut T) -> R) -> R;
+    fn map<R>(&self, f: impl FnOnce(&Self::Value) -> R) -> R;
+    fn map_mut<R>(&self, f: impl FnOnce(&mut Self::Value) -> R) -> R;
 }

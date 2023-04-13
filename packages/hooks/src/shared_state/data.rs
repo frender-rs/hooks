@@ -150,7 +150,9 @@ impl<T> SharedState<T> {
     }
 }
 
-impl<T> ShareValue<T> for SharedState<T> {
+impl<T> ShareValue for SharedState<T> {
+    type Value = T;
+
     #[inline]
     fn is_shared(&self) -> bool {
         Rc::strong_count(&self.inner) != 0
