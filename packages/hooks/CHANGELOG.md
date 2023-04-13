@@ -8,6 +8,13 @@
   * dependencies
     * hooks-core bumped from 2.0.1-alpha to 2.1.0-alpha
 
+## [2.1.1-alpha](https://github.com/frender-rs/hooks/compare/hooks-v2.1.0-alpha...hooks-v2.1.1-alpha) (2023-04-13)
+
+
+### Bug Fixes
+
+* **hooks:** SharedState should be able to be dropped while sharing value ([86b60c1](https://github.com/frender-rs/hooks/commit/86b60c1ac7eba823b409a4a77b8c72f5bd3017cb))
+
 ## [2.1.0-alpha](https://github.com/frender-rs/hooks/compare/hooks-v2.0.2-alpha...hooks-v2.1.0-alpha) (2023-04-04)
 
 
