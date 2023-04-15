@@ -283,6 +283,15 @@ pub struct StateUpdater<'a, T, const N: usize = STAGING_STATES_DEFAULT_STACK_COU
     waker_and_staging_states: Rc<RefCell<(Option<std::task::Waker>, StagingStates<'a, T, N>)>>,
 }
 
+impl<'a, T, const N: usize> PartialEq for StateUpdater<'a, T, N> {
+    fn eq(&self, other: &Self) -> bool {
+        Rc::ptr_eq(
+            &self.waker_and_staging_states,
+            &other.waker_and_staging_states,
+        )
+    }
+}
+
 impl<'a, T, const N: usize> Clone for StateUpdater<'a, T, N> {
     #[inline]
     fn clone(&self) -> Self {
