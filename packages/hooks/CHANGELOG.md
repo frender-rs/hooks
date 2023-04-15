@@ -8,6 +8,13 @@
   * dependencies
     * hooks-core bumped from 2.0.1-alpha to 2.1.0-alpha
 
+## [2.2.0-alpha](https://github.com/frender-rs/hooks/compare/hooks-v2.1.1-alpha...hooks-v2.2.0-alpha) (2023-04-15)
+
+
+### Features
+
+* impl `PartialEq` for StateUpdater ([c77e08c](https://github.com/frender-rs/hooks/commit/c77e08c3dc58ec6d91ac6b995f86530b72943dc1))
+
 ## [2.1.1-alpha](https://github.com/frender-rs/hooks/compare/hooks-v2.1.0-alpha...hooks-v2.1.1-alpha) (2023-04-13)
 
 
