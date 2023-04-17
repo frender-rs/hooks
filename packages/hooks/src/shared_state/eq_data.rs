@@ -99,6 +99,10 @@ impl<T: PartialEq> ShareValue for SharedStateEq<T> {
     fn map_mut<R>(&self, f: impl FnOnce(&mut T) -> R) -> R {
         self.0.map_mut(f)
     }
+
+    fn equivalent_to(&self, other: &Self) -> bool {
+        self.0.equivalent_to(&other.0)
+    }
 }
 
 hooks_core::impl_hook![

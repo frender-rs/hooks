@@ -75,6 +75,10 @@ impl<T> crate::ShareValue for SharedRef<T> {
         let mut v = self.0.borrow_mut();
         f(&mut *v)
     }
+
+    fn equivalent_to(&self, other: &Self) -> bool {
+        Rc::ptr_eq(&self.0, &other.0)
+    }
 }
 
 hooks_core::impl_hook![

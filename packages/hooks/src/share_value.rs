@@ -47,4 +47,9 @@ pub trait ShareValue {
 
     fn map<R>(&self, f: impl FnOnce(&Self::Value) -> R) -> R;
     fn map_mut<R>(&self, f: impl FnOnce(&mut Self::Value) -> R) -> R;
+
+    /// Returns `true` if `self` and `other` are sharing values from the same allocation.
+    /// In that case, `self` and `other` are equivalent to each other
+    /// because calling the same method on either of them leads to the same result.
+    fn equivalent_to(&self, other: &Self) -> bool;
 }

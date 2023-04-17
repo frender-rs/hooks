@@ -189,6 +189,10 @@ impl<T> ShareValue for SharedState<T> {
         self.notify_changed();
         f(&mut self.inner.value.borrow_mut())
     }
+
+    fn equivalent_to(&self, other: &Self) -> bool {
+        Rc::ptr_eq(&self.inner, &other.inner)
+    }
 }
 
 hooks_core::impl_hook![
