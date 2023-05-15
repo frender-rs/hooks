@@ -8,6 +8,19 @@
   * dependencies
     * hooks-core bumped from 2.0.1-alpha to 2.1.0-alpha
 
+## [2.3.0-alpha](https://github.com/frender-rs/hooks/compare/hooks-v2.2.0-alpha...hooks-v2.3.0-alpha) (2023-05-15)
+
+
+### ⚠ BREAKING CHANGES
+
+* **hooks:** add required method `equivalent_to` to trait `ShareValue`
+* **hooks:** trait `ShareValue` is changed from `ShareValue<T>` to `ShareValue<Value = T>`
+
+### Features
+
+* **hooks:** add required method `equivalent_to` to trait `ShareValue` ([330e3b0](https://github.com/frender-rs/hooks/commit/330e3b04e0e6bcbdf28e2075b69d924d5bc2bf4f))
+* **hooks:** trait `ShareValue` is changed from `ShareValue&lt;T&gt;` to `ShareValue<Value = T>` ([8442b91](https://github.com/frender-rs/hooks/commit/8442b919193924c329eb9ed1fd84c71e6fe814e9))
+
 ## [2.2.0-alpha](https://github.com/frender-rs/hooks/compare/hooks-v2.1.1-alpha...hooks-v2.2.0-alpha) (2023-04-15)
 
 
