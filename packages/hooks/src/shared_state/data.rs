@@ -153,6 +153,19 @@ impl<T> SharedState<T> {
 impl<T> ShareValue for SharedState<T> {
     type Value = T;
 
+    fn try_unwrap(self) -> Result<Self::Value, Self>
+    where
+        Self: Sized,
+    {
+        let inner = self.inner.clone();
+        drop(self);
+
+        match Rc::try_unwrap(inner) {
+            Ok(inner) => Ok(inner.value.into_inner()),
+            Err(inner) => Err(Self { inner }),
+        }
+    }
+
     #[inline]
     fn get(&self) -> T
     where

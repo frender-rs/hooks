@@ -29,6 +29,13 @@ impl<T: PartialEq> SharedStateEq<T> {
 impl<T: PartialEq> ShareValue for SharedStateEq<T> {
     type Value = T;
 
+    fn try_unwrap(self) -> Result<Self::Value, Self>
+    where
+        Self: Sized,
+    {
+        self.0.try_unwrap().map_err(Self)
+    }
+
     #[inline]
     fn get(&self) -> T
     where

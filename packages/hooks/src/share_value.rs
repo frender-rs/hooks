@@ -2,6 +2,21 @@
 pub trait ShareValue {
     type Value;
 
+    fn try_unwrap(self) -> Result<Self::Value, Self>
+    where
+        Self: Sized;
+
+    fn unwrap_or_get_cloned(self) -> Self::Value
+    where
+        Self: Sized,
+        Self::Value: Clone,
+    {
+        match self.try_unwrap() {
+            Ok(v) => v,
+            Err(this) => this.get_cloned(),
+        }
+    }
+
     #[inline]
     fn get(&self) -> Self::Value
     where

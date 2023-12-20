@@ -22,6 +22,16 @@ impl<T> SharedRef<T> {
 impl<T> crate::ShareValue for SharedRef<T> {
     type Value = T;
 
+    fn try_unwrap(self) -> Result<Self::Value, Self>
+    where
+        Self: Sized,
+    {
+        match Rc::try_unwrap(self.0) {
+            Ok(v) => Ok(v.into_inner()),
+            Err(this) => Err(Self(this)),
+        }
+    }
+
     #[inline]
     fn get(&self) -> T
     where
