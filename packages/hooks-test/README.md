@@ -2,9 +2,10 @@ This is the testing package for `::hooks`.
 
 ## borrowing arguments in used hooks
 
-Currently borrowing arguments in used hooks failed to compile.
+Currently borrowing arguments in used hooks only compiles with rust 1.74.0 and later versions.
+See issue #103532 <https://github.com/rust-lang/rust/issues/103532> for more information.
 
-```rust,compile_fail
+```rust
 # use hooks::{use_effect, hook};
 /// Print debug on `value` change.
 #[hook(bounds = "'a")]
