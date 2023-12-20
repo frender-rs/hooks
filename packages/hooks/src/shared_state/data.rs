@@ -154,11 +154,6 @@ impl<T> ShareValue for SharedState<T> {
     type Value = T;
 
     #[inline]
-    fn is_shared(&self) -> bool {
-        Rc::strong_count(&self.inner) != 0
-    }
-
-    #[inline]
     fn get(&self) -> T
     where
         T: Copy,

@@ -17,21 +17,10 @@ impl<T> SharedRef<T> {
     pub fn new(initial_value: T) -> Self {
         Self(Rc::new(RefCell::new(initial_value)))
     }
-
-    #[inline]
-    pub(crate) fn shared_count(&self) -> usize {
-        // Weak is never created, thus only need strong count.
-        Rc::strong_count(&self.0)
-    }
 }
 
 impl<T> crate::ShareValue for SharedRef<T> {
     type Value = T;
-
-    #[inline]
-    fn is_shared(&self) -> bool {
-        self.shared_count() != 0
-    }
 
     #[inline]
     fn get(&self) -> T

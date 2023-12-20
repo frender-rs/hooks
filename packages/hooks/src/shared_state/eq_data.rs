@@ -30,11 +30,6 @@ impl<T: PartialEq> ShareValue for SharedStateEq<T> {
     type Value = T;
 
     #[inline]
-    fn is_shared(&self) -> bool {
-        self.0.is_shared()
-    }
-
-    #[inline]
     fn get(&self) -> T
     where
         T: Copy,

@@ -2,8 +2,6 @@
 pub trait ShareValue {
     type Value;
 
-    fn is_shared(&self) -> bool;
-
     #[inline]
     fn get(&self) -> Self::Value
     where
