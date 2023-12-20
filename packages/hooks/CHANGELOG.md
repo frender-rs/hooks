@@ -8,6 +8,19 @@
   * dependencies
     * hooks-core bumped from 2.0.1-alpha to 2.1.0-alpha
 
+## [3.0.0-alpha](https://github.com/frender-rs/hooks/compare/hooks-v2.3.0-alpha...hooks-v3.0.0-alpha) (2023-12-20)
+
+
+### ⚠ BREAKING CHANGES
+
+* **hooks:** `ShareValue::try_unwrap` and `ShareValue::unwrap_or_get_cloned`
+* **hooks:** remove `ShareValue::is_shared` because it should always return `true` as designed
+
+### Features
+
+* **hooks:** `ShareValue::try_unwrap` and `ShareValue::unwrap_or_get_cloned` ([7666013](https://github.com/frender-rs/hooks/commit/7666013f85875f8b6ccc315d78a915983029dcfb))
+* **hooks:** remove `ShareValue::is_shared` because it should always return `true` as designed ([1812068](https://github.com/frender-rs/hooks/commit/1812068aa529f0667a81523a747444395840e6a3))
+
 ## [2.3.0-alpha](https://github.com/frender-rs/hooks/compare/hooks-v2.2.0-alpha...hooks-v2.3.0-alpha) (2023-05-15)
 
 
