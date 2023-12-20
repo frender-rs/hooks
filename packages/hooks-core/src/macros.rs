@@ -86,12 +86,17 @@ macro_rules! h {
 /// <details>
 /// <summary>
 ///
-/// There is a limitation that lifetimes must be used in arguments.
-/// Phantom lifetimes will fail to compile.
+/// Before rust 1.74.0,
+/// there is a limitation that lifetimes must be used in arguments
+/// due to [issue#103532](https://github.com/rust-lang/rust/issues/103532).
+/// In 1.74.0, this issue is resolved.
 ///
 /// </summary>
 ///
-/// ```compile_fail
+/// Before rust 1.74.0, the following code failed to compile because of phantom lifetimes.
+/// In 1.74.0, it compiles.
+///
+/// ```
 /// # use hooks_core::hook_fn;
 /// hook_fn!(
 ///     fn use_non_used_lifetime<'a>() -> &'a str {
