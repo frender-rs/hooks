@@ -13,9 +13,11 @@ test_single_feature use_lazy_pinned_hook
 test_single_feature use_memo
 test_single_feature use_mut
 test_single_feature use_poll_next_update
+test_single_feature use_reused
 test_single_feature use_shared_ref
 test_single_feature use_shared_state
 test_single_feature use_state
+test_single_feature use_state,use_reused
 test_single_feature use_uninitialized_hook
 
 cargo test -p hooks --no-default-features

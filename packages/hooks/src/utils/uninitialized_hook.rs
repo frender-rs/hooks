@@ -20,6 +20,21 @@ impl<H: Hook + Unpin> UninitializedHook<H> {
         };
         hook.use_hook()
     }
+
+    pub(crate) fn use_with(
+        &mut self,
+        into: impl FnOnce() -> H,
+        update: impl FnOnce(Pin<&mut H>),
+    ) -> hooks_core::Value![H] {
+        let hook = match &mut self.0 {
+            Some(hook) => {
+                update(Pin::new(hook));
+                hook
+            }
+            hook @ None => hook.insert(into()),
+        };
+        hook.use_hook()
+    }
 }
 
 impl<H> Default for UninitializedHook<H> {

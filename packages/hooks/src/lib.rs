@@ -1,6 +1,9 @@
 #![forbid(unsafe_code)]
 #![cfg_attr(all(feature = "futures-core", feature = "all", feature = "proc-macro"), doc = include_str!("../README.md"))]
 
+#[cfg(feature = "use_reused")]
+pub mod reused;
+
 #[cfg(feature = "use_effect")]
 pub mod effect;
 
@@ -71,6 +74,8 @@ pub mod prelude {
     pub use crate::pinned::use_default_pinned;
     #[cfg(feature = "use_poll_next_update")]
     pub use crate::poll_next_update::use_poll_next_update;
+    #[cfg(feature = "use_reused")]
+    pub use crate::reused::{use_reused, ReusableHookExt as _};
     #[cfg(feature = "use_shared_ref")]
     pub use crate::shared_ref::{use_shared_ref, use_shared_ref_with};
     #[cfg(feature = "use_shared_state")]
