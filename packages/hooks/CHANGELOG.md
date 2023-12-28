@@ -8,6 +8,22 @@
   * dependencies
     * hooks-core bumped from 2.0.1-alpha to 2.1.0-alpha
 
+## [3.0.0-alpha.2](https://github.com/frender-rs/hooks/compare/hooks-v3.0.0-alpha.1...hooks-v3.0.0-alpha.2) (2023-12-28)
+
+
+### ⚠ BREAKING CHANGES
+
+* **hooks:** feature `use_shared_state` should not enable feature `use_shared_ref`
+
+### Features
+
+* **hooks:** use_reused ([2cc4265](https://github.com/frender-rs/hooks/commit/2cc42657b17f6f238a6a9df4eb165cc340b871b5))
+
+
+### Bug Fixes
+
+* **hooks:** feature `use_shared_state` should not enable feature `use_shared_ref` ([069ce37](https://github.com/frender-rs/hooks/commit/069ce376ff4835e52357e5c4b35d27f8576062a1))
+
 ## [3.0.0-alpha.1](https://github.com/frender-rs/hooks/compare/hooks-v3.0.0-alpha...hooks-v3.0.0-alpha.1) (2023-12-28)
 
 
