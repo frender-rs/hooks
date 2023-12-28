@@ -50,7 +50,7 @@ use_memo = []
 use_mut = []
 use_poll_next_update = []
 use_shared_ref = ["ShareValue"]
-use_shared_state = ["use_shared_ref"]
+use_shared_state = ["ShareValue"]
 use_state = ["smallvec"]
 use_uninitialized_hook = []
 
