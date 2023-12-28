@@ -8,6 +8,13 @@
   * dependencies
     * hooks-core bumped from 2.0.1-alpha to 2.1.0-alpha
 
+## [3.0.0-alpha.1](https://github.com/frender-rs/hooks/compare/hooks-v3.0.0-alpha...hooks-v3.0.0-alpha.1) (2023-12-28)
+
+
+### Bug Fixes
+
+* **hooks:** cloned `SharedState` and `SharedStateEq` should be responsive in different tasks ([62dafeb](https://github.com/frender-rs/hooks/commit/62dafebbca40faf2a3154d8bd4606f114572b67c))
+
 ## [3.0.0-alpha](https://github.com/frender-rs/hooks/compare/hooks-v2.3.0-alpha...hooks-v3.0.0-alpha) (2023-12-20)
 
 
