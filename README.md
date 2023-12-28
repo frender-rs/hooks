@@ -11,3 +11,18 @@ Please see docs on [docs.rs](https://docs.rs/hooks).
 
 This project is still in alpha and may have breaking changes.
 You can see the [changelogs](./packages/hooks/CHANGELOG.md) before updating.
+
+## Development
+
+### Add a new hook
+
+If `hooks::use_my_hook` is to be added,
+
+- Add a feature named `use_my_hook` in [hooks/Cargo.toml](packages/hooks/Cargo.toml)
+  and add the feature to `all`.
+
+- Add mod `my_hook` in package [hooks](packages/hooks/src/lib.rs).
+
+- Prelude it in mod `hooks::prelude` under the feature.
+
+- Add the feature to [tests](scripts/test-hooks.sh).
