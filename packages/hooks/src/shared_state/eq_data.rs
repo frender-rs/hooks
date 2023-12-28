@@ -117,7 +117,7 @@ hooks_core::impl_hook![
     #[inline]
     fn use_hook(self) -> &'hook Self {
         let this = self.get_mut();
-        this.0.mark_as_unregistered();
+        this.0.mark_as_seen();
         this
     }
 ];
