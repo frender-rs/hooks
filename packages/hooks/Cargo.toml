@@ -1,6 +1,6 @@
 [package]
 name = "hooks"
-version = "3.0.0-alpha"
+version = "3.0.0-alpha.1"
 edition = "2021"
 description = "Compile-time, async hooks"
 license = "MIT"
