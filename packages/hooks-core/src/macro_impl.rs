@@ -293,6 +293,36 @@ macro_rules! __impl_hook_fn_bounds_resolved {
 
 #[doc(hidden)]
 #[macro_export]
+macro_rules! __impl_capture_lifetimes {
+    (
+        [$($prepend:tt)*]
+        {}
+    ) => {
+        $($prepend)*
+    };
+    (
+        [$($prepend:tt)*]
+        { $hook_bound:lifetime $(+)? }
+    ) => {
+        $($prepend)*
+        + $crate::Captures<
+            & $hook_bound ()
+        >
+    };
+    (
+        [$($prepend:tt)*]
+        { $hook_bound:lifetime $(+ $hook_bounds:lifetime)+ $(+)? }
+    ) => {
+        $($prepend)*
+        + $crate::Captures<(
+            & $hook_bound (),
+            $(& $hook_bounds (),)+
+        )>
+    };
+}
+
+#[doc(hidden)]
+#[macro_export]
 macro_rules! __impl_hook_fn_item_fn_parsed {
     (
         { $($hook_bounds:tt)* } // { 'a + 'b }
@@ -321,7 +351,13 @@ macro_rules! __impl_hook_fn_item_fn_parsed {
         $vis fn $name
         <$($generic_params)*>
         $paren_inputs
-        -> $crate::UpdateHookUninitialized![ $crate::__private::expand_or![[$($ret_ty)?]()], $($hook_bounds)* ]
+        -> $crate::UpdateHookUninitialized![
+            @ extract_lifetimes_from_generics {
+                value! { $crate::__private::expand_or![[$($ret_ty)?]()] }
+                params_name! $params_name
+                bounds! { $($hook_bounds)* }
+            }
+        ]
         $($where_clause)*
         {
             $($inner_attrs)*

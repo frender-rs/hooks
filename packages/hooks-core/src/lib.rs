@@ -35,3 +35,7 @@ pub mod prelude_h {
 pub mod __private {
     pub use syn_lite::{self, expand_or, parse_generics, parse_item_fn, parse_where_clause};
 }
+
+#[doc(hidden)]
+#[cfg(any(doc, test))]
+pub mod doc_tests;

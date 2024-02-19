@@ -64,46 +64,82 @@ macro_rules! h {
 /// );
 /// ```
 ///
-/// ## Borrow from arguments
+/// ## Capture lifetimes
 ///
-/// You can borrow from arguments,
-/// but you need to declare the lifetimes that this hook borrows from.
+/// Lifetimes in `fn` generics and `type Bounds = impl 'a` are captured.
 ///
-/// ```
-/// # extern crate hooks_dev as hooks;
-/// use std::rc::Rc;
-/// use hooks::prelude::*;
-///
-/// hook_fn!(
-///     type Bounds = impl 'a;
-///     fn use_lazy_rc<'a, T: Clone + PartialEq>(value: &'a T) -> Rc<T> {
-///         let (rc, _) = h!(use_memo(|value| Rc::new(T::clone(value)), value));
-///         rc.clone()
-///     }
-/// );
-/// ```
-///
-/// <details>
-/// <summary>
-///
-/// Before rust 1.74.0,
-/// there is a limitation that lifetimes must be used in arguments
-/// due to [issue#103532](https://github.com/rust-lang/rust/issues/103532).
-/// In 1.74.0, this issue is resolved.
-///
-/// </summary>
-///
-/// Before rust 1.74.0, the following code failed to compile because of phantom lifetimes.
-/// In 1.74.0, it compiles.
+/// For example, in
 ///
 /// ```
 /// # use hooks_core::hook_fn;
 /// hook_fn!(
-///     fn use_non_used_lifetime<'a>() -> &'a str {
-///        "hello"
+///     fn use_hook<'a>(_: &'a str) {}
+/// );
+/// ```
+///
+/// the return type of `use_hook` auto captures
+/// lifetime `'a` with trait bound [`Captures<&'a ()>`](crate::Captures)
+/// (even the argument `&'a str` is not used in the fn body).
+///
+/// <details>
+/// <summary>
+///
+/// If the lifetime is elided and used,
+/// it must be specified with `type Bounds = impl '_;`.
+///
+/// </summary>
+///
+/// ```compile_fail
+/// # use hooks_core::hook_fn;
+/// hook_fn!(
+///     fn use_hook(v: &str) {
+///         println!("{}", v);
 ///     }
 /// );
 /// ```
+///
+/// ```
+/// # use hooks_core::hook_fn;
+/// hook_fn!(
+///     type Bounds = impl '_;
+///     fn use_hook(v: &str) {
+///         println!("{}", v);
+///     }
+/// );
+/// ```
+///
+/// </details>
+///
+/// <details><summary>
+///
+/// If the lifetime comes from outer `Self`, it is auto captured.
+///
+/// </summary>
+///
+/// ```
+/// # use hooks_core::hook_fn;
+/// struct Data<'a>(&'a str);
+///
+/// impl<'a> Data<'a> {
+///     hook_fn!(
+///         fn use_data(v: &'a str) {
+///             println!("{}", v)
+///         }
+///    );
+/// }
+/// ```
+///
+/// </details>
+///
+/// <details>
+/// <summary>
+///
+/// In Rust 2024 and later editions, all lifetimes should be auto captured
+/// so you don't need to specify them explicitly.
+///
+/// </summary>
+///
+/// See [lifetime_capture_rules_2024](https://rust-lang.github.io/rfcs/3498-lifetime-capture-rules-2024.html)
 ///
 /// </details>
 ///
@@ -596,9 +632,13 @@ macro_rules! impl_hook {
 /// with type of [`Value`](crate::HookValue::Value).
 #[macro_export]
 macro_rules! Hook {
-    ($value:ty $(, $($($bounds:tt)+)?)? ) => {
-        impl $crate::Hook + for<'hook> $crate::HookValue<'hook, Value = $value>
-            $($(+ $($bounds)+)?)?
+    ($value:ty $(, $($bounds:tt)*)? ) => {
+        $crate::__impl_capture_lifetimes![
+            [
+                impl $crate::Hook + for<'hook> $crate::HookValue<'hook, Value = $value>
+            ]
+            { $($($bounds)*)? }
+        ]
     };
 }
 
@@ -606,10 +646,28 @@ macro_rules! Hook {
 /// with type of [`Hook`](crate::IntoHook::Hook)`::`[`Value`](crate::HookValue::Value).
 #[macro_export]
 macro_rules! UpdateHookUninitialized {
-    ($value:ty $(, $($($bounds:tt)+)?)?) => {
+    ($value:ty $(, $($bounds:tt)*)?) => {
         impl $crate::UpdateHookUninitialized<
-            Hook = $crate::Hook![$value $($(, $($bounds)+)?)?]
-        > $($(+ $($bounds)+)?)?
+            Hook = $crate::Hook![$value $(, $($bounds)*)?]
+        >
+    };
+    // Implementation details
+    (@ extract_lifetimes_from_generics {
+        value! { $value:ty }
+        params_name! {$(
+            $($lt:lifetime)?
+            $($tp0:ident $($tp1:ident)?)?
+        ),+}
+        // explicitly specified lifetime bounds
+        bounds! { $($bounds:tt)* }
+    }) => {
+        $crate::UpdateHookUninitialized![
+            $value,
+            $(
+                $( $lt + )?
+            )+
+            $($bounds)*
+        ]
     };
 }
 
