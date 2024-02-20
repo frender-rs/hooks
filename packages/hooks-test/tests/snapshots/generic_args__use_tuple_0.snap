@@ -5,10 +5,13 @@ expression: "use_tuple_0::hook_impl_code()"
 fn use_tuple_0<'a>(
     _: &'a (),
 ) -> impl ::hooks::core::UpdateHookUninitialized<
+    Uninitialized = impl ::hooks::core::HookPollNextUpdate + ::hooks::core::HookUnmount + ::core::default::Default + ::hooks::core::Captures<
+        &'a (),
+    >,
     Hook = impl ::hooks::core::Hook + for<'hook> ::hooks::core::HookValue<
         'hook,
         Value = (),
-    >,
+    > + ::hooks::core::Captures<&'a ()>,
 > {
     enum __HooksImplNever {}
     struct __HooksValueOfThisHook<'a> {
@@ -23,4 +26,3 @@ fn use_tuple_0<'a>(
         _,
     >(move |_: ::core::pin::Pin<&mut ::hooks::core::HookTuple::<()>>| {})
 }
-

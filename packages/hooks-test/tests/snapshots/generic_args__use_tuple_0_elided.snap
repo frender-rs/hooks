@@ -5,6 +5,7 @@ expression: "use_tuple_0_elided::hook_impl_code()"
 fn use_tuple_0_elided(
     _: &(),
 ) -> impl ::hooks::core::UpdateHookUninitialized<
+    Uninitialized = impl ::hooks::core::HookPollNextUpdate + ::hooks::core::HookUnmount + ::core::default::Default,
     Hook = impl ::hooks::core::Hook + for<'hook> ::hooks::core::HookValue<
         'hook,
         Value = (),
@@ -23,4 +24,3 @@ fn use_tuple_0_elided(
         _,
     >(move |_: ::core::pin::Pin<&mut ::hooks::core::HookTuple::<()>>| {})
 }
-

@@ -3,6 +3,7 @@ source: packages/hooks-test/tests/return_impl_trait.rs
 expression: "use_str_state::hook_impl_code()"
 ---
 fn use_str_state() -> impl ::hooks::core::UpdateHookUninitialized<
+    Uninitialized = impl ::hooks::core::HookPollNextUpdate + ::hooks::core::HookUnmount + ::core::default::Default,
     Hook = impl ::hooks::core::Hook + for<'hook> ::hooks::core::HookValue<
         'hook,
         Value = impl Any,
@@ -32,4 +33,3 @@ fn use_str_state() -> impl ::hooks::core::UpdateHookUninitialized<
         state.clone()
     })
 }
-

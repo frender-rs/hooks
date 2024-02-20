@@ -22,10 +22,43 @@ fn ty_to_capture_lifetime(lt: &syn::Lifetime) -> TokenStream {
     quote_spanned!(lt.span() => &#lt () )
 }
 
+fn dedup_iter<T: Clone + Eq + std::hash::Hash>(
+    iter: impl Iterator<Item = T>,
+) -> impl Iterator<Item = T> {
+    struct DedupIter<I: Iterator> {
+        iter: I,
+        yielded: std::collections::HashSet<I::Item>,
+    }
+
+    impl<I: Iterator> Iterator for DedupIter<I>
+    where
+        I::Item: Clone + Eq + std::hash::Hash,
+    {
+        type Item = I::Item;
+
+        fn next(&mut self) -> Option<Self::Item> {
+            for item in self.iter.by_ref() {
+                if !self.yielded.contains(&item) {
+                    self.yielded.insert(item.clone());
+                    return Some(item);
+                }
+            }
+
+            None
+        }
+    }
+
+    DedupIter {
+        iter,
+        yielded: Default::default(),
+    }
+}
+
 pub(crate) fn capture_lifetimes<'a>(
     lifetimes: impl Iterator<Item = &'a syn::Lifetime>,
     captures_trait_path: impl ToTokens,
 ) -> Option<TokenStream> {
+    let lifetimes = dedup_iter(lifetimes);
     let captures = iter_map_with_len(
         lifetimes,
         || None,

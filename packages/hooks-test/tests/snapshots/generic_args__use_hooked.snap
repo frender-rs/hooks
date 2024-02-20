@@ -5,11 +5,14 @@ expression: "use_hooked::hook_impl_code()"
 fn use_hooked<'a, T: ?Sized + ToOwned + PartialEq>(
     v: &'a T,
 ) -> impl ::hooks::core::UpdateHookUninitialized<
+    Uninitialized = impl ::hooks::core::HookPollNextUpdate + ::hooks::core::HookUnmount + ::core::default::Default + ::hooks::core::Captures<
+        &'a (),
+    >,
     Hook = impl ::hooks::core::Hook + for<'hook> ::hooks::core::HookValue<
         'hook,
         Value = &'hook T,
-    > + 'a,
-> + 'a {
+    > + ::hooks::core::Captures<&'a ()>,
+> {
     enum __HooksImplNever {}
     struct __HooksValueOfThisHook<'a, T: ?Sized + ToOwned + PartialEq> {
         __: (__HooksImplNever, &'a (), ::core::marker::PhantomData<T>),
@@ -32,4 +35,3 @@ fn use_hooked<'a, T: ?Sized + ToOwned + PartialEq>(
         (*memo).borrow()
     })
 }
-

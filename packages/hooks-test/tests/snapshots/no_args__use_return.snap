@@ -3,6 +3,7 @@ source: packages/hooks-test/tests/no_args.rs
 expression: "use_return::hook_impl_code()"
 ---
 fn use_return() -> impl ::hooks::core::UpdateHookUninitialized<
+    Uninitialized = impl ::hooks::core::HookPollNextUpdate + ::hooks::core::HookUnmount + ::core::default::Default,
     Hook = impl ::hooks::core::Hook + for<'hook> ::hooks::core::HookValue<
         'hook,
         Value = i32,
@@ -21,4 +22,3 @@ fn use_return() -> impl ::hooks::core::UpdateHookUninitialized<
         _,
     >(move |_: ::core::pin::Pin<&mut ::hooks::core::HookTuple::<()>>| { 1 })
 }
-

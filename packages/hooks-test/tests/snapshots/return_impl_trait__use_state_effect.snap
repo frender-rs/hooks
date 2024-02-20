@@ -3,6 +3,7 @@ source: packages/hooks-test/tests/return_impl_trait.rs
 expression: "use_state_effect::hook_impl_code()"
 ---
 fn use_state_effect() -> impl ::hooks::core::UpdateHookUninitialized<
+    Uninitialized = impl ::hooks::core::HookPollNextUpdate + ::hooks::core::HookUnmount + ::core::default::Default,
     Hook = impl ::hooks::core::Hook + for<'hook> ::hooks::core::HookValue<
         'hook,
         Value = impl Display,
@@ -43,4 +44,3 @@ fn use_state_effect() -> impl ::hooks::core::UpdateHookUninitialized<
         *state
     })
 }
-
