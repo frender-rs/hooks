@@ -18,7 +18,9 @@ pub mod arguments_with_lifetimes {
 
         #[test]
         fn assert_static() {
-            fn assert_static(v: impl Sized + 'static) {}
+            fn assert_static(v: impl Sized + 'static) {
+                _ = (v,)
+            }
 
             let s = String::new();
             assert_static(specify_any_bounds(&s));

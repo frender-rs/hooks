@@ -244,6 +244,12 @@ hooks_core::impl_hook![
     }
 ];
 
+/// An identity function which asserts argument is an [`effect fn`](EffectFor).
+#[inline]
+pub fn effect_fn<Dep, C: EffectCleanup, F: FnOnce(&Dep) -> C>(f: F) -> F {
+    f
+}
+
 #[cfg(test)]
 mod tests {
     use std::cell::RefCell;
@@ -334,10 +340,4 @@ mod tests {
             assert_eq!(values, ["123"]);
         });
     }
-}
-
-/// An identity function which asserts argument is an [`effect fn`](EffectFor).
-#[inline]
-pub fn effect_fn<Dep, C: EffectCleanup, F: FnOnce(&Dep) -> C>(f: F) -> F {
-    f
 }
