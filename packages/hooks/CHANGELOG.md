@@ -1,13 +1,5 @@
 # Changelog
 
-* The following workspace dependencies were updated
-  * dependencies
-    * hooks-core bumped from 2.0.0-alpha to 2.0.1-alpha
-
-* The following workspace dependencies were updated
-  * dependencies
-    * hooks-core bumped from 2.0.1-alpha to 2.1.0-alpha
-
 ## [3.0.0-alpha.2](https://github.com/frender-rs/hooks/compare/hooks-v3.0.0-alpha.1...hooks-v3.0.0-alpha.2) (2023-12-28)
 
 
