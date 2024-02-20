@@ -1,4 +1,5 @@
 # Changelog
+<!-- Touch this file so that the release-please would know this commit only affects this package -->
 
 ## [2.2.0-alpha](https://github.com/frender-rs/hooks/compare/hooks-core-v2.1.0-alpha...hooks-core-v2.2.0-alpha) (2023-04-04)
 
