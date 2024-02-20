@@ -436,6 +436,12 @@ mod utils {
 
         quote_spanned! {span=>
             impl #hooks_core_path::UpdateHookUninitialized<
+                Uninitialized =
+                    impl #hooks_core_path::HookPollNextUpdate
+                        + #hooks_core_path::HookUnmount
+                        + ::core::default::Default
+                        #bounds
+                ,
                 Hook = impl #hooks_core_path::Hook + for<'hook> #hooks_core_path::HookValue<'hook, Value = #value_ty>
                 #bounds
             >

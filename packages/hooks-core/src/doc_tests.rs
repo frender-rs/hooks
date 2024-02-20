@@ -53,3 +53,33 @@ pub enum ReturnValueMustNotHaveElidedLifetimes {}
 /// );
 /// ```
 pub enum GenericArgumentsWithElidedLifetimeAndUsedMustSpecifyBounds {}
+
+/// ```compile_fail
+/// use hooks_core::hook_fn;
+///
+/// struct Data<'a>(&'a ());
+///
+/// impl<'a> Data<'a> {
+///     hook_fn!(
+///         fn use_hook(v: &'a ()) {
+///             _ = (v,)
+///         }
+///     );
+/// }
+/// ```
+///
+/// ```
+/// use hooks_core::hook_fn;
+///
+/// struct Data<'a>(&'a ());
+///
+/// impl<'a> Data<'a> {
+///     hook_fn!(
+///         type Bounds = impl 'a;
+///         fn use_hook(v: &'a ()) {
+///             _ = (v,)
+///         }
+///     );
+/// }
+/// ```
+pub enum ArgumentsWithOuterLifetimeAndUsedMustSpecifyBounds {}

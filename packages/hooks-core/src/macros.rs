@@ -648,6 +648,14 @@ macro_rules! Hook {
 macro_rules! UpdateHookUninitialized {
     ($value:ty $(, $($bounds:tt)*)?) => {
         impl $crate::UpdateHookUninitialized<
+            Uninitialized = $crate::__impl_capture_lifetimes![
+                [
+                    impl $crate::HookPollNextUpdate
+                        + $crate::HookUnmount
+                        + ::core::default::Default
+                ]
+                { $($($bounds)*)? }
+            ],
             Hook = $crate::Hook![$value $(, $($bounds)*)?]
         >
     };

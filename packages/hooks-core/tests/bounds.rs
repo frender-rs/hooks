@@ -225,41 +225,52 @@ pub mod generic_arguments_with_lifetimes {
 }
 
 pub mod outer_lifetimes {
-    pub mod with_self_receiver {
-        use hooks_core::hook_fn;
 
-        pub struct Data<'a>(&'a str);
+    use hooks_core::hook_fn;
 
-        impl<'outer> Data<'outer> {
-            hook_fn!(
-                fn use_argument(v: &'outer str) {
-                    println!("{}", v);
-                }
-            );
+    pub struct Data<'a>(&'a str);
 
-            hook_fn!(
-                fn use_with_self_receiver(self) {
-                    println!("{}", self.0);
-                }
-            );
+    impl<'outer> Data<'outer> {
+        hook_fn!(
+            type Bounds = impl 'outer;
+            fn use_argument(v: &'outer str) {
+                println!("{}", v);
+            }
+        );
 
-            hook_fn!(
-                fn use_with_self_type(this: Self) {
-                    println!("{}", this.0);
-                }
-            );
+        hook_fn!(
+            type Bounds = impl '_;
+            fn default_lifetime(v: &'outer str) {
+                println!("{}", v);
+            }
+        );
 
-            hook_fn!(
-                fn use_with_self_receiver_rc(self: std::rc::Rc<Self>) {
-                    println!("{}", self.0);
-                }
-            );
+        hook_fn!(
+            type Bounds = impl 'outer;
+            fn use_with_self_receiver(self) {
+                println!("{}", self.0);
+            }
+        );
 
-            hook_fn!(
-                fn use_with_self_type_rc(this: std::rc::Rc<Self>) {
-                    println!("{}", this.0);
-                }
-            );
-        }
+        hook_fn!(
+            type Bounds = impl 'outer;
+            fn use_with_self_type(this: Self) {
+                println!("{}", this.0);
+            }
+        );
+
+        hook_fn!(
+            type Bounds = impl 'outer;
+            fn use_with_self_receiver_rc(self: std::rc::Rc<Self>) {
+                println!("{}", self.0);
+            }
+        );
+
+        hook_fn!(
+            type Bounds = impl 'outer;
+            fn use_with_self_type_rc(this: std::rc::Rc<Self>) {
+                println!("{}", this.0);
+            }
+        );
     }
 }
