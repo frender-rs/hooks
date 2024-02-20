@@ -7,5 +7,6 @@
   },
   "plugins": ["cargo-workspace"],
   "release-type": "rust",
+  "bump-minor-pre-major": true,
   "prerelease": true
 }
