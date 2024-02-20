@@ -29,6 +29,8 @@ jobs:
           cargo test --all-features
       - uses: google-github-actions/release-please-action@v4
         id: release
+        with:
+          target-branch: alpha
       - name: Publish
         run: |
           for dir_path in $PATHS_RELEASED
