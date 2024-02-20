@@ -1,3 +1,4 @@
+mod captures;
 mod utils;
 
 pub use utils::path_or_lit::PathOrLit;

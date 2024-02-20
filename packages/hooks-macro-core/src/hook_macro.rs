@@ -2,10 +2,11 @@ use std::borrow::Cow;
 
 use darling::FromMeta;
 use proc_macro2::Span;
-use quote::quote_spanned;
+use quote::{quote_spanned, ToTokens};
 use syn::spanned::Spanned;
 
 use crate::{
+    captures::capture_lifetimes,
     detect_hooks, detected_hooks_to_tokens,
     utils::{
         chain::Chain,
@@ -91,6 +92,49 @@ impl HookArgs {
         );
 
         let bounds = self.bounds;
+
+        let lifetimes_from_fn_generics = item_fn.sig.generics.lifetimes().map(|lt| &lt.lifetime);
+        let lifetimes_from_bounds = bounds.iter().flatten().filter_map(|bound| match bound {
+            syn::TypeParamBound::Trait(_) => None,
+            syn::TypeParamBound::Lifetime(lt) => Some(lt),
+        });
+        let lifetimes = lifetimes_from_fn_generics.chain(lifetimes_from_bounds);
+
+        let captures = capture_lifetimes(
+            lifetimes,
+            quote_spanned!(hooks_core_path.span() => #hooks_core_path::Captures),
+        );
+
+        // Trait bounds only
+        let bounds = bounds.map(|bounds| {
+            bounds
+                .into_pairs()
+                .filter_map(|pair| {
+                    let (bound, punc) = pair.into_tuple();
+                    match bound {
+                        syn::TypeParamBound::Trait(tb) => {
+                            Some(syn::punctuated::Pair::new(tb, punc))
+                        }
+                        syn::TypeParamBound::Lifetime(_) => None,
+                    }
+                })
+                .collect::<syn::punctuated::Punctuated<syn::TraitBound, _>>()
+        });
+
+        let bounds = match (captures, bounds) {
+            (Some(captures), Some(bounds)) => Some({
+                let mut ts = captures;
+
+                ts.extend([
+                    //
+                    quote_spanned!(item_fn.sig.fn_token.span() =>  +),
+                    bounds.into_token_stream(),
+                ]);
+
+                ts
+            }),
+            (a, b) => a.or(b.map(ToTokens::into_token_stream)),
+        };
 
         let sig = &mut item_fn.sig;
 
@@ -394,7 +438,7 @@ mod utils {
             impl #hooks_core_path::UpdateHookUninitialized<
                 Hook = impl #hooks_core_path::Hook + for<'hook> #hooks_core_path::HookValue<'hook, Value = #value_ty>
                 #bounds
-            > #bounds
+            >
         }
     }
 }
