@@ -23,7 +23,7 @@ macro_rules! h {
 ///     }
 /// );
 ///
-/// # use hooks_core::{UpdateHookUninitialized, Hook, HookValue};
+/// # use hooks_core::{UpdateHookUninitialized, Hook, HookValue, HookPollNextUpdate, HookUnmount};
 /// /// `use_constant()` actually returns:
 /// # fn assert_0() ->
 /// UpdateHookUninitialized![i32]
@@ -31,6 +31,7 @@ macro_rules! h {
 /// /// The above macro expands to
 /// # fn assert_1() ->
 /// impl UpdateHookUninitialized<
+///     Uninitialized = impl HookPollNextUpdate + HookUnmount + Default,
 ///     Hook = impl Hook + for<'hook> HookValue<'hook, Value = i32>
 /// >
 /// # { use_constant() }
@@ -112,9 +113,23 @@ macro_rules! h {
 ///
 /// <details><summary>
 ///
-/// If the lifetime comes from outer `Self`, it is auto captured.
+/// If the lifetime comes from outer `Self` and is used,
+/// it must be specified with `type Bounds = impl 'a;`.
 ///
 /// </summary>
+///
+/// ```compile_fail
+/// # use hooks_core::hook_fn;
+/// struct Data<'a>(&'a str);
+///
+/// impl<'a> Data<'a> {
+///     hook_fn!(
+///         fn use_data(self) {
+///             println!("{}", self.0)
+///         }
+///    );
+/// }
+/// ```
 ///
 /// ```
 /// # use hooks_core::hook_fn;
@@ -122,8 +137,9 @@ macro_rules! h {
 ///
 /// impl<'a> Data<'a> {
 ///     hook_fn!(
-///         fn use_data(v: &'a str) {
-///             println!("{}", v)
+///         type Bounds = impl 'a;
+///         fn use_data(self) {
+///             println!("{}", self.0)
 ///         }
 ///    );
 /// }

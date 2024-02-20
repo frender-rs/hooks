@@ -33,11 +33,15 @@ pub struct HookArgs {
     /// When a hook fn borrows from a lifetime,
     /// this bound might need to be explicitly specified.
     ///
+    /// Note that all lifetimes declared in fn generics are auto captured by `#[hook]`.
+    /// Thus, `#[hook(bounds = "...")]` is only required for
+    /// elided lifetimes and outer lifetimes.
+    ///
     /// ```compile_fail
     /// # extern crate hooks_dev as hooks;
     /// # use hooks::prelude::*;
     /// #[hook]
-    /// fn use_borrow<'a>(v: &'a str) -> usize {
+    /// fn use_borrow(v: &str) -> usize {
     ///     v.len()
     /// }
     /// ```
@@ -45,8 +49,8 @@ pub struct HookArgs {
     /// ```
     /// # extern crate hooks_dev as hooks;
     /// # use hooks::prelude::*;
-    /// #[hook(bounds = "'a")]
-    /// fn use_borrow<'a>(v: &'a str) -> usize {
+    /// #[hook(bounds = "'_")]
+    /// fn use_borrow(v: &str) -> usize {
     ///     v.len()
     /// }
     /// ```
@@ -58,8 +62,8 @@ pub struct HookArgs {
     /// # extern crate hooks_dev as hooks;
     /// # use hooks::prelude::*;
     /// hook_fn!(
-    ///     type Bounds = impl 'a;
-    ///     fn use_borrow<'a>(v: &'a str) -> usize {
+    ///     type Bounds = impl '_;
+    ///     fn use_borrow(v: &str) -> usize {
     ///         v.len()
     ///     }
     /// );
