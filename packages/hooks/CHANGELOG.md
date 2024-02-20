@@ -1,5 +1,20 @@
 # Changelog
 
+## [3.0.0-alpha.3](https://github.com/frender-rs/hooks/compare/hooks-v3.0.0-alpha.2...hooks-v3.0.0-alpha.3) (2024-02-20)
+
+
+### Miscellaneous Chores
+
+* **hooks:** fix changelog ([22413fb](https://github.com/frender-rs/hooks/commit/22413fbc7a48a2e66f19ccca103b5268652284e8))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * hooks-macro bumped from 0.1.1 to 0.1.2
+    * hooks-core bumped from 2.2.0-alpha to 3.0.0-alpha.1
+
 ## [3.0.0-alpha.2](https://github.com/frender-rs/hooks/compare/hooks-v3.0.0-alpha.1...hooks-v3.0.0-alpha.2) (2023-12-28)
 
 

@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.3.0](https://github.com/frender-rs/hooks/compare/hooks-macro-core-v0.2.0...hooks-macro-core-v0.3.0) (2024-02-20)
+
+
+### ⚠ BREAKING CHANGES
+
+* now `UpdateHookUninitialized::Uninitialized` is an abstract type in `UpdateHookUninitialized!` and return type of `hook_fn!` and `#[hook_fn]`
+* reimplement lifetime bounds in `#[hook]` with the Captures trick
+
+### Features
+
+* now `UpdateHookUninitialized::Uninitialized` is an abstract type in `UpdateHookUninitialized!` and return type of `hook_fn!` and `#[hook_fn]` ([79f9be9](https://github.com/frender-rs/hooks/commit/79f9be991390f46e82dfa28984cd46bca7a58f9c))
+* reimplement lifetime bounds in `#[hook]` with the Captures trick ([981adb2](https://github.com/frender-rs/hooks/commit/981adb25ae6196d917e102e35fdc02bcb86297a8))
+
+
+### Bug Fixes
+
+* docs and doc tests ([25f5e27](https://github.com/frender-rs/hooks/commit/25f5e27e896ce1c76aa1bec91c7329eea629b805))
+
 ## [0.2.0](https://github.com/frender-rs/hooks/compare/hooks-macro-core-v0.1.0...hooks-macro-core-v0.2.0) (2023-04-04)
 
 
