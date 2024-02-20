@@ -4,6 +4,10 @@
   * dependencies
     * hooks-macro-core bumped from 0.1.0 to 0.2.0
 
+* The following workspace dependencies were updated
+  * dependencies
+    * hooks-macro-core bumped from 0.2.0 to 0.3.0
+
 ## 0.1.0 (2023-03-16)
 
 
