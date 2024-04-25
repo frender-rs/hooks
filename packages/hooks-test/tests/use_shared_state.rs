@@ -9,7 +9,7 @@ use smol::Task;
 #[test]
 fn shared_state_delay() {
     thread_local! {
-        static EXE: smol::LocalExecutor<'static> = smol::LocalExecutor::new();
+        static EXE: smol::LocalExecutor<'static> = const { smol::LocalExecutor::new() };
     }
 
     fn spawn<T: 'static>(future: impl Future<Output = T> + 'static) -> Task<T> {
@@ -53,7 +53,7 @@ fn shared_state_delay() {
 #[test]
 fn shared_state_eq_delay() {
     thread_local! {
-        static EXE: smol::LocalExecutor<'static> = smol::LocalExecutor::new();
+        static EXE: smol::LocalExecutor<'static> = const { smol::LocalExecutor::new() };
     }
 
     fn spawn<T: 'static>(future: impl Future<Output = T> + 'static) -> Task<T> {

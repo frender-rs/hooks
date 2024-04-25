@@ -230,7 +230,7 @@ pub mod outer_lifetimes {
 
     use hooks_core::hook_fn;
 
-    pub struct Data<'a>(&'a str);
+    pub struct Data<'a>(#[allow(dead_code)] &'a str);
 
     impl<'outer> Data<'outer> {
         hook_fn!(

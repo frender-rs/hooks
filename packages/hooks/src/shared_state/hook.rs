@@ -160,7 +160,7 @@ mod tests {
     fn reference_cycle_should_always_pending() {
         use hooks_core::IntoHook;
 
-        struct Data(Option<super::SharedState<Self>>);
+        struct Data(#[allow(dead_code)] Option<super::SharedState<Self>>);
 
         hook_fn!(
             fn use_test() {
