@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.4.0](https://github.com/frender-rs/hooks/compare/hooks-macro-core-v0.3.0...hooks-macro-core-v0.4.0) (2024-04-25)
+
+
+### ⚠ BREAKING CHANGES
+
+* upgrade syn to version 2
+
+### dep
+
+* upgrade syn to version 2 ([2eab8b5](https://github.com/frender-rs/hooks/commit/2eab8b5ab7212e94e45b5c3915f28dd2c0816e8e))
+
 ## [0.3.0](https://github.com/frender-rs/hooks/compare/hooks-macro-core-v0.2.0...hooks-macro-core-v0.3.0) (2024-02-20)
 
 

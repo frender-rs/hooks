@@ -263,7 +263,7 @@ dependencies = [
 
 [[package]]
 name = "hooks"
-version = "3.0.0-alpha.3"
+version = "3.0.0-alpha.4"
 dependencies = [
  "futures-lite",
  "hooks-core",
@@ -284,14 +284,14 @@ dependencies = [
 
 [[package]]
 name = "hooks-macro"
-version = "0.1.2"
+version = "0.2.0"
 dependencies = [
  "hooks-macro-core",
 ]
 
 [[package]]
 name = "hooks-macro-core"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "darling",
  "hooks",
@@ -302,7 +302,7 @@ dependencies = [
 
 [[package]]
 name = "hooks-test"
-version = "0.1.12"
+version = "0.1.13"
 dependencies = [
  "futures-lite",
  "hooks",

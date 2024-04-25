@@ -1,6 +1,6 @@
 [package]
 name = "hooks"
-version = "3.0.0-alpha.3"
+version = "3.0.0-alpha.4"
 edition = "2021"
 description = "Compile-time, async hooks"
 license = "MIT"
@@ -10,7 +10,7 @@ repository = "https://github.com/frender-rs/hooks"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-hooks-macro = { path = "../hooks-macro", version = "0.1.2", optional = true }
+hooks-macro = { path = "../hooks-macro", version = "0.2.0", optional = true }
 hooks-core = { path = "../hooks-core", version = "3.0.0-alpha.1", default-features = false }
 pin-project-lite = "0.2.9"
 
