@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use darling::FromMeta;
+use darling::{ast::NestedMeta, FromMeta};
 use proc_macro2::Span;
 use quote::{quote_spanned, ToTokens};
 use syn::spanned::Spanned;
@@ -99,8 +99,8 @@ impl HookArgs {
 
         let lifetimes_from_fn_generics = item_fn.sig.generics.lifetimes().map(|lt| &lt.lifetime);
         let lifetimes_from_bounds = bounds.iter().flatten().filter_map(|bound| match bound {
-            syn::TypeParamBound::Trait(_) => None,
             syn::TypeParamBound::Lifetime(lt) => Some(lt),
+            _ => None,
         });
         let lifetimes = lifetimes_from_fn_generics.chain(lifetimes_from_bounds);
 
@@ -119,7 +119,7 @@ impl HookArgs {
                         syn::TypeParamBound::Trait(tb) => {
                             Some(syn::punctuated::Pair::new(tb, punc))
                         }
-                        syn::TypeParamBound::Lifetime(_) => None,
+                        _ => None,
                     }
                 })
                 .collect::<syn::punctuated::Punctuated<syn::TraitBound, _>>()
@@ -252,10 +252,9 @@ impl HookArgs {
             fn_stmts_extract_data: impl_extract_hooks_data,
         } = detected_hooks_to_tokens(used_hooks.hooks, &hooks_core_path, sig.fn_token.span);
 
-        item_fn
-            .block
-            .stmts
-            .push(syn::Stmt::Expr(syn::Expr::Verbatim(
+        item_fn.block.stmts.push(syn::Stmt::Expr(
+            syn::Expr::Verbatim(
+                //
                 quote_spanned! { span_fn_name =>
                     enum __HooksImplNever {}
 
@@ -292,16 +291,18 @@ impl HookArgs {
                         }
                     )
                 },
-            )));
+            ),
+            None,
+        ));
 
         // errors.finish().err()
         None
     }
 
     pub fn from_punctuated_meta_list(
-        meta_list: syn::punctuated::Punctuated<syn::NestedMeta, syn::Token![,]>,
+        meta_list: syn::punctuated::Punctuated<NestedMeta, syn::Token![,]>,
     ) -> darling::Result<Self> {
-        let args: Vec<syn::NestedMeta> = meta_list.into_iter().collect();
+        let args: Vec<NestedMeta> = meta_list.into_iter().collect();
         Self::from_list(&args)
     }
 }
@@ -355,10 +356,12 @@ fn replace_impl_trait_in_type(
                                     replace_impl_trait_in_type(ty, f);
                                 }
                                 syn::GenericArgument::Const(_) => {}
-                                syn::GenericArgument::Binding(b) => {
-                                    replace_impl_trait_in_type(&mut b.ty, f);
-                                }
                                 syn::GenericArgument::Constraint(_) => {}
+                                syn::GenericArgument::AssocType(assoc) => {
+                                    replace_impl_trait_in_type(&mut assoc.ty, f);
+                                }
+                                syn::GenericArgument::AssocConst(_) => {}
+                                _ => {}
                             }
                         }
                     }

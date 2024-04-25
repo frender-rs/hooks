@@ -1,4 +1,4 @@
-use darling::{FromMeta, ToTokens};
+use darling::{ast::NestedMeta, FromMeta, ToTokens};
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum PathOrLit<V> {
@@ -25,7 +25,7 @@ impl<V> PathOrLit<V> {
 }
 
 impl<V: FromMeta + From<syn::Path>> FromMeta for PathOrLit<V> {
-    fn from_list(items: &[syn::NestedMeta]) -> darling::Result<Self> {
+    fn from_list(items: &[NestedMeta]) -> darling::Result<Self> {
         if items.is_empty() {
             return Err(darling::Error::too_few_items(1));
         } else if items.len() > 1 {
@@ -34,10 +34,8 @@ impl<V: FromMeta + From<syn::Path>> FromMeta for PathOrLit<V> {
         let nmi = &items[0];
 
         match nmi {
-            syn::NestedMeta::Meta(syn::Meta::Path(path)) => {
-                Ok(PathOrLit::Path(path.clone().into()))
-            }
-            syn::NestedMeta::Lit(value) => Self::from_value(value),
+            NestedMeta::Meta(syn::Meta::Path(path)) => Ok(PathOrLit::Path(path.clone().into())),
+            NestedMeta::Lit(value) => Self::from_value(value),
             _ => Err(darling::Error::unexpected_type("non-word").with_span(nmi)),
         }
     }

@@ -12,8 +12,8 @@ repository = "https://github.com/frender-rs/hooks"
 [dependencies]
 proc-macro2 = "1.0.47"
 quote = "1.0.21"
-syn = "1.0.102"
-darling = "0.14.1"
+syn = "2.0.60"
+darling = "0.20.8"
 
 [dev-dependencies]
 hooks_dev = { path = "../hooks", package = "hooks" }

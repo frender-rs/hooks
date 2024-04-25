@@ -20,5 +20,5 @@ fn use_return() -> impl ::hooks::core::UpdateHookUninitialized<
         __HooksValueOfThisHook,
         _,
         _,
-    >(move |_: ::core::pin::Pin<&mut ::hooks::core::HookTuple::<()>>| { 1 })
+    >(move |_: ::core::pin::Pin<&mut ::hooks::core::HookTuple<()>>| { 1 })
 }

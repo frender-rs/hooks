@@ -25,5 +25,5 @@ fn use_lt<'a>(
         __HooksValueOfThisHook<'a, _>,
         _,
         _,
-    >(move |_: ::core::pin::Pin<&mut ::hooks::core::HookTuple::<()>>| { v })
+    >(move |_: ::core::pin::Pin<&mut ::hooks::core::HookTuple<()>>| { v })
 }

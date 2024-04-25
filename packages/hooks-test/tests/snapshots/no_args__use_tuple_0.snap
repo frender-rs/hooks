@@ -20,5 +20,5 @@ fn use_tuple_0() -> impl ::hooks::core::UpdateHookUninitialized<
         __HooksValueOfThisHook,
         _,
         _,
-    >(move |_: ::core::pin::Pin<&mut ::hooks::core::HookTuple::<()>>| {})
+    >(move |_: ::core::pin::Pin<&mut ::hooks::core::HookTuple<()>>| {})
 }

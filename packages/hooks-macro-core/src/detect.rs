@@ -33,11 +33,10 @@ pub mod is_hook {
 
 /// attr is `#[not_hook]` or `#![not_hook]`
 pub fn attr_is_not_hook(attr: &syn::Attribute) -> bool {
-    attr.tokens.is_empty()
-        && attr
-            .path
-            .get_ident()
-            .map_or(false, |ident| ident == "not_hook")
+    match &attr.meta {
+        syn::Meta::Path(path) => path.get_ident().map_or(false, |ident| ident == "not_hook"),
+        _ => false,
+    }
 }
 
 struct ExprOfStmtMut<'a> {
@@ -49,7 +48,12 @@ impl<'a> ExprOfStmtMut<'a> {
     fn try_from(stmt: &'a mut syn::Stmt) -> Option<Self> {
         match stmt {
             syn::Stmt::Local(local) => {
-                if let Some((_, expr)) = &mut local.init {
+                if let Some(syn::LocalInit {
+                    eq_token: _,
+                    expr,
+                    diverge: _, // diverge is not top level
+                }) = &mut local.init
+                {
                     Some(Self {
                         expr,
                         stmt_attrs: Some(&mut local.attrs),
@@ -62,14 +66,12 @@ impl<'a> ExprOfStmtMut<'a> {
                 // Items are untouched
                 None
             }
-            syn::Stmt::Expr(expr) => Some(Self {
+            syn::Stmt::Expr(expr, _) => Some(Self {
                 expr,
                 stmt_attrs: None,
             }),
-            syn::Stmt::Semi(expr, _) => Some(Self {
-                expr,
-                stmt_attrs: None,
-            }),
+            // Macros are untouched because it might not expand to expr
+            syn::Stmt::Macro(_) => None,
         }
     }
 }
@@ -204,11 +206,10 @@ impl NotHookAttrs {
                     pound_token: attr.pound_token,
                     style: attr.style,
                     bracket_token: attr.bracket_token,
-                    path: syn::Path {
+                    meta: syn::Meta::Path(syn::Path {
                         leading_colon: None,
                         segments: Default::default(),
-                    },
-                    tokens: Default::default(),
+                    }),
                 };
                 nothing_is_removed = false;
                 self.0.push(std::mem::replace(attr, src));
@@ -258,7 +259,6 @@ impl<F: FnMut(&mut syn::Expr)> MutateHookExpr<F> {
                 }
             }
             syn::Expr::Assign(e) => process_inner_expressions!(e { left, right }),
-            syn::Expr::AssignOp(e) => process_inner_expressions!(e { left, right }),
             syn::Expr::Async(_) => {
                 // `async {}` is untouched
             }
@@ -267,7 +267,6 @@ impl<F: FnMut(&mut syn::Expr)> MutateHookExpr<F> {
             syn::Expr::Block(_) => {
                 // `{}` is untouched because it is not top level
             }
-            syn::Expr::Box(e) => process_inner_expressions!(e.expr),
             syn::Expr::Break(_) => {
                 // `break` is untouched
                 // because there cannot be any break in top level.
@@ -335,10 +334,10 @@ impl<F: FnMut(&mut syn::Expr)> MutateHookExpr<F> {
             }
             syn::Expr::Range(r) => {
                 if (self.not_hook_attrs).might_be_hook(&mut r.attrs) {
-                    if let Some(e) = &mut r.from {
+                    if let Some(e) = &mut r.start {
                         self.mutate_if_expr_is_hook(e);
                     }
-                    if let Some(e) = &mut r.to {
+                    if let Some(e) = &mut r.end {
                         self.mutate_if_expr_is_hook(e);
                     }
                 }
@@ -377,7 +376,6 @@ impl<F: FnMut(&mut syn::Expr)> MutateHookExpr<F> {
                     }
                 }
             }
-            syn::Expr::Type(e) => process_inner_expressions!(e.expr),
             syn::Expr::Unary(e) => process_inner_expressions!(e.expr),
             syn::Expr::Unsafe(_) => {
                 // `unsafe {}` is untouched
@@ -391,6 +389,8 @@ impl<F: FnMut(&mut syn::Expr)> MutateHookExpr<F> {
                 // `yield` is untouched
                 // with the same reason as `break`
             }
+            syn::Expr::Const(_) => {}
+            syn::Expr::Infer(_) => {}
             _ => {
                 // unknown exprs are untouched
                 // Adding new variants or changing behavior of current variants

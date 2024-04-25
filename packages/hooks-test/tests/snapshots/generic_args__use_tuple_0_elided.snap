@@ -22,5 +22,5 @@ fn use_tuple_0_elided(
         __HooksValueOfThisHook,
         _,
         _,
-    >(move |_: ::core::pin::Pin<&mut ::hooks::core::HookTuple::<()>>| {})
+    >(move |_: ::core::pin::Pin<&mut ::hooks::core::HookTuple<()>>| {})
 }

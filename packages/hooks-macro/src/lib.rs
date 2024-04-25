@@ -1,15 +1,20 @@
 use proc_macro::TokenStream;
 
 use hooks_macro_core::{
-    darling::FromMeta,
+    darling::{self, ast::NestedMeta, FromMeta},
     proc_macro2,
     quote::ToTokens,
-    syn::{parse_macro_input, AttributeArgs, ItemFn},
+    syn::{parse_macro_input, ItemFn},
 };
 
 #[proc_macro_attribute]
 pub fn hook(args: TokenStream, input: TokenStream) -> TokenStream {
-    let attr_args = parse_macro_input!(args as AttributeArgs);
+    let attr_args = match NestedMeta::parse_meta_list(args.into()) {
+        Ok(v) => v,
+        Err(e) => {
+            return TokenStream::from(darling::Error::from(e).write_errors());
+        }
+    };
 
     let args = match ::hooks_macro_core::HookArgs::from_list(&attr_args) {
         Ok(v) => v,

@@ -20,7 +20,7 @@ fn use_hook_lt() -> impl ::hooks::core::UpdateHookUninitialized<
         __HooksValueOfThisHook,
         _,
         _,
-    >(move |_: ::core::pin::Pin<&mut ::hooks::core::HookTuple::<()>>| {
+    >(move |_: ::core::pin::Pin<&mut ::hooks::core::HookTuple<()>>| {
         static VALUE: i32 = 2;
         &VALUE
     })
