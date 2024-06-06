@@ -40,7 +40,7 @@ pub mod arguments_with_lifetimes {
         );
 
         #[derive(Debug)]
-        struct WithReceiverArgument;
+        pub struct WithReceiverArgument;
         impl WithReceiverArgument {
             hook_fn!(
                 type Bounds = impl '_;

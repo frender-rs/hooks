@@ -1,6 +1,6 @@
 use std::pin::Pin;
 
-use hooks_core::{Hook, HookExt, IntoHook, UpdateHook};
+use hooks_core::{Hook, HookExt, UpdateHook};
 
 #[derive(Debug)]
 pub struct UninitializedHook<H>(pub Option<H>);
@@ -9,7 +9,7 @@ impl<H: Hook + Unpin> UninitializedHook<H> {
     #[inline]
     pub(crate) fn use_into_or_update_hook(
         &mut self,
-        into_hook: impl IntoHook<Hook = H> + UpdateHook,
+        into_hook: impl UpdateHook<Hook = H>,
     ) -> hooks_core::Value![H] {
         let hook = match &mut self.0 {
             Some(hook) => {
