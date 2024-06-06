@@ -1,6 +1,13 @@
 # Changelog
 <!-- Touch this file so that the release-please would know this commit only affects this package -->
 
+## [3.0.0-alpha.5](https://github.com/frender-rs/hooks/compare/hooks-v3.0.0-alpha.4...hooks-v3.0.0-alpha.5) (2024-06-06)
+
+
+### Features
+
+* impl ReusableHook for SharedStateEq ([1d0ec20](https://github.com/frender-rs/hooks/commit/1d0ec20f1f7054a347673e6f9513bfefb53dd039))
+
 ## [3.0.0-alpha.4](https://github.com/frender-rs/hooks/compare/hooks-v3.0.0-alpha.3...hooks-v3.0.0-alpha.4) (2024-04-25)
 
 
