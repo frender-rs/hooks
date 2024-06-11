@@ -47,6 +47,29 @@ pub mod shared_state;
 #[cfg(feature = "use_state")]
 pub mod state;
 
+#[cfg(feature = "use_state_with_updater")]
+mod state_with_updater;
+#[cfg(feature = "use_state_with_updater")]
+pub use state_with_updater::{StateUpdater, StateWithUpdater};
+
+#[cfg(feature = "UpdateState")]
+pub use state_with_updater::{IntoUpdateStateResult, UpdateState};
+
+#[cfg(feature = "use_shared_update_state")]
+pub use state_with_updater::{SharedUpdateState, UseSharedUpdateState, UseSharedUpdateStateWith};
+
+#[cfg(feature = "use_shared_call")]
+pub use state_with_updater::{Call, SharedCall, UseSharedCall, UseSharedCallWith};
+#[cfg(feature = "use_shared_reducer")]
+pub use state_with_updater::{
+    Reduce, Reducer, SharedReduce, SharedReducer, UseSharedReduce, UseSharedReduceWith,
+    UseSharedReducer, UseSharedReducerWith,
+};
+#[cfg(feature = "use_shared_set")]
+pub use state_with_updater::{Set, SharedSet, UseSharedSet, UseSharedSetWith};
+#[cfg(feature = "use_shared_toggle")]
+pub use state_with_updater::{SharedToggle, Toggle, UseSharedToggle, UseSharedToggleWith};
+
 #[cfg(feature = "use_uninitialized_hook")]
 pub mod uninitialized_hook;
 
@@ -88,6 +111,24 @@ pub mod prelude {
         use_state_eq_default_n, use_state_eq_n, use_state_eq_n_with, use_state_eq_with,
         use_state_n, use_state_n_with, use_state_with,
     };
+
+    #[cfg(feature = "use_state_with_updater")]
+    pub use crate::state_with_updater::{use_state_with_updater, use_state_with_updater_with};
+
+    #[cfg(feature = "use_shared_update_state")]
+    pub use crate::state_with_updater::{use_shared_update_state, use_shared_update_state_with};
+
+    #[cfg(feature = "use_shared_call")]
+    pub use crate::state_with_updater::{use_shared_call, use_shared_call_with};
+    #[cfg(feature = "use_shared_reducer")]
+    pub use crate::state_with_updater::{
+        use_shared_reduce, use_shared_reduce_with, use_shared_reducer, use_shared_reducer_with,
+    };
+    #[cfg(feature = "use_shared_set")]
+    pub use crate::state_with_updater::{use_shared_set, use_shared_set_with};
+    #[cfg(feature = "use_shared_toggle")]
+    pub use crate::state_with_updater::{use_shared_toggle, use_shared_toggle_with};
+
     #[cfg(feature = "use_uninitialized_hook")]
     pub use crate::uninitialized_hook::use_uninitialized_hook;
 

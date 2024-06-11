@@ -39,7 +39,15 @@ all = [
     "use_shared_ref",
     "use_shared_state",
     "use_state",
+    "use_state_with_updater",
     "use_uninitialized_hook",
+
+    "use_shared_update_state",
+
+    "use_shared_call",
+    "use_shared_reducer",
+    "use_shared_set",
+    "use_shared_toggle",
 ]
 ShareValue = []
 use_debug = []
@@ -54,7 +62,16 @@ use_reused = []
 use_shared_ref = ["ShareValue"]
 use_shared_state = ["ShareValue"]
 use_state = ["smallvec"]
+use_state_with_updater = []
 use_uninitialized_hook = []
+
+UpdateState = ["use_state_with_updater"]
+use_shared_update_state = ["UpdateState"]
+
+use_shared_call = ["use_shared_update_state"]
+use_shared_reducer = ["use_shared_update_state"]
+use_shared_set = ["use_shared_update_state"]
+use_shared_toggle = ["use_shared_update_state"]
 
 [package.metadata.docs.rs]
 all-features = true

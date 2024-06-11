@@ -20,6 +20,13 @@ test_single_feature use_state
 test_single_feature use_state,use_reused
 test_single_feature use_uninitialized_hook
 
+test_single_feature use_state_with_updater
+test_single_feature use_shared_update_state
+test_single_feature use_shared_call
+test_single_feature use_shared_reducer
+test_single_feature use_shared_set
+test_single_feature use_shared_toggle
+
 cargo test -p hooks --no-default-features
 cargo test -p hooks --no-default-features --features all
 cargo test -p hooks --no-default-features --features all,proc-macro
