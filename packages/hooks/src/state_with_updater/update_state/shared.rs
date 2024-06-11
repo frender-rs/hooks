@@ -14,6 +14,16 @@ impl<U> Clone for SharedUpdateState<U> {
     }
 }
 
+impl<U> Drop for SharedUpdateState<U> {
+    fn drop(&mut self) {
+        let mut waker_and_updater = self.0.borrow_mut();
+
+        if let Some(waker) = waker_and_updater.waker.take() {
+            waker.wake()
+        }
+    }
+}
+
 impl<U> SharedUpdateState<U> {
     pub fn new(updater: U) -> Self {
         Self(Rc::new(RefCell::new(WakerAndUpdater {
