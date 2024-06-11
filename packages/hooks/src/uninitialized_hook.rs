@@ -73,7 +73,7 @@ hooks_core::impl_hook![
     all(
         feature = "futures-core",
         feature = "proc-macro",
-        feature = "use_state",
+        feature = "use_shared_set",
         feature = "use_effect",
     ),
     doc = r###"
@@ -81,7 +81,7 @@ hooks_core::impl_hook![
 # use hooks::prelude::*;
 #[hook]
 fn use_demo() -> i32 {
-    let (state, updater) = use_state(0);
+    let (state, updater) = use_shared_set(0);
     let hook_effect = use_uninitialized_hook();
     if *state < 2 {
         let updater = updater.clone();

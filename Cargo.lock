@@ -269,7 +269,6 @@ dependencies = [
  "hooks-core",
  "hooks-macro",
  "pin-project-lite",
- "smallvec",
 ]
 
 [[package]]
@@ -462,12 +461,6 @@ checksum = "6528351c9bc8ab22353f9d776db39a20288e8d6c37ef8cfe3317cf875eecfc2d"
 dependencies = [
  "autocfg",
 ]
-
-[[package]]
-name = "smallvec"
-version = "1.10.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a507befe795404456341dfab10cef66ead4c041f62b8b11bbb92bffe5d0953e0"
 
 [[package]]
 name = "smol"

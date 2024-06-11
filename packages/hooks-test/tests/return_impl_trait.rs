@@ -202,15 +202,16 @@ fn one_state() {
     hook_macro! {
         #[hook]
         fn use_str_state() -> impl Any {
-            let (state, updater) = ::hooks::use_state_with(String::new);
-
-            updater.replace_maybe_with_fn_pointer(|old| {
+            let (state, updater) = ::hooks::use_shared_call(String::new(), |old| {
                 if old.len() < 2 {
-                    Some(format!("{old} "))
+                    *old = format!("{old} ");
+                    true
                 } else {
-                    None
+                    false
                 }
             });
+
+            updater.call();
 
             state.clone()
         }
@@ -235,13 +236,7 @@ fn one_state() {
             std::mem::size_of_val(&hook),
             std::mem::size_of::<(
                 bool,
-                utils::HookUninitialized<
-                    ::hooks::state::UseState<
-                        String,
-                        { ::hooks::state::STAGING_STATES_DEFAULT_STACK_COUNT },
-                        false,
-                    >,
-                >
+                utils::HookUninitialized<::hooks::UseSharedCall<String, fn(&mut String) -> bool>>
             )>()
         );
 
@@ -274,7 +269,7 @@ fn two_hooks() {
     hook_macro! {
         #[hook]
         fn use_state_effect() -> impl Display {
-            let (state, updater) = ::hooks::use_state_with::<i32>(Default::default);
+            let (state, updater) = ::hooks::use_shared_set_with::<i32>(Default::default);
             let updater = updater.clone();
 
             ::hooks::use_effect(move |v: &_| {
@@ -303,10 +298,10 @@ fn two_hooks() {
             std::mem::size_of_val(&hook),
             std::mem::size_of_val(&(
                 false,
-                utils::hook_uninitialized_default(hooks::use_state(0)),
+                utils::hook_uninitialized_default(hooks::use_shared_set(0)),
                 utils::hook_uninitialized_default(hooks::use_effect(
                     {
-                        let updater = hooks::state::StateUpdater::<i32>::new();
+                        let updater = hooks::SharedSet::<i32>::new(hooks::Set::default());
                         move |_: &i32| drop(updater)
                     },
                     0,

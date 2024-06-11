@@ -83,7 +83,7 @@ pub struct UseLazyPinnedHook<H: Hook>(PhantomData<H>);
     all(
         feature = "futures-core",
         feature = "proc-macro",
-        feature = "use_state",
+        feature = "use_shared_set",
         feature = "use_effect",
     ),
     doc = r###"
@@ -91,7 +91,7 @@ pub struct UseLazyPinnedHook<H: Hook>(PhantomData<H>);
 # use hooks::prelude::*;
 #[hook]
 fn use_demo() -> i32 {
-    let (state, updater) = use_state(0);
+    let (state, updater) = use_shared_set(0);
     if *state < 2 {
         use_effect(|v: &i32| updater.set(*v + 1), *state);
     }
@@ -113,7 +113,7 @@ assert_eq!(values, [0])
     all(
         feature = "futures-core",
         feature = "proc-macro",
-        feature = "use_state",
+        feature = "use_shared_set",
         feature = "use_effect",
     ),
     doc = r###"
@@ -121,7 +121,7 @@ assert_eq!(values, [0])
 # use hooks::prelude::*;
 #[hook]
 fn use_demo() -> i32 {
-    let (state, updater) = use_state(0);
+    let (state, updater) = use_shared_set(0);
     let hook_effect = use_lazy_pinned_hook();
     if *state < 2 {
         let updater = updater.clone();

@@ -25,7 +25,7 @@ use hooks::prelude::*;
 
 hook_fn!(
     fn use_demo() {
-        let (state, updater) = h![hooks::use_state(0)];
+        let (state, updater) = h![hooks::use_shared_set(0)];
 
         let updater = updater.clone();
 
@@ -60,7 +60,7 @@ use hooks::prelude::*;
 
 #[hook]
 fn use_demo() {
-    let (state, updater) = hooks::use_state(0);
+    let (state, updater) = hooks::use_shared_set(0);
 
     let updater = updater.clone();
 
@@ -177,13 +177,21 @@ which is a [`Stream`] if the hook is [`NonLendingHook`].
 # use hooks::prelude::*;
 hook_fn!(
     fn use_demo() -> i32 {
-        let (state, updater) = h![use_state(0)];
+        let (state, updater) = h![use_shared_call(
+            0,
+            |v| {
+                if *v < 2 {
+                    *v += 1;
+                    true // indicating state is updated
+                } else {
+                    false // indicating state is not updated
+                }
+            },
+        )];
 
         let updater = updater.clone();
         h![hooks::use_effect(move |_: &i32| {
-            updater.replace_maybe_with_fn_pointer(
-                |v| if *v < 2 { Some(*v + 1) } else { None }
-            );
+            updater.call();
         }, *state)];
 
         *state

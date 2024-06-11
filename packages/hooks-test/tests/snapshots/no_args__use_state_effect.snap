@@ -25,7 +25,7 @@ fn use_state_effect() -> impl ::hooks::core::UpdateHookUninitialized<
             __hooks_hook_data, __hooks_hook_0, __hooks_hook_1,
         );
         let (state, updater) = ::hooks::core::UpdateHookUninitialized::h(
-            ::hooks::use_state_with(Default::default),
+            ::hooks::use_shared_set_with(Default::default),
             __hooks_hook_0,
         );
         let updater = updater.clone();

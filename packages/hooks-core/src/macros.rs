@@ -176,7 +176,7 @@ macro_rules! h {
 ///         let mut the_state_hook = state_hook;
 ///         let state_hook = std::pin::Pin::as_mut(&mut the_state_hook);
 ///
-///         let (state, updater) = h![state_hook = use_state(1)];
+///         let (state, updater) = h![state_hook = use_shared_set(1)];
 ///
 ///         let state = *state;
 ///
@@ -345,7 +345,7 @@ macro_rules! hook_fn {
 ///     []
 ///     // code
 ///     {
-///         let (state, _updater) = h![use_state(3)];
+///         let (state, _updater) = h![use_shared_set(3)];
 ///         *state
 ///     }
 /// };

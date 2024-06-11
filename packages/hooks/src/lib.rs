@@ -44,9 +44,6 @@ pub use shared_ref::SharedRef;
 #[cfg(feature = "use_shared_state")]
 pub mod shared_state;
 
-#[cfg(feature = "use_state")]
-pub mod state;
-
 #[cfg(feature = "use_state_with_updater")]
 mod state_with_updater;
 #[cfg(feature = "use_state_with_updater")]
@@ -104,12 +101,6 @@ pub mod prelude {
     #[cfg(feature = "use_shared_state")]
     pub use crate::shared_state::{
         use_shared_state, use_shared_state_eq, use_shared_state_eq_with, use_shared_state_with,
-    };
-    #[cfg(feature = "use_state")]
-    pub use crate::state::{
-        use_state, use_state_default, use_state_default_n, use_state_eq, use_state_eq_default,
-        use_state_eq_default_n, use_state_eq_n, use_state_eq_n_with, use_state_eq_with,
-        use_state_n, use_state_n_with, use_state_with,
     };
 
     #[cfg(feature = "use_state_with_updater")]

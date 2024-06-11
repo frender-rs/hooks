@@ -16,8 +16,6 @@ test_single_feature use_poll_next_update
 test_single_feature use_reused
 test_single_feature use_shared_ref
 test_single_feature use_shared_state
-test_single_feature use_state
-test_single_feature use_state,use_reused
 test_single_feature use_uninitialized_hook
 
 test_single_feature use_state_with_updater

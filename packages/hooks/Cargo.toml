@@ -14,11 +14,6 @@ hooks-macro = { path = "../hooks-macro", version = "0.2.0", optional = true }
 hooks-core = { path = "../hooks-core", version = "3.0.0-alpha.1", default-features = false }
 pin-project-lite = "0.2.9"
 
-[dependencies.smallvec]
-version = "1.10.0"
-optional = true
-features = ["const_generics"]
-
 [dev-dependencies]
 futures-lite = "1.12.0"
 
@@ -38,7 +33,6 @@ all = [
     "use_reused",
     "use_shared_ref",
     "use_shared_state",
-    "use_state",
     "use_state_with_updater",
     "use_uninitialized_hook",
 
@@ -61,7 +55,6 @@ use_poll_next_update = []
 use_reused = []
 use_shared_ref = ["ShareValue"]
 use_shared_state = ["ShareValue"]
-use_state = ["smallvec"]
 use_state_with_updater = []
 use_uninitialized_hook = []
 

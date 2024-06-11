@@ -23,13 +23,20 @@ fn use_str_state() -> impl ::hooks::core::UpdateHookUninitialized<
         _,
     >(move |__hooks_hook_0: ::core::pin::Pin<&mut _>| {
         let (state, updater) = ::hooks::core::UpdateHookUninitialized::h(
-            ::hooks::use_state_with(String::new),
+            ::hooks::use_shared_call(
+                String::new(),
+                |old| {
+                    if old.len() < 2 {
+                        *old = format!("{old} ");
+                        true
+                    } else {
+                        false
+                    }
+                },
+            ),
             __hooks_hook_0,
         );
-        updater
-            .replace_maybe_with_fn_pointer(|old| {
-                if old.len() < 2 { Some(format!("{old} ")) } else { None }
-            });
+        updater.call();
         state.clone()
     })
 }

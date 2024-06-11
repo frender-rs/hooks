@@ -1,22 +1,22 @@
-#![cfg(feature = "use_state")]
+#![cfg(feature = "use_shared_set")]
 
 use hooks::prelude::*;
 
 hook_fn!(
     fn use_max_tokens_rust_analyzer() -> i32 {
-        let (state, _) = h!(use_state(0));
+        let (state, _) = h!(use_shared_set(0));
         let value = *state
             +1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1
             +1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1
             // + 1 // TEST: rust-analyzer should works fine unless uncomment this
             + 1;
-        *h!(use_state(value)).0
+        *h!(use_shared_set(value)).0
     }
 );
 
 hook_fn!(
     fn use_max_tokens_recursion_limit() -> i32 {
-        let (state, _) = h!(use_state(0));
+        let (state, _) = h!(use_shared_set(0));
         let value = *state
             +1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1
             +1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1
@@ -25,7 +25,7 @@ hook_fn!(
             +1+1+1+1+1+1+1+1+1+1+1+1+1+1
             // + 1 // TEST: if uncomment this, recursion limit is reached
             + 1;
-        *h!(use_state(value)).0
+        *h!(use_shared_set(value)).0
     }
 );
 

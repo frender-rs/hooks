@@ -185,15 +185,16 @@ fn one_state() {
     hook_macro! {
         #[hook]
         fn use_str_state() -> &'hook str {
-            let (state, updater) = ::hooks::use_state_with(String::new);
-
-            updater.replace_maybe_with_fn_pointer(|old| {
+            let (state, updater) = ::hooks::use_shared_call(String::new(), |old| {
                 if old.len() < 2 {
-                    Some(format!("{old} "))
+                    *old = format!("{old} ");
+                    true
                 } else {
-                    None
+                    false
                 }
             });
+
+            updater.call();
 
             state
         }
@@ -214,7 +215,7 @@ fn one_state() {
             std::mem::size_of_val(&hook),
             std::mem::size_of_val(&(
                 false,
-                utils::hook_uninitialized_default(hooks::use_state(String::new())),
+                utils::hook_uninitialized_default(hooks::use_shared_call(String::new(), |_| true)),
             ))
         );
 
@@ -243,7 +244,7 @@ fn two_hooks() {
     hook_macro! {
         #[hook]
         fn use_state_effect() -> &'hook i32 {
-            let (state, updater) = ::hooks::use_state_with(Default::default);
+            let (state, updater) = ::hooks::use_shared_set_with(Default::default);
             let updater = updater.clone();
 
             ::hooks::use_effect(move |v: &_| {
@@ -273,9 +274,9 @@ fn two_hooks() {
             std::mem::size_of_val(&(
                 //
                 false,
-                utils::hook_uninitialized_default(hooks::use_state_with(i32::default),),
+                utils::hook_uninitialized_default(hooks::use_shared_set_with(i32::default),),
                 utils::hook_uninitialized_default({
-                    let updater = hooks::state::StateUpdater::<i32>::new();
+                    let updater = hooks::SharedSet::<i32>::new(hooks::Set::default());
                     let effect = move |_: &i32| drop(updater);
                     hooks::use_effect(effect, 0)
                 }),

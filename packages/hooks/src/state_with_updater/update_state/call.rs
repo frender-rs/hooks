@@ -38,8 +38,8 @@ impl<F: FnMut(&mut S) -> R, S: ?Sized, R: IntoUpdateStateResult> UpdateState<S> 
 mod shared {
     use super::{
         super::{
-            use_shared_update_state, use_shared_update_state_with, SharedUpdateState,
-            UseSharedUpdateState, UseSharedUpdateStateWith,
+            use_shared_update_state, use_shared_update_state_with, IntoUpdateStateResult,
+            SharedUpdateState, UseSharedUpdateState, UseSharedUpdateStateWith,
         },
         Call,
     };
@@ -54,12 +54,15 @@ mod shared {
 
     pub type UseSharedCall<S, F> = UseSharedUpdateState<S, Call<F>>;
     /// Note that only the initial `f` will be called.
-    pub fn use_shared_call<S, F: FnMut(&mut S)>(initial_state: S, f: F) -> UseSharedCall<S, F> {
+    pub fn use_shared_call<S, F: FnMut(&mut S) -> R, R: IntoUpdateStateResult>(
+        initial_state: S,
+        f: F,
+    ) -> UseSharedCall<S, F> {
         use_shared_update_state(initial_state, Call::new(f))
     }
 
     pub type UseSharedCallWith<S, F, F2> = UseSharedUpdateStateWith<S, Call<F>, F2>;
-    pub fn use_shared_call_with<S, F: FnMut(&mut S)>(
+    pub fn use_shared_call_with<S, F: FnMut(&mut S) -> R, R: IntoUpdateStateResult>(
         f: impl FnOnce() -> (S, F),
     ) -> UseSharedCallWith<S, F, impl FnOnce() -> (S, SharedCall<F>)> {
         use_shared_update_state_with(move || {

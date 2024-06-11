@@ -91,10 +91,10 @@ pub trait HookUnmount {
 ///
 /// ```
 /// # extern crate hooks_dev as hooks;
-/// # use hooks::{use_state, hook_fn};
+/// # use hooks::{use_shared_set, hook_fn};
 /// hook_fn![
 ///     pub fn use_my_hook() -> &'hook mut i32 {
-///         let (state, updater) = h![use_state(1)];
+///         let (state, updater) = h![use_shared_set(1)];
 ///         state
 ///     }
 /// ];
