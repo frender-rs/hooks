@@ -1,5 +1,21 @@
 # Changelog
 
+## [3.0.0-alpha.2](https://github.com/frender-rs/hooks/compare/hooks-core-v3.0.0-alpha.1...hooks-core-v3.0.0-alpha.2) (2024-06-11)
+
+
+### ⚠ BREAKING CHANGES
+
+* remove use_state
+
+### Features
+
+* remove use_state ([a6039e2](https://github.com/frender-rs/hooks/commit/a6039e2b4dbee3dd278fb747758cb1e7bb204f33))
+
+
+### Miscellaneous Chores
+
+* release ([3cc30d6](https://github.com/frender-rs/hooks/commit/3cc30d61943aff45b5687827e58bd8547eda27e8))
+
 ## [3.0.0-alpha.1](https://github.com/frender-rs/hooks/compare/hooks-core-v2.2.0-alpha...hooks-core-v3.0.0-alpha.1) (2024-02-20)
 
 

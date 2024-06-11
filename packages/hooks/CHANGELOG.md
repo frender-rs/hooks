@@ -1,5 +1,34 @@
 # Changelog
 
+## [3.0.0-alpha.6](https://github.com/frender-rs/hooks/compare/hooks-v3.0.0-alpha.5...hooks-v3.0.0-alpha.6) (2024-06-11)
+
+
+### ⚠ BREAKING CHANGES
+
+* remove use_state
+
+### Features
+
+* remove use_state ([a6039e2](https://github.com/frender-rs/hooks/commit/a6039e2b4dbee3dd278fb747758cb1e7bb204f33))
+* use_state_with_updater ([e33d6b9](https://github.com/frender-rs/hooks/commit/e33d6b975879b3b646ffffe5422b83f13715fd90))
+
+
+### Bug Fixes
+
+* SharedUpdateState should wake when dropped ([36b18d1](https://github.com/frender-rs/hooks/commit/36b18d1b143e67994927c0cd15f43de309c38b69))
+
+
+### Miscellaneous Chores
+
+* release ([64aebe1](https://github.com/frender-rs/hooks/commit/64aebe11b6858df75fdbb73e94046a94236e691a))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * hooks-core bumped from 3.0.0-alpha.1 to 3.0.0-alpha.2
+
 ## [3.0.0-alpha.5](https://github.com/frender-rs/hooks/compare/hooks-v3.0.0-alpha.4...hooks-v3.0.0-alpha.5) (2024-06-06)
 
 
