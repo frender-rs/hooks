@@ -7,17 +7,18 @@ use hooks_core::{Hook, HookPollNextUpdate, HookUnmount};
 use crate::ShareValue;
 
 mod sealed {
-    use hooks_core::HookValue;
+    use hooks_core::{HookValue, HookValueBounds};
 
     pub trait RefOrSelf<T: ?Sized> {}
 
     impl<T: ?Sized> RefOrSelf<T> for T {}
     impl<T: ?Sized> RefOrSelf<T> for &T {}
 
-    pub trait SignalHookValue<'hook, S: ?Sized, ImplicitBounds = &'hook Self>:
-        HookValue<'hook, Value = Self::SignalHookValue>
-    where
-        Self: 'hook,
+    pub trait SignalHookValue<
+        'hook,
+        S: ?Sized,
+        ImplicitBounds: HookValueBounds<'hook, Self> = &'hook Self,
+    >: HookValue<'hook, ImplicitBounds, Value = Self::SignalHookValue>
     {
         type SignalHookValue: RefOrSelf<S>;
     }
