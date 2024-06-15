@@ -5,9 +5,13 @@ use std::{
 };
 
 mod sealed {
-    pub trait HookValueBounds<'hook, This: ?Sized> {}
-    impl<'hook, T: ?Sized> HookValueBounds<'hook, T> for &'hook T {}
+    pub trait Sealed<'hook, This: ?Sized> {}
+    impl<'hook, T: ?Sized> Sealed<'hook, T> for &'hook T {}
 }
+
+pub trait HookValueBounds<'hook, This: ?Sized>: sealed::Sealed<'hook, This> {}
+
+impl<'hook, T: ?Sized> HookValueBounds<'hook, T> for &'hook T {}
 
 /// [The Captures trick](https://rust-lang.github.io/rfcs/3498-lifetime-capture-rules-2024.html#the-captures-trick)
 pub trait Captures<U> {}
@@ -26,7 +30,7 @@ impl<T: ?Sized, U> Captures<U> for T {}
 /// Instead, use [`impl_hook![...];`](crate::impl_hook).
 ///
 /// [*better GAT*]: https://sabrinajewson.org/blog/the-better-alternative-to-lifetime-gats#the-better-gats
-pub trait HookValue<'hook, ImplicitBounds: sealed::HookValueBounds<'hook, Self> = &'hook Self> {
+pub trait HookValue<'hook, ImplicitBounds: HookValueBounds<'hook, Self> = &'hook Self> {
     /// The output type of [`Hook::use_hook`].
     ///
     /// Please don't use this associated type directly.
