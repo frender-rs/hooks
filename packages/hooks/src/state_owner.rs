@@ -1,6 +1,5 @@
 use std::{
     cell::RefCell,
-    rc::Rc,
     task::{Context, Poll, Waker},
 };
 
