@@ -51,7 +51,7 @@ pub trait Signal: ShareValue {
         UseSignal(self)
     }
 
-    fn notify(&self);
+    fn notify_changed(&self);
 
     fn map_mut_and_notify_if<R>(&self, f: impl FnOnce(&mut Self::Value) -> (R, bool)) -> R;
 }
