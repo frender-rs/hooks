@@ -46,6 +46,17 @@ impl<H: Hook + Unpin> UninitializedHook<H> {
             |hook| reusable.reuse_update_hook(hook),
         )
     }
+
+    #[cfg(feature = "Signal")]
+    pub(crate) fn use_with_signal(
+        &mut self,
+        signal: &impl crate::Signal<SignalHook = H, SignalHookUninitialized = Self>,
+    ) -> hooks_core::Value![H] {
+        self.use_with(
+            || signal.to_signal_hook(),
+            |hook: Pin<&mut H>| signal.update_signal_hook(hook),
+        )
+    }
 }
 
 impl<H> Default for UninitializedHook<H> {

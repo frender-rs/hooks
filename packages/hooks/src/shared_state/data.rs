@@ -62,12 +62,11 @@ impl<T> SharedState<T> {
         }
     }
 
-    #[inline]
-    pub fn notify_changed(&self) {
+    pub(crate) fn imp_notify_changed(&self) {
         self.imp.notify_changed()
     }
 
-    pub fn map_mut_and_notify_if<R>(&self, f: impl FnOnce(&mut T) -> (R, bool)) -> R {
+    pub(crate) fn imp_map_mut_and_notify_if<R>(&self, f: impl FnOnce(&mut T) -> (R, bool)) -> R {
         self.imp.map_mut_and_notify_if(f)
     }
 
@@ -125,12 +124,48 @@ impl<T> ShareValue for SharedState<T> {
 
     #[inline]
     fn map_mut<R>(&self, f: impl FnOnce(&mut T) -> R) -> R {
-        self.notify_changed();
+        self.imp_notify_changed();
         f(&mut self.inner().value.borrow_mut())
     }
 
     fn equivalent_to(&self, other: &Self) -> bool {
         Rc::ptr_eq(self.inner(), other.inner())
+    }
+}
+
+#[cfg(feature = "Signal")]
+impl<T> crate::SignalHook for SharedState<T> {
+    type Signal = Self;
+}
+
+#[cfg(feature = "Signal")]
+impl<T> crate::Signal for SharedState<T> {
+    type SignalHook = Self;
+    type SignalHookUninitialized = crate::utils::UninitializedHook<Self>;
+
+    fn to_signal_hook(&self) -> Self::SignalHook {
+        self.clone()
+    }
+
+    fn update_signal_hook(&self, mut hook: std::pin::Pin<&mut Self::SignalHook>) {
+        if !hook.equivalent_to(self) {
+            hook.set(self.clone())
+        }
+    }
+
+    fn h_signal_hook<'hook>(
+        &self,
+        hook: std::pin::Pin<&'hook mut Self::SignalHookUninitialized>,
+    ) -> hooks_core::Value![Self::SignalHook, 'hook] {
+        hook.get_mut().use_with_signal(self)
+    }
+
+    fn notify_changed(&self) {
+        self.imp_notify_changed()
+    }
+
+    fn map_mut_and_notify_if<R>(&self, f: impl FnOnce(&mut Self::Value) -> (R, bool)) -> R {
+        self.imp_map_mut_and_notify_if(f)
     }
 }
 

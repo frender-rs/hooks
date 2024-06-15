@@ -1,3 +1,5 @@
+use std::pin::Pin;
+
 use crate::ShareValue;
 
 use super::SharedState;
@@ -54,7 +56,7 @@ impl<T: PartialEq> ShareValue for SharedStateEq<T> {
 
     #[inline]
     fn set(&self, new_value: T) {
-        self.0.map_mut_and_notify_if(move |old| {
+        self.0.imp_map_mut_and_notify_if(move |old| {
             let changed = *old != new_value;
             *old = new_value;
             ((), changed)
@@ -63,7 +65,7 @@ impl<T: PartialEq> ShareValue for SharedStateEq<T> {
 
     #[inline]
     fn replace(&self, new_value: T) -> T {
-        self.0.map_mut_and_notify_if(move |old| {
+        self.0.imp_map_mut_and_notify_if(move |old| {
             let changed = *old != new_value;
             let old = std::mem::replace(old, new_value);
             (old, changed)
@@ -84,7 +86,7 @@ impl<T: PartialEq> ShareValue for SharedStateEq<T> {
 
     #[inline]
     fn replace_with<F: FnOnce(&T) -> T>(&self, f: F) -> T {
-        self.0.map_mut_and_notify_if(move |v| {
+        self.0.imp_map_mut_and_notify_if(move |v| {
             let new_value = f(v);
             let changed = new_value != *v;
             let old = std::mem::replace(v, new_value);
@@ -104,6 +106,40 @@ impl<T: PartialEq> ShareValue for SharedStateEq<T> {
 
     fn equivalent_to(&self, other: &Self) -> bool {
         self.0.equivalent_to(&other.0)
+    }
+}
+
+#[cfg(feature = "Signal")]
+impl<T: PartialEq> crate::SignalHook for SharedStateEq<T> {
+    type Signal = Self;
+}
+
+#[cfg(feature = "Signal")]
+impl<T: PartialEq> crate::Signal for SharedStateEq<T> {
+    type SignalHook = Self;
+    type SignalHookUninitialized = crate::utils::UninitializedHook<Self>;
+
+    fn to_signal_hook(&self) -> Self::SignalHook {
+        Self(self.0.to_signal_hook())
+    }
+
+    fn update_signal_hook(&self, hook: std::pin::Pin<&mut Self::SignalHook>) {
+        self.0.update_signal_hook(Pin::new(&mut hook.get_mut().0))
+    }
+
+    fn h_signal_hook<'hook>(
+        &self,
+        hook: std::pin::Pin<&'hook mut Self::SignalHookUninitialized>,
+    ) -> hooks_core::Value![Self::SignalHook, 'hook] {
+        hook.get_mut().use_with_signal(self)
+    }
+
+    fn notify_changed(&self) {
+        self.0.notify_changed()
+    }
+
+    fn map_mut_and_notify_if<R>(&self, f: impl FnOnce(&mut Self::Value) -> (R, bool)) -> R {
+        self.0.map_mut_and_notify_if(f)
     }
 }
 
