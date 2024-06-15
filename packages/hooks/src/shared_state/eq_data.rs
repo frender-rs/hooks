@@ -112,12 +112,16 @@ hooks_core::impl_hook![
     fn unmount() {}
     #[inline]
     fn poll_next_update(self, cx: _) {
-        self.get_mut().0.impl_poll_next_update(cx)
+        use hooks_core::HookPollNextUpdateExt;
+
+        self.get_mut().0.poll_next_update(cx)
     }
     #[inline]
     fn use_hook(self) -> &'hook Self {
+        use hooks_core::HookExt;
+
         let this = self.get_mut();
-        this.0.mark_as_seen();
+        this.0.use_hook();
         this
     }
 ];
