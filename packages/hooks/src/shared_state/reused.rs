@@ -49,9 +49,6 @@ impl<T: PartialEq> ReusableHook for SharedStateEq<T> {
         &self,
         hook: Pin<&'hook mut Self::ReusableUninitialized>,
     ) -> hooks_core::Value![Self::ReusableHook, 'hook] {
-        hook.get_mut().use_with(
-            || self.reuse_into_hook(),
-            |hook| self.reuse_update_hook(hook),
-        )
+        hook.get_mut().use_with_reusable(self)
     }
 }

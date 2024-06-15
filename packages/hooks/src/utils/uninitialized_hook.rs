@@ -35,6 +35,16 @@ impl<H: Hook + Unpin> UninitializedHook<H> {
         };
         hook.use_hook()
     }
+
+    pub(crate) fn use_with_reusable(
+        &mut self,
+        reusable: &impl crate::reused::ReusableHook<ReusableHook = H, ReusableUninitialized = Self>,
+    ) -> hooks_core::Value![H] {
+        self.use_with(
+            || reusable.reuse_into_hook(),
+            |hook| reusable.reuse_update_hook(hook),
+        )
+    }
 }
 
 impl<H> Default for UninitializedHook<H> {
