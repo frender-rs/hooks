@@ -36,6 +36,11 @@ mod share_value;
 #[cfg(feature = "ShareValue")]
 pub use share_value::ShareValue;
 
+#[cfg(feature = "Signal")]
+mod signal;
+#[cfg(feature = "Signal")]
+pub use signal::{use_signal, Signal, SignalHook, UseSignal};
+
 #[cfg(feature = "use_shared_ref")]
 pub mod shared_ref;
 #[cfg(feature = "use_shared_ref")]
@@ -125,6 +130,9 @@ pub mod prelude {
 
     #[cfg(feature = "ShareValue")]
     pub use crate::ShareValue;
+
+    #[cfg(feature = "Signal")]
+    pub use crate::{use_signal, Signal};
 }
 
 pub use hooks_core as core;

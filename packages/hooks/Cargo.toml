@@ -22,6 +22,7 @@ default = ["futures-core", "all"]
 proc-macro = ["hooks-macro"]
 futures-core = ["hooks-core/futures-core"]
 all = [
+    "Signal",
     "use_debug",
     "use_default_pinned",
     "use_effect",
@@ -44,6 +45,7 @@ all = [
     "use_shared_toggle",
 ]
 ShareValue = []
+Signal = ["ShareValue"]
 use_debug = []
 use_default_pinned = []
 use_effect = []
