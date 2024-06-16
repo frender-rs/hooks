@@ -2,6 +2,15 @@ use std::pin::Pin;
 
 use hooks_core::{Hook, HookPollNextUpdate, HookUnmount, HookValue};
 
+/// This wrapper type also derives the following traits if `S: Unpin`.
+///
+/// - [`HookUnmount`]
+/// - [`HookPollNextUpdate`]
+/// - [`HookValue`] (the [`Value`](HookValue::Value) is wrapped with [`SignalEq`])
+/// - [`Hook`] (the value returned by [`use_hook`](Hook::use_hook) is wrapped with [`SignalEq`])
+/// - [`SignalHook`](crate::SignalHook)
+/// - [`ShareValue`](crate::ShareValue)
+/// - [`Signal`](crate::Signal)
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct SignalEq<S>(pub S);
 
