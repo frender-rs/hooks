@@ -67,8 +67,64 @@ pub trait ShareValue {
     fn equivalent_to(&self, other: &Self) -> bool;
 }
 
+macro_rules! proxy_share_value_non_eq {
+    (|$_self:ident| -> $ty:ty { $expr:expr }, |$other:ident| $other_expr:expr) => {
+        type Value = <$ty>::Value;
+
+        fn map<R>(&$_self, f: impl FnOnce(&Self::Value) -> R) -> R {
+            <$ty>::map($expr, f)
+        }
+
+        fn map_mut<R>(&$_self, f: impl FnOnce(&mut Self::Value) -> R) -> R {
+            <$ty>::map_mut($expr, f)
+        }
+
+        fn equivalent_to(&$_self, $other: &Self) -> bool {
+            <$ty>::equivalent_to($expr, $other_expr)
+        }
+
+        fn get(&$_self) -> Self::Value
+        where
+            Self::Value: Copy,
+        {
+            <$ty>::get($expr)
+        }
+
+        fn get_cloned(&$_self) -> Self::Value
+        where
+            Self::Value: Clone,
+        {
+            <$ty>::get_cloned($expr)
+        }
+
+        fn replace_mut<F: FnOnce(&mut Self::Value) -> Self::Value>(&$_self, f: F) -> Self::Value {
+            <$ty>::replace_mut($expr, f)
+        }
+    };
+}
+
+macro_rules! proxy_share_value {
+    (|$_self:ident| -> $ty:ty { $expr:expr }, |$other:ident| $other_expr:expr) => {
+        $crate::share_value::proxy_share_value_non_eq! { |$_self| -> $ty { $expr }, |$other| $other_expr }
+
+        fn set(&$_self, new_value: Self::Value) {
+            <$ty>::set($expr, new_value)
+        }
+
+        fn replace(&$_self, new_value: Self::Value) -> Self::Value {
+            <$ty>::replace($expr, new_value)
+        }
+
+        fn replace_with<F: FnOnce(&Self::Value) -> Self::Value>(&$_self, f: F) -> Self::Value {
+            <$ty>::replace_with($expr, f)
+        }
+    };
+}
+
+pub(crate) use {proxy_share_value, proxy_share_value_non_eq};
+
 impl<S: ?Sized + ShareValue> ShareValue for &S {
-    type Value = S::Value;
+    proxy_share_value!(|self| -> S { self }, |other| other);
 
     fn try_unwrap(self) -> Result<Self::Value, Self>
     where
@@ -77,53 +133,11 @@ impl<S: ?Sized + ShareValue> ShareValue for &S {
         Err(self)
     }
 
-    fn map<R>(&self, f: impl FnOnce(&Self::Value) -> R) -> R {
-        S::map(self, f)
-    }
-
-    fn map_mut<R>(&self, f: impl FnOnce(&mut Self::Value) -> R) -> R {
-        S::map_mut(self, f)
-    }
-
-    fn equivalent_to(&self, other: &Self) -> bool {
-        S::equivalent_to(self, other)
-    }
-
     fn unwrap_or_get_cloned(self) -> Self::Value
     where
         Self: Sized,
         Self::Value: Clone,
     {
         self.get_cloned()
-    }
-
-    fn get(&self) -> Self::Value
-    where
-        Self::Value: Copy,
-    {
-        S::get(self)
-    }
-
-    fn get_cloned(&self) -> Self::Value
-    where
-        Self::Value: Clone,
-    {
-        S::get_cloned(self)
-    }
-
-    fn set(&self, new_value: Self::Value) {
-        S::set(self, new_value)
-    }
-
-    fn replace(&self, new_value: Self::Value) -> Self::Value {
-        S::replace(self, new_value)
-    }
-
-    fn replace_mut<F: FnOnce(&mut Self::Value) -> Self::Value>(&self, f: F) -> Self::Value {
-        S::replace_mut(self, f)
-    }
-
-    fn replace_with<F: FnOnce(&Self::Value) -> Self::Value>(&self, f: F) -> Self::Value {
-        S::replace_with(self, f)
     }
 }
