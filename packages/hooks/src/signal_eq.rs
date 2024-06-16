@@ -116,7 +116,7 @@ where
     fn h_signal_hook<'hook>(
         &self,
         hook: std::pin::Pin<&'hook mut Self::SignalHookUninitialized>,
-    ) -> hooks_core::Value![Self::SignalHook, 'hook] {
+    ) -> crate::Value<'hook, Self::SignalHook> {
         SignalEq(self.0.h_signal_hook(hook))
     }
 

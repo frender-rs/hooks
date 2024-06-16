@@ -27,7 +27,7 @@ impl<U: HookPollNextUpdate + HookUnmount + Default> UninitializedHook<U> {
     pub fn h<H: UpdateHookUninitialized<Uninitialized = U>>(
         self: Pin<&mut Self>,
         into_hook: H,
-    ) -> hooks_core::Value![H::Hook] {
+    ) -> crate::Value<H::Hook> {
         into_hook.h(self.pin_project())
     }
 }

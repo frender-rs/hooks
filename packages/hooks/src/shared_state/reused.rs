@@ -22,7 +22,7 @@ impl<T> ReusableHook for SharedState<T> {
     fn reuse_h<'hook>(
         &self,
         hook: Pin<&'hook mut Self::ReusableUninitialized>,
-    ) -> hooks_core::Value![Self::ReusableHook, 'hook] {
+    ) -> crate::Value<'hook, Self::ReusableHook> {
         hook.get_mut().use_with(
             || self.reuse_into_hook(),
             |hook| self.reuse_update_hook(hook),

@@ -54,7 +54,7 @@ pub trait Signal: ShareValue {
     fn h_signal_hook<'hook>(
         &self,
         hook: Pin<&'hook mut Self::SignalHookUninitialized>,
-    ) -> hooks_core::Value![Self::SignalHook, 'hook];
+    ) -> crate::Value<'hook, Self::SignalHook>;
 
     fn use_signal(&self) -> UseSignal<'_, Self> {
         UseSignal(self)

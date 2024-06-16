@@ -32,10 +32,7 @@ impl<H: HookPollNextUpdate + HookUnmount> LazyPinnedHook<H> {
     }
 }
 impl<H: Hook> LazyPinnedHook<H> {
-    pub fn h(
-        mut self: Pin<&mut Self>,
-        into_hook: impl UpdateHook<Hook = H>,
-    ) -> hooks_core::Value![H] {
+    pub fn h(mut self: Pin<&mut Self>, into_hook: impl UpdateHook<Hook = H>) -> crate::Value<H> {
         if let Some(hook) = self.as_mut().pin_project_hook() {
             into_hook.update_hook(hook)
         } else {

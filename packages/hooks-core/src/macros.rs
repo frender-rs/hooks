@@ -694,17 +694,3 @@ macro_rules! UpdateHookUninitialized {
         ]
     };
 }
-
-/// Use this macro to get [`HookValue::Value`][crate::HookValue::Value].
-///
-/// In the future, when [`HookValue`](crate::HookValue) changed to GAT,
-/// this macro would still works.
-#[macro_export]
-macro_rules! Value {
-    ($hook_ty:ty $(,)?) => {
-        <$hook_ty as $crate::HookValue<'_>>::Value
-    };
-    ($hook_ty:ty , $lt:lifetime $(,)?) => {
-        <$hook_ty as $crate::HookValue<$lt>>::Value
-    };
-}

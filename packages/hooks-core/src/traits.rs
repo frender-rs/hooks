@@ -329,4 +329,8 @@ pub trait UpdateHookUninitialized: UpdateHook {
     fn h(self, hook: Pin<&mut Self::Uninitialized>) -> <Self::Hook as HookValue<'_>>::Value;
 }
 
+/// Type alias for [`HookValue::Value`].
+///
+/// In the future, when [`HookValue`] changed to GAT,
+/// this type alias would still works.
 pub type Value<'hook, H> = <H as HookValue<'hook>>::Value;

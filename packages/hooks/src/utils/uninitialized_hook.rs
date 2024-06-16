@@ -10,7 +10,7 @@ impl<H: Hook + Unpin> UninitializedHook<H> {
     pub(crate) fn use_into_or_update_hook(
         &mut self,
         into_hook: impl UpdateHook<Hook = H>,
-    ) -> hooks_core::Value![H] {
+    ) -> crate::Value<H> {
         let hook = match &mut self.0 {
             Some(hook) => {
                 into_hook.update_hook(Pin::new(hook));
@@ -25,7 +25,7 @@ impl<H: Hook + Unpin> UninitializedHook<H> {
         &mut self,
         into: impl FnOnce() -> H,
         update: impl FnOnce(Pin<&mut H>),
-    ) -> hooks_core::Value![H] {
+    ) -> crate::Value<H> {
         let hook = match &mut self.0 {
             Some(hook) => {
                 update(Pin::new(hook));
@@ -40,7 +40,7 @@ impl<H: Hook + Unpin> UninitializedHook<H> {
     pub(crate) fn use_with_reusable(
         &mut self,
         reusable: &impl crate::reused::ReusableHook<ReusableHook = H, ReusableUninitialized = Self>,
-    ) -> hooks_core::Value![H] {
+    ) -> crate::Value<H> {
         self.use_with(
             || reusable.reuse_into_hook(),
             |hook| reusable.reuse_update_hook(hook),
@@ -51,7 +51,7 @@ impl<H: Hook + Unpin> UninitializedHook<H> {
     pub(crate) fn use_with_signal(
         &mut self,
         signal: &impl crate::Signal<SignalHook = H, SignalHookUninitialized = Self>,
-    ) -> hooks_core::Value![H] {
+    ) -> crate::Value<H> {
         self.use_with(
             || signal.to_signal_hook(),
             |hook: Pin<&mut H>| signal.update_signal_hook(hook),

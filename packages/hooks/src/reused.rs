@@ -29,7 +29,7 @@ pub trait ReusableHook {
     fn reuse_h<'hook>(
         &self,
         hook: Pin<&'hook mut Self::ReusableUninitialized>,
-    ) -> hooks_core::Value![Self::ReusableHook, 'hook];
+    ) -> crate::Value<'hook, Self::ReusableHook>;
 }
 
 pub trait ReusableHookExt: ReusableHook {

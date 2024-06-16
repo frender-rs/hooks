@@ -160,7 +160,7 @@ impl<T> crate::Signal for SharedState<T> {
     fn h_signal_hook<'hook>(
         &self,
         hook: std::pin::Pin<&'hook mut Self::SignalHookUninitialized>,
-    ) -> hooks_core::Value![Self::SignalHook, 'hook] {
+    ) -> crate::Value<'hook, Self::SignalHook> {
         hook.get_mut().use_with_signal(self)
     }
 
