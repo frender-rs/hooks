@@ -1,6 +1,24 @@
 # Changelog
 <!-- Touch this file so that the release-please would know this commit only affects this package -->
 
+## [3.0.0-alpha.3](https://github.com/frender-rs/hooks/compare/hooks-core-v3.0.0-alpha.2...hooks-core-v3.0.0-alpha.3) (2024-06-16)
+
+
+### ⚠ BREAKING CHANGES
+
+* remove macro `Value![]`
+
+### Features
+
+* export HookValueBounds and it's still sealed ([e6b0519](https://github.com/frender-rs/hooks/commit/e6b0519f7d43c159eec3123fb4196a8c7117016b))
+* remove macro `Value![]` ([ba9b1ed](https://github.com/frender-rs/hooks/commit/ba9b1edac5eb4371dc66181d41a1e9d28a94d599))
+* type alias Value ([eae87a6](https://github.com/frender-rs/hooks/commit/eae87a687c82ece9a909c40a141bc0c2845e7577))
+
+
+### Miscellaneous Chores
+
+* release ([69d178a](https://github.com/frender-rs/hooks/commit/69d178a454ba4da75581590a65da86527d149140))
+
 ## [3.0.0-alpha.2](https://github.com/frender-rs/hooks/compare/hooks-core-v3.0.0-alpha.1...hooks-core-v3.0.0-alpha.2) (2024-06-11)
 
 
