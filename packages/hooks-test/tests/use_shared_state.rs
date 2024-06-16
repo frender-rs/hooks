@@ -1,9 +1,7 @@
 use std::future::Future;
 
 use futures_lite::StreamExt;
-use hooks::{
-    hook, use_effect, use_shared_state, use_shared_state_eq, HookExt, IntoHook, ShareValue,
-};
+use hooks::{hook, use_effect, use_shared_state, HookExt, IntoHook, ShareValue, Signal};
 use smol::Task;
 
 #[test]
@@ -52,6 +50,8 @@ fn shared_state_delay() {
 
 #[test]
 fn shared_state_eq_delay() {
+    use hooks::IntoEq;
+
     thread_local! {
         static EXE: smol::LocalExecutor<'static> = const { smol::LocalExecutor::new() };
     }
@@ -62,10 +62,10 @@ fn shared_state_eq_delay() {
 
     #[hook]
     fn use_test() -> i32 {
-        let state = use_shared_state_eq(0);
+        let state = use_shared_state(0).into_eq();
 
         let value = state.get();
-        let s = state.clone();
+        let s = state.to_signal_hook();
 
         use_effect(
             move |v: &_| {

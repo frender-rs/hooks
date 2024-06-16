@@ -78,6 +78,9 @@ pub mod uninitialized_hook;
 mod signal_eq;
 pub use signal_eq::SignalEq;
 
+mod into_eq;
+pub use into_eq::IntoEq;
+
 pub mod prelude {
     pub use hooks_core::prelude::*;
 
@@ -107,9 +110,7 @@ pub mod prelude {
     #[cfg(feature = "use_shared_ref")]
     pub use crate::shared_ref::{use_shared_ref, use_shared_ref_with};
     #[cfg(feature = "use_shared_state")]
-    pub use crate::shared_state::{
-        use_shared_state, use_shared_state_eq, use_shared_state_eq_with, use_shared_state_with,
-    };
+    pub use crate::shared_state::{use_shared_state, use_shared_state_with};
 
     #[cfg(feature = "use_state_with_updater")]
     pub use crate::state_with_updater::{use_state_with_updater, use_state_with_updater_with};
@@ -136,6 +137,8 @@ pub mod prelude {
 
     #[cfg(feature = "Signal")]
     pub use crate::{use_signal, Signal};
+
+    pub use crate::IntoEq;
 }
 
 pub use hooks_core as core;
