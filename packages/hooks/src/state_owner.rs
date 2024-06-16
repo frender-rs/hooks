@@ -163,6 +163,7 @@ impl<T, SR: SharableRef<Value = SharedStateInner<T>>> StateOwner<T, SR> {
         }
     }
 
+    #[cfg(todo)]
     pub(crate) fn from_sharable_ref(sr: SR) -> Self {
         Self {
             key: sr.map(|inner| inner.notifiers.borrow_mut().add()),
