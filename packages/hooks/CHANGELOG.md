@@ -1,6 +1,54 @@
 # Changelog
 <!-- Touch this file so that the release-please would know this commit only affects this package -->
 
+## [3.0.0-alpha.7](https://github.com/frender-rs/hooks/compare/hooks-v3.0.0-alpha.6...hooks-v3.0.0-alpha.7) (2024-06-16)
+
+
+### ⚠ BREAKING CHANGES
+
+* reorganize exports
+* now feature use_shared_ref and use_shared_state doesn't enable feature ShareValue
+* remove use_reused
+* remove macro `Value![]`
+* IntoEq and remove use_shared_state_eq
+* SignalHook::to_signal
+* redesign Signal and SignalEq
+* impl `ShareValue` for `&impl ShareValue`
+* impl Signal for SharedState and SharedStateEq
+* rename Signal::notify to notify_changed
+
+### Features
+
+* impl `ShareValue` for `&impl ShareValue` ([6f00ca0](https://github.com/frender-rs/hooks/commit/6f00ca0457463505fe6eeb4bd3ce237ace027b71))
+* impl Signal for SharedState and SharedStateEq ([649024e](https://github.com/frender-rs/hooks/commit/649024ebca05f866565a74087c0083630595e334))
+* IntoEq and remove use_shared_state_eq ([9c52bf3](https://github.com/frender-rs/hooks/commit/9c52bf3d7e96979cda19c1a6fec213bcb3ce8591))
+* now feature use_shared_ref and use_shared_state doesn't enable feature ShareValue ([09841d6](https://github.com/frender-rs/hooks/commit/09841d69aed1feebd84fb5dfd1b1428b21946d8e))
+* redesign Signal and SignalEq ([68e04d8](https://github.com/frender-rs/hooks/commit/68e04d80910af1d08226332d3b680710c572eea7))
+* remove macro `Value![]` ([ba9b1ed](https://github.com/frender-rs/hooks/commit/ba9b1edac5eb4371dc66181d41a1e9d28a94d599))
+* remove use_reused ([efc9de6](https://github.com/frender-rs/hooks/commit/efc9de6708ea503fc839b6638b6642d52b2ac9ee))
+* rename Signal::notify to notify_changed ([02b5856](https://github.com/frender-rs/hooks/commit/02b5856e11f12ce1e4771b0368b46e88a9aae6c1))
+* reorganize exports ([71b894f](https://github.com/frender-rs/hooks/commit/71b894f0e9bf4390f36f45d2fa66f190109aa1cc))
+* Signal, SignalHook and use_signal ([893a380](https://github.com/frender-rs/hooks/commit/893a38083615a52369ef01751884d5d247cd0ae7))
+* SignalHook::to_signal ([f1d3900](https://github.com/frender-rs/hooks/commit/f1d39000c603ff8b1ee581d293a18aed3e8a9147))
+* type alias Value ([eae87a6](https://github.com/frender-rs/hooks/commit/eae87a687c82ece9a909c40a141bc0c2845e7577))
+
+
+### Bug Fixes
+
+* make SignalHookValue better ([72160bc](https://github.com/frender-rs/hooks/commit/72160bc39fa8e7ec5525ec58c7837d1f3e9aea08))
+
+
+### Miscellaneous Chores
+
+* release ([ebdfdaa](https://github.com/frender-rs/hooks/commit/ebdfdaa5d18b8a3cea514779fbba3c4e75ef5c1a))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * hooks-core bumped from 3.0.0-alpha.2 to 3.0.0-alpha.3
+
 ## [3.0.0-alpha.6](https://github.com/frender-rs/hooks/compare/hooks-v3.0.0-alpha.5...hooks-v3.0.0-alpha.6) (2024-06-11)
 
 
