@@ -3,7 +3,6 @@ use std::{cell::RefCell, rc::Rc};
 use crate::{
     state_owner::{SharableRef, SharedStateInner, StateOwner},
     utils::RcStatus,
-    ShareValue,
 };
 
 impl<T> SharableRef for Rc<T> {
@@ -75,7 +74,8 @@ impl<T> SharedState<T> {
     }
 }
 
-impl<T> ShareValue for SharedState<T> {
+#[cfg(feature = "ShareValue")]
+impl<T> crate::ShareValue for SharedState<T> {
     type Value = T;
 
     fn try_unwrap(self) -> Result<Self::Value, Self>
@@ -152,6 +152,8 @@ impl<T> crate::Signal for SharedState<T> {
     }
 
     fn update_signal_hook(&self, mut hook: std::pin::Pin<&mut Self::SignalHook>) {
+        use crate::ShareValue;
+
         if !hook.equivalent_to(self) {
             hook.set(self.clone())
         }
@@ -225,6 +227,7 @@ hooks_core::impl_hook![
     }
 ];
 
+#[cfg(feature = "ShareValue")]
 #[cfg(feature = "futures-core")]
 #[cfg(test)]
 mod tests {

@@ -19,6 +19,7 @@ impl<T> SharedRef<T> {
     }
 }
 
+#[cfg(feature = "ShareValue")]
 impl<T> crate::ShareValue for SharedRef<T> {
     type Value = T;
 
