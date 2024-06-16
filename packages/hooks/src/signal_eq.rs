@@ -45,6 +45,10 @@ where
     H::SignalShareValue: PartialEq,
 {
     type SignalShareValue = H::SignalShareValue;
+
+    fn to_signal(&self) -> SignalEq<crate::Value<'_, H>> {
+        SignalEq(self.0.to_signal())
+    }
 }
 
 #[cfg(feature = "Signal")]

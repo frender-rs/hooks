@@ -34,13 +34,22 @@ pub trait SignalHook:
     Hook + for<'hook> sealed::HookValueImplSignal<'hook, Self::SignalShareValue>
 {
     type SignalShareValue;
+
+    /// This is the opposite of [`Signal::to_signal_hook`].
+    ///
+    /// In contrast to [`Hook::use_hook`], this method just require a `&Self` instead of `Pin<&mut Self>`.
+    /// In implementations, [`Hook::use_hook`] might mark the SignalHook's updated value as already read
+    /// but this method should not.
+    fn to_signal(&self) -> crate::Value<'_, Self>;
 }
 
 pub trait Signal: ShareValue {
     type SignalHook: SignalHook<SignalShareValue = Self::Value>;
     type SignalHookUninitialized: HookPollNextUpdate + HookUnmount + Default;
 
+    /// This is the opposite of [`SignalHook::to_signal`].
     fn to_signal_hook(&self) -> Self::SignalHook;
+
     fn update_signal_hook(&self, hook: Pin<&mut Self::SignalHook>);
     fn h_signal_hook<'hook>(
         &self,

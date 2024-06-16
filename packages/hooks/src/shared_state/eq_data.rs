@@ -112,6 +112,10 @@ impl<T: PartialEq> ShareValue for SharedStateEq<T> {
 #[cfg(feature = "Signal")]
 impl<T: PartialEq> crate::SignalHook for SharedStateEq<T> {
     type SignalShareValue = T;
+
+    fn to_signal(&self) -> &Self {
+        self
+    }
 }
 
 #[cfg(feature = "Signal")]
