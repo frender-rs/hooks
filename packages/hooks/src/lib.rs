@@ -75,6 +75,9 @@ pub use state_with_updater::{SharedToggle, Toggle, UseSharedToggle, UseSharedTog
 #[cfg(feature = "use_uninitialized_hook")]
 pub mod uninitialized_hook;
 
+mod signal_eq;
+pub use signal_eq::SignalEq;
+
 pub mod prelude {
     pub use hooks_core::prelude::*;
 

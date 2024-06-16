@@ -9,35 +9,35 @@ use crate::ShareValue;
 mod sealed {
     use hooks_core::{HookValue, HookValueBounds};
 
-    pub trait RefOrSelf<T: ?Sized> {}
+    use super::Signal;
 
-    impl<T: ?Sized> RefOrSelf<T> for T {}
-    impl<T: ?Sized> RefOrSelf<T> for &T {}
-
-    pub trait SignalHookValue<
+    pub trait HookValueImplSignal<
         'hook,
-        S: ?Sized,
+        V,
         ImplicitBounds: HookValueBounds<'hook, Self> = &'hook Self,
-    >: HookValue<'hook, ImplicitBounds, Value = Self::SignalHookValue>
+    >: HookValue<'hook, ImplicitBounds, Value = Self::HookValueImplSignal>
     {
-        type SignalHookValue: RefOrSelf<S>;
+        type HookValueImplSignal: Signal<SignalHook = Self, Value = V>;
     }
 
-    impl<'hook, H, S> SignalHookValue<'hook, S> for H
+    impl<'hook, H: ?Sized, V> HookValueImplSignal<'hook, V> for H
     where
         H: HookValue<'hook>,
-        H::Value: RefOrSelf<S>,
+        H::Value: Signal<SignalHook = Self, Value = V>,
     {
-        type SignalHookValue = H::Value;
+        type HookValueImplSignal = H::Value;
     }
 }
 
-pub trait SignalHook: Hook + for<'hook> sealed::SignalHookValue<'hook, Self::Signal> {
-    type Signal: Signal<SignalHook = Self> + ?Sized;
+/// `for<'hook> sealed::HookValueImplSignal<'hook>` here acts like [`for<'hook> HookValue<'hook, Value: Signal<SignalHook = Self, Value = Self::SignalShareValue>>`](crate::HookValue::Value).
+pub trait SignalHook:
+    Hook + for<'hook> sealed::HookValueImplSignal<'hook, Self::SignalShareValue>
+{
+    type SignalShareValue;
 }
 
 pub trait Signal: ShareValue {
-    type SignalHook: SignalHook<Signal = Self>;
+    type SignalHook: SignalHook<SignalShareValue = Self::Value>;
     type SignalHookUninitialized: HookPollNextUpdate + HookUnmount + Default;
 
     fn to_signal_hook(&self) -> Self::SignalHook;
@@ -54,6 +54,29 @@ pub trait Signal: ShareValue {
     fn notify_changed(&self);
 
     fn map_mut_and_notify_if<R>(&self, f: impl FnOnce(&mut Self::Value) -> (R, bool)) -> R;
+}
+
+impl<S: Signal + ?Sized> Signal for &S {
+    type SignalHook = S::SignalHook;
+    type SignalHookUninitialized = S::SignalHookUninitialized;
+    fn to_signal_hook(&self) -> Self::SignalHook {
+        S::to_signal_hook(self)
+    }
+    fn update_signal_hook(&self, hook: Pin<&mut Self::SignalHook>) {
+        S::update_signal_hook(self, hook)
+    }
+    fn h_signal_hook<'hook>(
+        &self,
+        hook: ::core::pin::Pin<&'hook mut Self::SignalHookUninitialized>,
+    ) -> crate::Value<'hook, Self::SignalHook> {
+        S::h_signal_hook(self, hook)
+    }
+    fn notify_changed(&self) {
+        S::notify_changed(self)
+    }
+    fn map_mut_and_notify_if<R>(&self, f: impl FnOnce(&mut Self::Value) -> (R, bool)) -> R {
+        S::map_mut_and_notify_if(self, f)
+    }
 }
 
 pub struct UseSignal<'a, S: Signal + ?Sized>(&'a S);

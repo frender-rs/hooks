@@ -135,7 +135,7 @@ impl<T> ShareValue for SharedState<T> {
 
 #[cfg(feature = "Signal")]
 impl<T> crate::SignalHook for SharedState<T> {
-    type Signal = Self;
+    type SignalShareValue = T;
 }
 
 #[cfg(feature = "Signal")]
