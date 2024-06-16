@@ -1,14 +1,11 @@
 use std::future::Future;
 
 use futures_lite::stream::StreamExt;
-use hooks::{
-    hook, hook_fn, reused::ReusableHookExt, shared_state::SharedState, HookExt, IntoHook,
-    ShareValue,
-};
+use hooks::{hook, hook_fn, shared_state::SharedState, HookExt, IntoHook, ShareValue, Signal};
 
 hook_fn!(
     fn use_test(state: SharedState<i32>) -> i32 {
-        let state = h![state.use_reused()];
+        let state = h![state.use_signal()];
 
         state.get()
     }
@@ -17,7 +14,7 @@ hook_fn!(
 hook_fn!(
     type Bounds = impl '_;
     fn use_test_1(state: &SharedState<i32>) -> i32 {
-        let state = h![state.use_reused()];
+        let state = h![state.use_signal()];
 
         state.get()
     }
@@ -26,7 +23,7 @@ hook_fn!(
 #[hook(bounds = "'_")]
 fn use_tests(state: &SharedState<i32>) -> i32 {
     let v = use_test_1(state);
-    let state = state.use_reused();
+    let state = state.use_signal();
 
     v + state.get()
 }

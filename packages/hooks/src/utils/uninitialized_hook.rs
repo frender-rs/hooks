@@ -36,17 +36,6 @@ impl<H: Hook + Unpin> UninitializedHook<H> {
         hook.use_hook()
     }
 
-    #[cfg(feature = "use_reused")]
-    pub(crate) fn use_with_reusable(
-        &mut self,
-        reusable: &impl crate::reused::ReusableHook<ReusableHook = H, ReusableUninitialized = Self>,
-    ) -> crate::Value<H> {
-        self.use_with(
-            || reusable.reuse_into_hook(),
-            |hook| reusable.reuse_update_hook(hook),
-        )
-    }
-
     #[cfg(feature = "Signal")]
     pub(crate) fn use_with_signal(
         &mut self,
