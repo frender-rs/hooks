@@ -66,3 +66,64 @@ pub trait ShareValue {
     /// because calling the same method on either of them leads to the same result.
     fn equivalent_to(&self, other: &Self) -> bool;
 }
+
+impl<S: ?Sized + ShareValue> ShareValue for &S {
+    type Value = S::Value;
+
+    fn try_unwrap(self) -> Result<Self::Value, Self>
+    where
+        Self: Sized,
+    {
+        Err(self)
+    }
+
+    fn map<R>(&self, f: impl FnOnce(&Self::Value) -> R) -> R {
+        S::map(self, f)
+    }
+
+    fn map_mut<R>(&self, f: impl FnOnce(&mut Self::Value) -> R) -> R {
+        S::map_mut(self, f)
+    }
+
+    fn equivalent_to(&self, other: &Self) -> bool {
+        S::equivalent_to(self, other)
+    }
+
+    fn unwrap_or_get_cloned(self) -> Self::Value
+    where
+        Self: Sized,
+        Self::Value: Clone,
+    {
+        self.get_cloned()
+    }
+
+    fn get(&self) -> Self::Value
+    where
+        Self::Value: Copy,
+    {
+        S::get(self)
+    }
+
+    fn get_cloned(&self) -> Self::Value
+    where
+        Self::Value: Clone,
+    {
+        S::get_cloned(self)
+    }
+
+    fn set(&self, new_value: Self::Value) {
+        S::set(self, new_value)
+    }
+
+    fn replace(&self, new_value: Self::Value) -> Self::Value {
+        S::replace(self, new_value)
+    }
+
+    fn replace_mut<F: FnOnce(&mut Self::Value) -> Self::Value>(&self, f: F) -> Self::Value {
+        S::replace_mut(self, f)
+    }
+
+    fn replace_with<F: FnOnce(&Self::Value) -> Self::Value>(&self, f: F) -> Self::Value {
+        S::replace_with(self, f)
+    }
+}
