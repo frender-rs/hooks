@@ -328,3 +328,5 @@ pub trait UpdateHookUninitialized: UpdateHook {
 
     fn h(self, hook: Pin<&mut Self::Uninitialized>) -> <Self::Hook as HookValue<'_>>::Value;
 }
+
+pub type Value<'hook, H> = <H as HookValue<'hook>>::Value;
