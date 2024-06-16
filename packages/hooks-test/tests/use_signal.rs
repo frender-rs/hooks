@@ -1,7 +1,7 @@
 use std::future::Future;
 
 use futures_lite::stream::StreamExt;
-use hooks::{hook, hook_fn, shared_state::SharedState, HookExt, IntoHook, ShareValue, Signal};
+use hooks::{hook, hook_fn, HookExt, IntoHook, ShareValue, SharedState, Signal};
 
 hook_fn!(
     fn use_test(state: SharedState<i32>) -> i32 {

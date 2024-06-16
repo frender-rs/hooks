@@ -113,7 +113,7 @@ async fn assert_timeout(fut: impl Future, millis_timeout: u64) {
 
 #[test]
 fn different_tasks() {
-    use hooks::shared_state::SharedState;
+    use hooks::SharedState;
 
     let mut state = SharedState::new(0);
 
