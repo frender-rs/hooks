@@ -1,4 +1,5 @@
 [workspace]
+resolver = "2"
 members = [
     "packages/hooks-core",
     "packages/hooks-macro-core",
