@@ -7,3 +7,6 @@ pub use uninitialized_hook::*;
 mod rc_status;
 
 pub use rc_status::*;
+
+#[cfg(test)]
+pub(crate) mod testing;

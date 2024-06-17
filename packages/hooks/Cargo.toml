@@ -15,7 +15,8 @@ hooks-core = { path = "../hooks-core", version = "3.0.0-alpha.3", default-featur
 pin-project-lite = "0.2.9"
 
 [dev-dependencies]
-futures-lite = "1.12.0"
+futures-lite = "2.3.0"
+async-io = "2.3.3"
 
 [features]
 default = ["futures-core", "all"]

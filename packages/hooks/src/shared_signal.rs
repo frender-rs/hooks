@@ -238,7 +238,7 @@ mod tests {
     use futures_lite::StreamExt;
     use hooks_core::hook_fn;
 
-    use crate::{use_shared_signal, ShareValue};
+    use crate::{use_shared_signal, utils::testing::assert_always_pending, ShareValue};
 
     #[test]
     #[cfg(feature = "use_effect")]
@@ -326,44 +326,20 @@ mod tests {
         )
     }
 
-    fn assert_timeout<Fut: std::future::Future>(
-        get_fut: impl 'static + Send + FnOnce() -> Fut,
-        timeout: u64,
-    ) {
-        use std::sync::mpsc::RecvTimeoutError;
-
-        let (tx, rx) = std::sync::mpsc::sync_channel(0);
-
-        let hook_thread = std::thread::spawn(move || {
-            let _ = futures_lite::future::block_on(get_fut());
-            tx.send(()).unwrap();
-        });
-
-        assert!(matches!(
-            rx.recv_timeout(std::time::Duration::from_millis(timeout)),
-            Err(RecvTimeoutError::Timeout)
-        ));
-
-        assert!(!hook_thread.is_finished());
-    }
-
-    fn assert_always_pending<Fut: std::future::Future>(
-        get_fut: impl 'static + Send + FnOnce() -> Fut,
-    ) {
-        const TIMEOUT: u64 = 100;
-        assert_timeout(get_fut, TIMEOUT)
-    }
-
     #[test]
     fn reference_cycle_should_always_pending() {
         use hooks_core::IntoHook;
 
+        use crate::IntoEq;
+
+        #[derive(PartialEq)]
         struct Data(#[allow(dead_code)] Option<super::SharedSignal<Self>>);
 
         hook_fn!(
             fn use_test() {
-                let state = h!(use_shared_signal(Data(None))).clone();
-                state.set(Data(Some(state.clone())));
+                let state = h!(use_shared_signal(Data(None))).into_eq();
+
+                state.set(Data(Some(state.0.clone())));
             }
         );
 
@@ -371,7 +347,7 @@ mod tests {
     }
 
     #[test]
-    fn unconditional_map_mut_should_always_pending() {
+    fn unconditional_map_mut_should_emit_infinite_values() {
         use hooks_core::IntoHook;
 
         hook_fn!(
@@ -386,6 +362,14 @@ mod tests {
             }
         );
 
-        assert_always_pending(|| use_test().into_hook_values().collect::<Vec<_>>());
+        futures_lite::future::block_on(async {
+            let res = use_test()
+                .into_hook_values()
+                .take(100)
+                .collect::<Vec<_>>()
+                .await;
+
+            assert_eq!(res, [0; 100])
+        });
     }
 }
