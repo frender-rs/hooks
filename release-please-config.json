@@ -1,6 +1,7 @@
 {
   "packages": {
     "packages/hooks-core": {},
+    "packages/hooks-gen": {},
     "packages/hooks-macro-core": {},
     "packages/hooks-macro": {},
     "packages/hooks": {}
