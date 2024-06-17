@@ -39,6 +39,12 @@ pub struct SharedSignal<T> {
     imp: SignalOwner<T, Rc<SignalInner<T>>>,
 }
 
+impl<T> PartialEq for SharedSignal<T> {
+    fn eq(&self, other: &Self) -> bool {
+        Rc::ptr_eq(self.inner(), other.inner())
+    }
+}
+
 impl<T: std::fmt::Debug> std::fmt::Debug for SharedSignal<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         self.imp.debug_fmt("SharedState", f)
@@ -129,7 +135,7 @@ impl<T> crate::ShareValue for SharedSignal<T> {
     }
 
     fn equivalent_to(&self, other: &Self) -> bool {
-        Rc::ptr_eq(self.inner(), other.inner())
+        *self == *other
     }
 }
 
