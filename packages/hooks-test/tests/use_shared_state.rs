@@ -1,7 +1,7 @@
 use std::future::Future;
 
 use futures_lite::StreamExt;
-use hooks::{hook, use_effect, use_shared_state, HookExt, IntoHook, ShareValue, Signal};
+use hooks::{hook, use_effect, use_shared_signal, HookExt, IntoHook, ShareValue, Signal};
 use smol::Task;
 
 #[test]
@@ -16,7 +16,7 @@ fn shared_state_delay() {
 
     #[hook]
     fn use_test() -> i32 {
-        let state = use_shared_state(0);
+        let state = use_shared_signal(0);
 
         let value = state.get();
         let s = state.clone();
@@ -62,7 +62,7 @@ fn shared_state_eq_delay() {
 
     #[hook]
     fn use_test() -> i32 {
-        let state = use_shared_state(0).into_eq();
+        let state = use_shared_signal(0).into_eq();
 
         let value = state.get();
         let s = state.to_signal_hook();
@@ -113,9 +113,9 @@ async fn assert_timeout(fut: impl Future, millis_timeout: u64) {
 
 #[test]
 fn different_tasks() {
-    use hooks::SharedState;
+    use hooks::SharedSignal;
 
-    let mut state = SharedState::new(0);
+    let mut state = SharedSignal::new(0);
 
     let exe = smol::LocalExecutor::new();
 

@@ -33,7 +33,7 @@ all = [
     "use_mut",
     "use_poll_next_update",
     "use_shared_ref",
-    "use_shared_state",
+    "use_shared_signal",
     "use_state_with_updater",
     "use_uninitialized_hook",
 
@@ -55,7 +55,7 @@ use_memo = []
 use_mut = []
 use_poll_next_update = []
 use_shared_ref = []
-use_shared_state = []
+use_shared_signal = []
 use_state_with_updater = []
 use_uninitialized_hook = []
 

@@ -11,7 +11,7 @@ test_many_async!(use_1_hook(
     {
         hook_fn!(
             fn use_shared_state() -> u32 {
-                let state = h![hooks::use_shared_state(3)];
+                let state = h![hooks::use_shared_signal(3)];
                 state.get()
             }
         );
@@ -26,8 +26,8 @@ test_many_async!(use_1_hook(
         hook_fn!(
             fn use_shared_state_borrowing<'a>(
                 initial_value: &'a str,
-            ) -> &'hook hooks::SharedState<&'a str> {
-                let state = h!(hooks::use_shared_state(initial_value));
+            ) -> &'hook hooks::SharedSignal<&'a str> {
+                let state = h!(hooks::use_shared_signal(initial_value));
                 state
             }
         );

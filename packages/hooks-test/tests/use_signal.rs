@@ -1,10 +1,10 @@
 use std::future::Future;
 
 use futures_lite::stream::StreamExt;
-use hooks::{hook, hook_fn, HookExt, IntoHook, ShareValue, SharedState, Signal};
+use hooks::{hook, hook_fn, HookExt, IntoHook, ShareValue, SharedSignal, Signal};
 
 hook_fn!(
-    fn use_test(state: SharedState<i32>) -> i32 {
+    fn use_test(state: SharedSignal<i32>) -> i32 {
         let state = h![state.use_signal()];
 
         state.get()
@@ -13,7 +13,7 @@ hook_fn!(
 
 hook_fn!(
     type Bounds = impl '_;
-    fn use_test_1(state: &SharedState<i32>) -> i32 {
+    fn use_test_1(state: &SharedSignal<i32>) -> i32 {
         let state = h![state.use_signal()];
 
         state.get()
@@ -21,7 +21,7 @@ hook_fn!(
 );
 
 #[hook(bounds = "'_")]
-fn use_tests(state: &SharedState<i32>) -> i32 {
+fn use_tests(state: &SharedSignal<i32>) -> i32 {
     let v = use_test_1(state);
     let state = state.use_signal();
 
@@ -40,9 +40,9 @@ async fn assert_timeout(fut: impl Future) {
 }
 
 #[test]
-fn reuse_shared_state() {
+fn reuse_shared_signal() {
     futures_lite::future::block_on(async {
-        let state = SharedState::new(0);
+        let state = SharedSignal::new(0);
         let mut values = use_test(state.clone()).into_hook_values();
         drop(state);
         assert_eq!(values.next().await, Some(0));
@@ -57,9 +57,9 @@ fn reuse_shared_state() {
 }
 
 #[test]
-fn clone_shared_state() {
+fn clone_shared_signal() {
     futures_lite::future::block_on(async {
-        let mut state_1 = SharedState::new(0);
+        let mut state_1 = SharedSignal::new(0);
         let mut state_2 = state_1.clone();
 
         if let Some(state) = state_1.next_value().await {
@@ -115,16 +115,16 @@ fn clone_shared_state() {
 }
 
 #[test]
-fn reuse_shared_state_2() {
+fn reuse_shared_signal_2() {
     futures_lite::future::block_on(async {
-        let state = SharedState::new(0);
+        let state = SharedSignal::new(0);
         let mut values_1 = use_test(state.clone()).into_hook_values();
         let mut values_2 = use_test(state.clone()).into_hook_values();
 
         assert_eq!(values_1.next().await, Some(0));
 
         // This is because fn_hook will at least run once
-        // and cloned SharedState is marked as not seen.
+        // and cloned SharedSignal is marked as not seen.
         assert_eq!(values_2.next().await, Some(0));
 
         assert_timeout(values_1.next()).await;
@@ -145,7 +145,7 @@ fn reuse_shared_state_2() {
 #[test]
 fn tests() {
     futures_lite::future::block_on(async {
-        let state = SharedState::new(0);
+        let state = SharedSignal::new(0);
         let values = use_tests(&state).into_hook_values();
 
         futures_lite::pin!(values);

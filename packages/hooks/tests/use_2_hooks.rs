@@ -9,7 +9,7 @@ use utils::test_many_async;
 
 test_many_async!(use_2_hooks(
     {
-        struct IncrementBoth<'a>([&'a hooks::SharedState<u32>; 2]);
+        struct IncrementBoth<'a>([&'a hooks::SharedSignal<u32>; 2]);
 
         impl IncrementBoth<'_> {
             pub fn increment_both(&self) {
@@ -21,8 +21,8 @@ test_many_async!(use_2_hooks(
 
         hook_fn!(
             fn use_shared_state() -> (u32, IncrementBoth<'hook>) {
-                let state_0 = h![hooks::use_shared_state(0)];
-                let state_1 = h![hooks::use_shared_state(0)];
+                let state_0 = h![hooks::use_shared_signal(0)];
+                let state_1 = h![hooks::use_shared_signal(0)];
 
                 (
                     state_0.get() + state_1.get(),

@@ -46,11 +46,12 @@ pub use shared_ref::{
     UseSharedRefWith,
 };
 
-#[cfg(feature = "use_shared_state")]
-mod shared_state;
-#[cfg(feature = "use_shared_state")]
-pub use shared_state::{
-    use_shared_state, use_shared_state_with, SharedState, UseSharedState, UseSharedStateWith,
+#[cfg(feature = "use_shared_signal")]
+mod shared_signal;
+#[cfg(feature = "use_shared_signal")]
+pub use shared_signal::{
+    SharedSignal, UseSharedSignal, UseSharedSignal as use_shared_signal, UseSharedSignalWith,
+    UseSharedSignalWith as use_shared_signal_with,
 };
 
 #[cfg(feature = "use_state_with_updater")]
@@ -111,8 +112,8 @@ pub mod prelude {
     pub use crate::poll_next_update::use_poll_next_update;
     #[cfg(feature = "use_shared_ref")]
     pub use crate::{use_shared_ref, use_shared_ref_with};
-    #[cfg(feature = "use_shared_state")]
-    pub use crate::{use_shared_state, use_shared_state_with};
+    #[cfg(feature = "use_shared_signal")]
+    pub use crate::{use_shared_signal, use_shared_signal_with};
 
     #[cfg(feature = "use_state_with_updater")]
     pub use crate::state_with_updater::{use_state_with_updater, use_state_with_updater_with};

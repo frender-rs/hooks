@@ -13,12 +13,12 @@ macro_rules! wrap_signal_eq {
     };
 }
 
-#[cfg(feature = "use_shared_state")]
-impl<T: PartialEq> IntoEq for crate::shared_state::SharedState<T> {
+#[cfg(feature = "use_shared_signal")]
+impl<T: PartialEq> IntoEq for crate::SharedSignal<T> {
     wrap_signal_eq! {}
 }
 
-#[cfg(feature = "use_shared_state")]
-impl<T: PartialEq> IntoEq for &crate::shared_state::SharedState<T> {
+#[cfg(feature = "use_shared_signal")]
+impl<T: PartialEq> IntoEq for &crate::SharedSignal<T> {
     wrap_signal_eq! {}
 }

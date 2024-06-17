@@ -35,17 +35,17 @@ impl<T> SharableRef for Rc<T> {
     }
 }
 
-pub struct SharedState<T> {
+pub struct SharedSignal<T> {
     imp: StateOwner<T, Rc<SharedStateInner<T>>>,
 }
 
-impl<T: std::fmt::Debug> std::fmt::Debug for SharedState<T> {
+impl<T: std::fmt::Debug> std::fmt::Debug for SharedSignal<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         self.imp.debug_fmt("SharedState", f)
     }
 }
 
-impl<T> Clone for SharedState<T> {
+impl<T> Clone for SharedSignal<T> {
     fn clone(&self) -> Self {
         Self {
             imp: self.imp.clone(),
@@ -53,7 +53,7 @@ impl<T> Clone for SharedState<T> {
     }
 }
 
-impl<T> SharedState<T> {
+impl<T> SharedSignal<T> {
     #[inline]
     pub fn new(initial_value: T) -> Self {
         Self {
@@ -75,7 +75,7 @@ impl<T> SharedState<T> {
 }
 
 #[cfg(feature = "ShareValue")]
-impl<T> crate::ShareValue for SharedState<T> {
+impl<T> crate::ShareValue for SharedSignal<T> {
     type Value = T;
 
     fn try_unwrap(self) -> Result<Self::Value, Self>
@@ -134,7 +134,7 @@ impl<T> crate::ShareValue for SharedState<T> {
 }
 
 #[cfg(feature = "Signal")]
-impl<T> crate::SignalHook for SharedState<T> {
+impl<T> crate::SignalHook for SharedSignal<T> {
     type SignalShareValue = T;
 
     fn to_signal(&self) -> &Self {
@@ -143,7 +143,7 @@ impl<T> crate::SignalHook for SharedState<T> {
 }
 
 #[cfg(feature = "Signal")]
-impl<T> crate::Signal for SharedState<T> {
+impl<T> crate::Signal for SharedSignal<T> {
     type SignalHook = Self;
     type SignalHookUninitialized = crate::utils::UninitializedHook<Self>;
 
@@ -176,7 +176,7 @@ impl<T> crate::Signal for SharedState<T> {
 }
 
 hooks_core::impl_hook![
-    type For<T> = SharedState<T>;
+    type For<T> = SharedSignal<T>;
     fn unmount() {}
     #[inline]
     fn poll_next_update(self, cx: _) {
@@ -193,36 +193,34 @@ hooks_core::impl_hook![
     }
 ];
 
-pub struct UseSharedState<T>(pub T);
-pub use UseSharedState as use_shared_state;
+pub struct UseSharedSignal<T>(pub T);
 
 hooks_core::impl_hook![
-    type For<T> = UseSharedState<T>;
+    type For<T> = UseSharedSignal<T>;
     #[inline]
-    fn into_hook(self) -> SharedState<T> {
-        SharedState::new(self.0)
+    fn into_hook(self) -> SharedSignal<T> {
+        SharedSignal::new(self.0)
     }
     #[inline(always)]
     fn update_hook(self, _hook: _) {}
-    fn h(self, hook: crate::utils::UninitializedHook<SharedState<T>>) {
+    fn h(self, hook: crate::utils::UninitializedHook<SharedSignal<T>>) {
         hook.get_mut().use_into_or_update_hook(self)
     }
 ];
 
-pub struct UseSharedStateWith<T, F: FnOnce() -> T>(pub F);
-pub use UseSharedStateWith as use_shared_state_with;
+pub struct UseSharedSignalWith<T, F: FnOnce() -> T>(pub F);
 
 hooks_core::impl_hook![
-    type For<T, F: FnOnce() -> T> = UseSharedStateWith<T, F>;
+    type For<T, F: FnOnce() -> T> = UseSharedSignalWith<T, F>;
 
     #[inline]
-    fn into_hook(self) -> SharedState<T> {
-        SharedState::new(self.0())
+    fn into_hook(self) -> SharedSignal<T> {
+        SharedSignal::new(self.0())
     }
 
     #[inline(always)]
     fn update_hook(self, _hook: _) {}
-    fn h(self, hook: crate::utils::UninitializedHook<SharedState<T>>) {
+    fn h(self, hook: crate::utils::UninitializedHook<SharedSignal<T>>) {
         hook.get_mut().use_into_or_update_hook(self)
     }
 ];
@@ -234,18 +232,18 @@ mod tests {
     use futures_lite::StreamExt;
     use hooks_core::hook_fn;
 
-    use crate::{use_shared_state, ShareValue};
+    use crate::{use_shared_signal, ShareValue};
 
     #[test]
     #[cfg(feature = "use_effect")]
-    fn shared_state() {
+    fn shared_signal() {
         use hooks_core::IntoHook;
 
         use crate::use_effect;
 
         hook_fn!(
             fn use_test() -> i32 {
-                let state = h![use_shared_state(0)];
+                let state = h![use_shared_signal(0)];
 
                 let value = state.get();
                 let s = state.clone();
@@ -277,7 +275,7 @@ mod tests {
 
         hook_fn!(
             fn use_test() -> i32 {
-                let state = h!(use_shared_state(0));
+                let state = h!(use_shared_signal(0));
 
                 let value = state.get();
                 let s = state.clone();
@@ -300,7 +298,7 @@ mod tests {
 
         hook_fn!(
             fn use_test() -> i32 {
-                let state = h!(use_shared_state(0));
+                let state = h!(use_shared_signal(0));
 
                 let value = state.get();
                 let s = state.clone();
@@ -354,11 +352,11 @@ mod tests {
     fn reference_cycle_should_always_pending() {
         use hooks_core::IntoHook;
 
-        struct Data(#[allow(dead_code)] Option<super::SharedState<Self>>);
+        struct Data(#[allow(dead_code)] Option<super::SharedSignal<Self>>);
 
         hook_fn!(
             fn use_test() {
-                let state = h!(use_shared_state(Data(None))).clone();
+                let state = h!(use_shared_signal(Data(None))).clone();
                 state.set(Data(Some(state.clone())));
             }
         );
@@ -372,7 +370,7 @@ mod tests {
 
         hook_fn!(
             fn use_test() -> i32 {
-                let state = h!(use_shared_state(0));
+                let state = h!(use_shared_signal(0));
 
                 let value = state.get();
 

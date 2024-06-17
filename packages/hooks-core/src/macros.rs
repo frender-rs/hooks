@@ -47,7 +47,7 @@ macro_rules! h {
 ///
 /// hook_fn!(
 ///     fn use_auto_increment(max: i32) -> i32 {
-///         let state = h!(use_shared_state(0));
+///         let state = h!(use_shared_signal(0));
 ///         let v = state.get();
 ///
 ///         h!(use_effect_with::<i32, _>(|old_dependency| {
@@ -202,10 +202,10 @@ macro_rules! h {
 /// # extern crate hooks_dev as hooks;
 /// # use hooks::prelude::*;
 /// hook_fn!(
-///     fn use_shared_state_2() -> (i32, i32) {
+///     fn use_shared_signal_2() -> (i32, i32) {
 ///         (
-///             h![use_shared_state(0)].get(),
-///             h![use_shared_state(1)].get(),
+///             h![use_shared_signal(0)].get(),
+///             h![use_shared_signal(1)].get(),
 ///         )
 ///     }
 /// );
@@ -217,9 +217,9 @@ macro_rules! h {
 /// # extern crate hooks_dev as hooks;
 /// # use hooks::prelude::*;
 /// hook_fn!(
-///     fn use_shared_state_2() -> (i32, i32) {
-///         let a = h![use_shared_state(0)].get();
-///         let b = h![use_shared_state(1)].get();
+///     fn use_shared_signal_2() -> (i32, i32) {
+///         let a = h![use_shared_signal(0)].get();
+///         let b = h![use_shared_signal(1)].get();
 ///         (a, b)
 ///     }
 /// );
@@ -232,10 +232,10 @@ macro_rules! h {
 /// # extern crate hooks_dev as hooks;
 /// # use hooks::prelude::*;
 /// #[hook]
-/// fn use_shared_state_2() -> (i32, i32) {
+/// fn use_shared_signal_2() -> (i32, i32) {
 ///     (
-///         use_shared_state(0).get(),
-///         use_shared_state(1).get(),
+///         use_shared_signal(0).get(),
+///         use_shared_signal(1).get(),
 ///     )
 /// }
 /// ```

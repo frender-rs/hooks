@@ -15,9 +15,9 @@ test_single_feature use_mut
 test_single_feature use_poll_next_update
 test_single_feature use_shared_ref
 test_single_feature use_shared_ref,ShareValue
-test_single_feature use_shared_state
-test_single_feature use_shared_state,ShareValue
-test_single_feature use_shared_state,Signal
+test_single_feature use_shared_signal
+test_single_feature use_shared_signal,ShareValue
+test_single_feature use_shared_signal,Signal
 test_single_feature use_uninitialized_hook
 
 test_single_feature use_state_with_updater
