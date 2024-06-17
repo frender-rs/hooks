@@ -27,7 +27,7 @@ jobs:
           cargo test -p hooks-test
           cargo test
           cargo test --all-features
-      - uses: google-github-actions/release-please-action@v4
+      - uses: googleapis/release-please-action@v4
         id: release
         with:
           target-branch: alpha
