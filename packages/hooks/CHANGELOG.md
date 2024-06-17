@@ -1,5 +1,4 @@
 # Changelog
-<!-- Touch this file so that the release-please would know this commit only affects this package -->
 
 ## [3.0.0-alpha.7](https://github.com/frender-rs/hooks/compare/hooks-v3.0.0-alpha.6...hooks-v3.0.0-alpha.7) (2024-06-16)
 
