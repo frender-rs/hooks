@@ -2,6 +2,9 @@
 name = "hooks-gen"
 version = "0.1.0"
 edition = "2021"
+description = "generational arena for hooks"
+license = "MIT"
+repository = "https://github.com/frender-rs/hooks"
 
 [dependencies]
 slab = { version = "0.4.9", default-features = false }
