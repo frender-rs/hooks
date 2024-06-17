@@ -1,5 +1,21 @@
 # Changelog
 
+## [3.0.0-alpha.4](https://github.com/frender-rs/hooks/compare/hooks-core-v3.0.0-alpha.3...hooks-core-v3.0.0-alpha.4) (2024-06-17)
+
+
+### ⚠ BREAKING CHANGES
+
+* rename use_shared_state to use_shared_signal
+
+### Features
+
+* rename use_shared_state to use_shared_signal ([68cb5a2](https://github.com/frender-rs/hooks/commit/68cb5a29526be6fabc1048733c6f940fb5b1b14f))
+
+
+### Miscellaneous Chores
+
+* release ([4b573d0](https://github.com/frender-rs/hooks/commit/4b573d0f2e9b05cb06fc322fdd13defb771a5bc1))
+
 ## [3.0.0-alpha.3](https://github.com/frender-rs/hooks/compare/hooks-core-v3.0.0-alpha.2...hooks-core-v3.0.0-alpha.3) (2024-06-16)
 
 

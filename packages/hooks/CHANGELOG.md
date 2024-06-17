@@ -1,5 +1,30 @@
 # Changelog
 
+## [3.0.0-alpha.8](https://github.com/frender-rs/hooks/compare/hooks-v3.0.0-alpha.7...hooks-v3.0.0-alpha.8) (2024-06-17)
+
+
+### ⚠ BREAKING CHANGES
+
+* rename use_shared_state to use_shared_signal
+
+### Features
+
+* impl PartialEq for SharedSignal ([c02a223](https://github.com/frender-rs/hooks/commit/c02a223881abe760d1b3f6a8ae8430f44e505f9b))
+* rename use_shared_state to use_shared_signal ([68cb5a2](https://github.com/frender-rs/hooks/commit/68cb5a29526be6fabc1048733c6f940fb5b1b14f))
+* use_gen_signal and use_gen_ref ([9560467](https://github.com/frender-rs/hooks/commit/9560467b4966b512c1406265980d350a81ddedff))
+
+
+### Miscellaneous Chores
+
+* release ([eeba9f0](https://github.com/frender-rs/hooks/commit/eeba9f0b28b4469ae6919fb23c9907ed81629c7e))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * hooks-core bumped from 3.0.0-alpha.3 to 3.0.0-alpha.4
+
 ## [3.0.0-alpha.7](https://github.com/frender-rs/hooks/compare/hooks-v3.0.0-alpha.6...hooks-v3.0.0-alpha.7) (2024-06-16)
 
 
