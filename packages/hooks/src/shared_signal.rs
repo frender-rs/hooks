@@ -1,7 +1,7 @@
 use std::{cell::RefCell, rc::Rc};
 
 use crate::{
-    state_owner::{SharableRef, SharedStateInner, StateOwner},
+    state_owner::{SharableRef, SignalInner, SignalOwner},
     utils::RcStatus,
 };
 
@@ -36,7 +36,7 @@ impl<T> SharableRef for Rc<T> {
 }
 
 pub struct SharedSignal<T> {
-    imp: StateOwner<T, Rc<SharedStateInner<T>>>,
+    imp: SignalOwner<T, Rc<SignalInner<T>>>,
 }
 
 impl<T: std::fmt::Debug> std::fmt::Debug for SharedSignal<T> {
@@ -57,7 +57,7 @@ impl<T> SharedSignal<T> {
     #[inline]
     pub fn new(initial_value: T) -> Self {
         Self {
-            imp: StateOwner::new(initial_value),
+            imp: SignalOwner::new(initial_value),
         }
     }
 
@@ -69,7 +69,7 @@ impl<T> SharedSignal<T> {
         self.imp.map_mut_and_notify_if(f)
     }
 
-    fn inner(&self) -> &Rc<SharedStateInner<T>> {
+    fn inner(&self) -> &Rc<SignalInner<T>> {
         self.imp.inner()
     }
 }

@@ -5,12 +5,13 @@ use std::{
 
 use crate::utils::RcStatus;
 
-pub(crate) struct SharedStateInner<T> {
+/// A value and notifiers
+pub(crate) struct SignalInner<T> {
     pub(crate) value: RefCell<T>,
     notifiers: RefCell<Notifiers>,
 }
 
-impl<T> SharedStateInner<T> {
+impl<T> SignalInner<T> {
     pub(crate) fn into_value(self) -> T {
         self.value.into_inner()
     }
@@ -97,14 +98,15 @@ pub(crate) trait SharableRef: Clone {
     ) -> R;
 }
 
-pub(crate) struct StateOwner<T, R: SharableRef<Value = SharedStateInner<T>>> {
+pub(crate) struct SignalOwner<T, R: SharableRef<Value = SignalInner<T>>> {
     inner: R,
+    /// the key of notifier
     key: usize,
 }
 
-impl<T, R: SharableRef<Value = SharedStateInner<T>>> Unpin for StateOwner<T, R> {}
+impl<T, R: SharableRef<Value = SignalInner<T>>> Unpin for SignalOwner<T, R> {}
 
-impl<T, R: SharableRef<Value = SharedStateInner<T>>> Drop for StateOwner<T, R> {
+impl<T, R: SharableRef<Value = SignalInner<T>>> Drop for SignalOwner<T, R> {
     fn drop(&mut self) {
         self.inner.map(|inner| {
             let mut notifiers = inner.notifiers.borrow_mut();
@@ -119,7 +121,7 @@ impl<T, R: SharableRef<Value = SharedStateInner<T>>> Drop for StateOwner<T, R> {
     }
 }
 
-impl<T: std::fmt::Debug, R: SharableRef<Value = SharedStateInner<T>>> StateOwner<T, R> {
+impl<T: std::fmt::Debug, R: SharableRef<Value = SignalInner<T>>> SignalOwner<T, R> {
     pub(crate) fn debug_fmt(
         &self,
         type_name: &str,
@@ -139,7 +141,7 @@ impl<T: std::fmt::Debug, R: SharableRef<Value = SharedStateInner<T>>> StateOwner
     }
 }
 
-impl<T, R: SharableRef<Value = SharedStateInner<T>>> Clone for StateOwner<T, R> {
+impl<T, R: SharableRef<Value = SignalInner<T>>> Clone for SignalOwner<T, R> {
     fn clone(&self) -> Self {
         Self {
             inner: self.inner.clone(),
@@ -148,14 +150,14 @@ impl<T, R: SharableRef<Value = SharedStateInner<T>>> Clone for StateOwner<T, R> 
     }
 }
 
-impl<T, SR: SharableRef<Value = SharedStateInner<T>>> StateOwner<T, SR> {
+impl<T, SR: SharableRef<Value = SignalInner<T>>> SignalOwner<T, SR> {
     pub(crate) fn inner(&self) -> &SR {
         &self.inner
     }
 
     pub(crate) fn new(initial_value: T) -> Self {
         Self {
-            inner: SR::create(SharedStateInner {
+            inner: SR::create(SignalInner {
                 value: RefCell::new(initial_value),
                 notifiers: RefCell::new(Notifiers::new_1()),
             }),
@@ -172,7 +174,7 @@ impl<T, SR: SharableRef<Value = SharedStateInner<T>>> StateOwner<T, SR> {
     }
 
     pub(crate) fn notify_changed(&self) {
-        self.inner.map(SharedStateInner::notify_changed)
+        self.inner.map(SignalInner::notify_changed)
     }
 
     pub(crate) fn map_mut_and_notify_if<R>(&self, f: impl FnOnce(&mut T) -> (R, bool)) -> R {
@@ -223,7 +225,7 @@ impl<T, SR: SharableRef<Value = SharedStateInner<T>>> StateOwner<T, SR> {
 }
 
 hooks_core::impl_hook![
-    type For<T, SR: SharableRef<Value = SharedStateInner<T>>> = StateOwner<T, SR>;
+    type For<T, SR: SharableRef<Value = SignalInner<T>>> = SignalOwner<T, SR>;
     fn unmount() {}
     #[inline]
     fn poll_next_update(self, cx: _) {
