@@ -54,6 +54,22 @@ pub use shared_signal::{
     UseSharedSignalWith as use_shared_signal_with,
 };
 
+#[cfg(feature = "use_gen_ref")]
+mod gen_ref;
+#[cfg(feature = "use_gen_ref")]
+pub use gen_ref::{
+    GenRef, GenRefKey, UseGenRef, UseGenRef as use_gen_ref, UseGenRefWith,
+    UseGenRefWith as use_gen_ref_with,
+};
+
+#[cfg(feature = "use_gen_signal")]
+mod gen_signal;
+#[cfg(feature = "use_gen_signal")]
+pub use gen_signal::{
+    GenSignal, GenSignalHook, UseGenSignal, UseGenSignal as use_gen_signal, UseGenSignalWith,
+    UseGenSignalWith as use_gen_signal_with,
+};
+
 #[cfg(feature = "use_state_with_updater")]
 mod state_with_updater;
 #[cfg(feature = "use_state_with_updater")]

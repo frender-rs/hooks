@@ -112,6 +112,7 @@ impl<T, R: SharableRef<Value = SignalInner<T>>> Drop for SignalOwner<T, R> {
             let mut notifiers = inner.notifiers.borrow_mut();
             notifiers.remove_at_occupied(self.key);
 
+            // TODO: this can be ignored for GenSignal
             // This is the last owner.
             // Or, after this is dropped, owner will be no longer shared
             if self.inner.shared_count() <= 2 {
@@ -165,7 +166,6 @@ impl<T, SR: SharableRef<Value = SignalInner<T>>> SignalOwner<T, SR> {
         }
     }
 
-    #[cfg(todo)]
     pub(crate) fn from_sharable_ref(sr: SR) -> Self {
         Self {
             key: sr.map(|inner| inner.notifiers.borrow_mut().add()),
@@ -179,6 +179,26 @@ impl<T, SR: SharableRef<Value = SignalInner<T>>> SignalOwner<T, SR> {
 
     pub(crate) fn map_mut_and_notify_if<R>(&self, f: impl FnOnce(&mut T) -> (R, bool)) -> R {
         self.inner.map(|inner| inner.map_mut_and_notify_if(f))
+    }
+
+    /// Updates are always considered possible
+    pub(crate) fn impl_poll_next_update_never_false(&mut self, cx: &mut Context<'_>) -> Poll<bool> {
+        Self::map_mut_or_borrow_mut_notifiers(&mut self.inner, |notifiers, _| {
+            let notifier = notifiers.get_mut_occupied(self.key);
+            if notifier.seen {
+                let new_waker = cx.waker();
+                if !(notifier
+                    .waker
+                    .as_ref()
+                    .is_some_and(|old_waker| old_waker.will_wake(new_waker)))
+                {
+                    notifier.waker = Some(new_waker.clone());
+                }
+                Poll::Pending
+            } else {
+                Poll::Ready(true)
+            }
+        })
     }
 
     fn impl_poll_next_update(&mut self, cx: &mut Context<'_>) -> Poll<bool> {

@@ -326,6 +326,7 @@ mod tests {
         )
     }
 
+    #[cfg(feature = "Signal")]
     #[test]
     fn reference_cycle_should_always_pending() {
         use hooks_core::IntoHook;

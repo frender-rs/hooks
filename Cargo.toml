@@ -5,6 +5,7 @@ members = [
     "packages/hooks-macro",
     "packages/hooks",
     "packages/hooks-test",
+    "packages/hooks-gen",
 ]
 
 [profile.dev.package.insta]

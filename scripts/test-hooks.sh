@@ -1,7 +1,10 @@
 set -e
 
 test_single_feature() {
-  cargo test -p hooks --no-default-features --features "proc-macro,futures-core,$1"
+  RUSTFLAGS="$RUSTFLAGS -A dead_code -A unused_imports" cargo test \
+    -p hooks \
+    --quiet \
+    --no-default-features --features "proc-macro,futures-core,$1"
 }
 
 test_single_feature ShareValue
@@ -26,6 +29,12 @@ test_single_feature use_shared_call
 test_single_feature use_shared_reducer
 test_single_feature use_shared_set
 test_single_feature use_shared_toggle
+
+test_single_feature use_gen_ref
+test_single_feature use_gen_ref,ShareValue
+test_single_feature use_gen_signal
+test_single_feature use_gen_signal,ShareValue
+test_single_feature use_gen_signal,Signal
 
 cargo test -p hooks --no-default-features
 cargo test -p hooks --no-default-features --features all
