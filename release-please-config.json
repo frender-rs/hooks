@@ -1,6 +1,13 @@
 {
   "packages": {
-    "packages/hooks-core": {},
+    "packages/hooks-core": {
+      "exclude-paths": [
+        "../hooks-gen",
+        "../hooks-macro-core",
+        "../hooks-macro",
+        "../hooks"
+      ]
+    },
     "packages/hooks-gen": {},
     "packages/hooks-macro-core": {},
     "packages/hooks-macro": {},
