@@ -1,6 +1,9 @@
 #[cfg(feature = "use_shared_reducer")]
 pub use shared::*;
 
+#[cfg(feature = "use_gen_reducer")]
+pub use gen::*;
+
 use super::{IntoUpdateStateResult, UpdateState};
 
 pub trait Reduce<S, A> {
@@ -202,6 +205,184 @@ mod shared {
                 }
 
                 assert!(hook.next_value().await.is_none());
+            })
+        }
+    }
+}
+
+#[cfg(feature = "use_gen_reducer")]
+mod gen {
+    use super::{
+        super::{
+            use_gen_update_state, use_gen_update_state_with, GenUpdateState, GenUpdateStateKey,
+            UseGenUpdateState, UseGenUpdateStateWith,
+        },
+        Reduce, Reducer,
+    };
+
+    pub type GenReducer<A, R, AS> = GenUpdateState<Reducer<A, R, AS>>;
+    pub type GenReducerKey<A, R, AS> = GenUpdateStateKey<Reducer<A, R, AS>>;
+    pub type GenReduce<A, R> = GenReducer<A, R, Vec<A>>;
+    pub type GenReduceKey<A, R> = GenReducerKey<A, R, Vec<A>>;
+
+    impl<A, R, AS: Default + Extend<A> + IntoIterator<Item = A>> GenReducerKey<A, R, AS> {
+        pub fn dispatch(&self, action: A) {
+            self.map_mut_update_state(|reducer| reducer.actions.extend(Some(action)))
+        }
+
+        pub fn dispatch_actions<AA: IntoIterator<Item = A>>(&self, actions: AA) {
+            self.map_mut_update_state(|reducer| reducer.actions.extend(actions))
+        }
+    }
+
+    pub type UseGenReducer<S, A, R, AS> = UseGenUpdateState<S, Reducer<A, R, AS>>;
+    pub fn use_gen_reducer<
+        S,
+        A,
+        R: Reduce<S, A>,
+        AS: Default + Extend<A> + IntoIterator<Item = A>,
+    >(
+        initial_state: S,
+        reduce: R,
+    ) -> UseGenReducer<S, A, R, AS> {
+        use_gen_update_state(
+            initial_state,
+            Reducer {
+                reduce,
+                actions: AS::default(),
+            },
+        )
+    }
+
+    pub type UseGenReducerWith<F> = UseGenUpdateStateWith<F>;
+    pub fn use_gen_reducer_with<
+        S,
+        A,
+        R: Reduce<S, A>,
+        AS: Default + Extend<A> + IntoIterator<Item = A>,
+    >(
+        f: impl FnOnce() -> (S, R),
+    ) -> UseGenReducerWith<impl FnOnce() -> (S, Reducer<A, R, AS>)> {
+        use_gen_update_state_with(move || {
+            let (initial_state, reduce) = f();
+            (
+                initial_state,
+                Reducer {
+                    reduce,
+                    actions: AS::default(),
+                },
+            )
+        })
+    }
+
+    pub type UseGenReduce<S, A, R> = UseGenReducer<S, A, R, Vec<A>>;
+    pub fn use_gen_reduce<S, A, R: Reduce<S, A>>(
+        initial_state: S,
+        reduce: R,
+    ) -> UseGenReduce<S, A, R> {
+        use_gen_reducer(initial_state, reduce)
+    }
+
+    pub type UseGenReduceWith<F> = UseGenReducerWith<F>;
+    pub fn use_gen_reduce_with<S, A, R: Reduce<S, A>>(
+        f: impl FnOnce() -> (S, R),
+    ) -> UseGenReduceWith<impl FnOnce() -> (S, Reducer<A, R, Vec<A>>)> {
+        use_gen_reducer_with(f)
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use futures_lite::future::block_on;
+        use hooks_core::{HookExt, IntoHook};
+
+        use crate::{hook_fn, utils::testing::assert_always_pending, Reduce};
+
+        use super::{use_gen_reduce_with, GenReduceKey};
+
+        type GenMyReduceKey = GenReduceKey<MyAction, MyReduce>;
+
+        struct MyReduce {
+            step: i32,
+        }
+
+        enum MyAction {
+            Increment,
+            Decrement,
+        }
+
+        impl Reduce<i32, MyAction> for MyReduce {
+            fn reduce(&mut self, state: &mut i32, action: MyAction) -> bool {
+                if self.step == 0 {
+                    return false;
+                }
+
+                match action {
+                    MyAction::Increment => *state += self.step,
+                    MyAction::Decrement => *state -= self.step,
+                }
+
+                true
+            }
+        }
+
+        hook_fn!(
+            fn use_my_reduce(step: i32) -> (i32, GenMyReduceKey) {
+                let (value, reduce) = h![use_gen_reduce_with(|| (0, MyReduce { step }))];
+                (*value, reduce)
+            }
+        );
+
+        #[test]
+        fn reduce() {
+            block_on(async {
+                let mut hook = use_my_reduce(2).into_hook();
+                let (value, _) = hook.next_value().await.unwrap();
+                assert_eq!(value, 0);
+
+                assert_always_pending(|| hook.next_value());
+
+                {
+                    let (value, reduce) = hook.use_hook();
+                    assert_eq!(value, 0);
+
+                    reduce.dispatch(MyAction::Increment);
+                    assert_eq!(hook.next_value().await.unwrap().0, 2);
+                }
+
+                {
+                    let (value, reduce) = hook.use_hook();
+                    assert_eq!(value, 2);
+
+                    reduce.dispatch(MyAction::Increment);
+                    reduce.dispatch(MyAction::Decrement);
+                    assert_eq!(hook.next_value().await.unwrap().0, 2);
+                }
+
+                {
+                    let (value, reduce) = hook.use_hook();
+                    assert_eq!(value, 2);
+
+                    reduce.map_mut_update_state(|reducer| reducer.reduce.step = 1);
+
+                    reduce.dispatch(MyAction::Increment);
+                    reduce.dispatch(MyAction::Increment);
+                    reduce.dispatch(MyAction::Decrement);
+                    reduce.dispatch(MyAction::Increment);
+                    reduce.dispatch(MyAction::Increment);
+                    assert_eq!(hook.next_value().await.unwrap().0, 5);
+                }
+
+                {
+                    let (value, reduce) = hook.use_hook();
+                    assert_eq!(value, 5);
+
+                    reduce.map_mut_update_state(|reducer| reducer.reduce.step = 0);
+
+                    reduce.dispatch(MyAction::Increment);
+                    assert_always_pending(|| hook.next_value());
+                }
+
+                assert_always_pending(|| hook.next_value());
             })
         }
     }

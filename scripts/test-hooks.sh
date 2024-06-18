@@ -30,6 +30,12 @@ test_single_feature use_shared_reducer
 test_single_feature use_shared_set
 test_single_feature use_shared_toggle
 
+test_single_feature use_gen_update_state
+test_single_feature use_gen_call
+test_single_feature use_gen_reducer
+test_single_feature use_gen_set
+test_single_feature use_gen_toggle
+
 test_single_feature use_gen_ref
 test_single_feature use_gen_ref,ShareValue
 test_single_feature use_gen_signal

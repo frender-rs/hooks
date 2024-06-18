@@ -95,13 +95,16 @@ mod update_state {
     #[cfg(feature = "use_shared_update_state")]
     pub use shared::*;
 
-    #[cfg(feature = "use_shared_call")]
+    #[cfg(feature = "use_gen_update_state")]
+    pub use gen::*;
+
+    #[cfg(any(feature = "use_shared_call", feature = "use_gen_call"))]
     pub use call::*;
-    #[cfg(feature = "use_shared_reducer")]
+    #[cfg(any(feature = "use_shared_reducer", feature = "use_gen_reducer"))]
     pub use reducer::*;
-    #[cfg(feature = "use_shared_set")]
+    #[cfg(any(feature = "use_shared_set", feature = "use_gen_set"))]
     pub use set::*;
-    #[cfg(feature = "use_shared_toggle")]
+    #[cfg(any(feature = "use_shared_toggle", feature = "use_gen_toggle"))]
     pub use toggle::*;
 
     pub trait UpdateState<S: ?Sized> {
@@ -113,6 +116,14 @@ mod update_state {
     struct WakerAndUpdater<U> {
         waker: Option<std::task::Waker>,
         updater: U,
+    }
+
+    impl<U> WakerAndUpdater<U> {
+        fn wake(&mut self) {
+            if let Some(waker) = self.waker.take() {
+                waker.wake()
+            }
+        }
     }
 
     pub trait IntoUpdateStateResult {
@@ -134,12 +145,15 @@ mod update_state {
     #[cfg(feature = "use_shared_update_state")]
     mod shared;
 
-    #[cfg(feature = "use_shared_call")]
+    #[cfg(feature = "use_gen_update_state")]
+    mod gen;
+
+    #[cfg(any(feature = "use_shared_call", feature = "use_gen_call"))]
     mod call;
-    #[cfg(feature = "use_shared_reducer")]
+    #[cfg(any(feature = "use_shared_reducer", feature = "use_gen_reducer"))]
     mod reducer;
-    #[cfg(feature = "use_shared_set")]
+    #[cfg(any(feature = "use_shared_set", feature = "use_gen_set"))]
     mod set;
-    #[cfg(feature = "use_shared_toggle")]
+    #[cfg(any(feature = "use_shared_toggle", feature = "use_gen_toggle"))]
     mod toggle;
 }

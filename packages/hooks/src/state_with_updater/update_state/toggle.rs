@@ -1,6 +1,9 @@
 #[cfg(feature = "use_shared_toggle")]
 pub use shared::*;
 
+#[cfg(feature = "use_gen_toggle")]
+pub use gen::*;
+
 use super::UpdateState;
 
 #[derive(Debug, Default)]
@@ -58,5 +61,37 @@ mod shared {
         f: impl FnOnce() -> bool,
     ) -> UseSharedToggleWith<impl FnOnce() -> (bool, SharedToggle)> {
         use_shared_update_state_with(move || (f(), Toggle::new()))
+    }
+}
+
+#[cfg(feature = "use_gen_toggle")]
+mod gen {
+    use super::{
+        super::{
+            use_gen_update_state, use_gen_update_state_with, GenUpdateState, GenUpdateStateKey,
+            UseGenUpdateState, UseGenUpdateStateWith,
+        },
+        Toggle,
+    };
+
+    pub type GenToggle = GenUpdateState<Toggle>;
+    pub type GenToggleKey = GenUpdateStateKey<Toggle>;
+
+    impl GenToggleKey {
+        pub fn toggle(&self) {
+            self.map_mut_update_state(|v| v.toggle())
+        }
+    }
+
+    pub type UseGenToggle = UseGenUpdateState<bool, Toggle>;
+    pub fn use_gen_toggle(initial_state: bool) -> UseGenToggle {
+        use_gen_update_state(initial_state, Toggle::new())
+    }
+
+    pub type UseGenToggleWith<F> = UseGenUpdateStateWith<F>;
+    pub fn use_gen_toggle_with(
+        f: impl FnOnce() -> bool,
+    ) -> UseGenToggleWith<impl FnOnce() -> (bool, Toggle)> {
+        use_gen_update_state_with(move || (f(), Toggle::new()))
     }
 }

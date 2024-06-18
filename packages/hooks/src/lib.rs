@@ -73,25 +73,71 @@ pub use gen_signal::{
 #[cfg(feature = "use_state_with_updater")]
 mod state_with_updater;
 #[cfg(feature = "use_state_with_updater")]
-pub use state_with_updater::{StateUpdater, StateWithUpdater};
+pub use state_with_updater::{
+    use_state_with_updater, use_state_with_updater_with, StateUpdater, StateWithUpdater,
+};
 
 #[cfg(feature = "UpdateState")]
 pub use state_with_updater::{IntoUpdateStateResult, UpdateState};
 
 #[cfg(feature = "use_shared_update_state")]
-pub use state_with_updater::{SharedUpdateState, UseSharedUpdateState, UseSharedUpdateStateWith};
+pub use state_with_updater::{
+    use_shared_update_state, use_shared_update_state_with, SharedUpdateState, UseSharedUpdateState,
+    UseSharedUpdateStateWith,
+};
+
+#[cfg(feature = "use_gen_update_state")]
+pub use state_with_updater::{
+    use_gen_update_state, use_gen_update_state_with, GenUpdateState, GenUpdateStateKey,
+    UseGenUpdateState, UseGenUpdateStateWith,
+};
+
+#[cfg(any(feature = "use_shared_call", feature = "use_gen_call"))]
+pub use state_with_updater::Call;
+#[cfg(any(feature = "use_shared_set", feature = "use_gen_set"))]
+pub use state_with_updater::Set;
+#[cfg(any(feature = "use_shared_toggle", feature = "use_gen_toggle"))]
+pub use state_with_updater::Toggle;
+#[cfg(any(feature = "use_shared_reducer", feature = "use_gen_reducer"))]
+pub use state_with_updater::{Reduce, Reducer};
 
 #[cfg(feature = "use_shared_call")]
-pub use state_with_updater::{Call, SharedCall, UseSharedCall, UseSharedCallWith};
+pub use state_with_updater::{
+    use_shared_call, use_shared_call_with, SharedCall, UseSharedCall, UseSharedCallWith,
+};
 #[cfg(feature = "use_shared_reducer")]
 pub use state_with_updater::{
-    Reduce, Reducer, SharedReduce, SharedReducer, UseSharedReduce, UseSharedReduceWith,
-    UseSharedReducer, UseSharedReducerWith,
+    use_shared_reduce, use_shared_reduce_with, use_shared_reducer, use_shared_reducer_with,
+    SharedReduce, SharedReducer, UseSharedReduce, UseSharedReduceWith, UseSharedReducer,
+    UseSharedReducerWith,
 };
 #[cfg(feature = "use_shared_set")]
-pub use state_with_updater::{Set, SharedSet, UseSharedSet, UseSharedSetWith};
+pub use state_with_updater::{
+    use_shared_set, use_shared_set_with, SharedSet, UseSharedSet, UseSharedSetWith,
+};
 #[cfg(feature = "use_shared_toggle")]
-pub use state_with_updater::{SharedToggle, Toggle, UseSharedToggle, UseSharedToggleWith};
+pub use state_with_updater::{
+    use_shared_toggle, use_shared_toggle_with, SharedToggle, UseSharedToggle, UseSharedToggleWith,
+};
+
+#[cfg(feature = "use_gen_call")]
+pub use state_with_updater::{
+    use_gen_call, use_gen_call_with, GenCall, GenCallKey, UseGenCall, UseGenCallWith,
+};
+#[cfg(feature = "use_gen_reducer")]
+pub use state_with_updater::{
+    use_gen_reduce, use_gen_reduce_with, use_gen_reducer, use_gen_reducer_with, GenReduce,
+    GenReduceKey, GenReducer, GenReducerKey, UseGenReduce, UseGenReduceWith, UseGenReducer,
+    UseGenReducerWith,
+};
+#[cfg(feature = "use_gen_set")]
+pub use state_with_updater::{
+    use_gen_set, use_gen_set_with, GenSet, GenSetKey, UseGenSet, UseGenSetWith,
+};
+#[cfg(feature = "use_gen_toggle")]
+pub use state_with_updater::{
+    use_gen_toggle, use_gen_toggle_with, GenToggle, GenToggleKey, UseGenToggle, UseGenToggleWith,
+};
 
 #[cfg(feature = "use_uninitialized_hook")]
 pub mod uninitialized_hook;
@@ -132,21 +178,33 @@ pub mod prelude {
     pub use crate::{use_shared_signal, use_shared_signal_with};
 
     #[cfg(feature = "use_state_with_updater")]
-    pub use crate::state_with_updater::{use_state_with_updater, use_state_with_updater_with};
+    pub use crate::{use_state_with_updater, use_state_with_updater_with};
 
     #[cfg(feature = "use_shared_update_state")]
-    pub use crate::state_with_updater::{use_shared_update_state, use_shared_update_state_with};
+    pub use crate::{use_shared_update_state, use_shared_update_state_with};
+
+    #[cfg(feature = "use_gen_update_state")]
+    pub use crate::{use_gen_update_state, use_gen_update_state_with};
 
     #[cfg(feature = "use_shared_call")]
-    pub use crate::state_with_updater::{use_shared_call, use_shared_call_with};
+    pub use crate::{use_shared_call, use_shared_call_with};
     #[cfg(feature = "use_shared_reducer")]
-    pub use crate::state_with_updater::{
+    pub use crate::{
         use_shared_reduce, use_shared_reduce_with, use_shared_reducer, use_shared_reducer_with,
     };
     #[cfg(feature = "use_shared_set")]
-    pub use crate::state_with_updater::{use_shared_set, use_shared_set_with};
+    pub use crate::{use_shared_set, use_shared_set_with};
     #[cfg(feature = "use_shared_toggle")]
-    pub use crate::state_with_updater::{use_shared_toggle, use_shared_toggle_with};
+    pub use crate::{use_shared_toggle, use_shared_toggle_with};
+
+    #[cfg(feature = "use_gen_call")]
+    pub use crate::{use_gen_call, use_gen_call_with};
+    #[cfg(feature = "use_gen_reducer")]
+    pub use crate::{use_gen_reduce, use_gen_reduce_with, use_gen_reducer, use_gen_reducer_with};
+    #[cfg(feature = "use_gen_set")]
+    pub use crate::{use_gen_set, use_gen_set_with};
+    #[cfg(feature = "use_gen_toggle")]
+    pub use crate::{use_gen_toggle, use_gen_toggle_with};
 
     #[cfg(feature = "use_uninitialized_hook")]
     pub use crate::uninitialized_hook::use_uninitialized_hook;

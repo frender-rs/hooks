@@ -46,6 +46,13 @@ all = [
     "use_shared_set",
     "use_shared_toggle",
 
+    "use_gen_update_state",
+
+    "use_gen_call",
+    "use_gen_reducer",
+    "use_gen_set",
+    "use_gen_toggle",
+
     "use_gen_ref",
     "use_gen_signal",
 ]
@@ -71,6 +78,13 @@ use_shared_call = ["use_shared_update_state"]
 use_shared_reducer = ["use_shared_update_state"]
 use_shared_set = ["use_shared_update_state"]
 use_shared_toggle = ["use_shared_update_state"]
+
+use_gen_update_state = ["UpdateState", "dep:hooks-gen"]
+
+use_gen_call = ["use_gen_update_state"]
+use_gen_reducer = ["use_gen_update_state"]
+use_gen_set = ["use_gen_update_state"]
+use_gen_toggle = ["use_gen_update_state"]
 
 use_gen_ref = ["dep:hooks-gen"]
 use_gen_signal = ["dep:hooks-gen"]
