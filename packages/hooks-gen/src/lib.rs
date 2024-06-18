@@ -33,7 +33,7 @@ pub mod local {
     /// ```compile_fail
     /// # fn test(v: hooks_gen::local::Key<()>) -> impl Sync { v };
     /// ```
-    pub struct Key<T> {
+    pub struct Key<T: 'static> {
         index: store::UntypedKey,
         _phantom: PhantomData<*const T>,
     }
