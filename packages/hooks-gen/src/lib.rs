@@ -34,7 +34,7 @@ pub mod local {
     /// # fn test(v: hooks_gen::local::Key<()>) -> impl Sync { v };
     /// ```
     pub struct Key<T> {
-        index: usize,
+        index: store::UntypedKey,
         _phantom: PhantomData<*const T>,
     }
 
@@ -46,7 +46,7 @@ pub mod local {
     }
 
     impl<T> Key<T> {
-        const fn new(index: usize) -> Self {
+        const fn new(index: store::UntypedKey) -> Self {
             Self {
                 index,
                 _phantom: PhantomData,
@@ -110,16 +110,70 @@ pub mod local {
             collections::HashMap,
         };
 
-        use slab::Slab;
-
         use super::{Key, Owner};
+
+        pub(super) type UntypedKey = generational_slab::Index;
+
+        mod generational_slab {
+            #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+            pub(crate) struct Index {
+                index: usize,
+                generation: u64,
+            }
+
+            pub struct ValueWithGeneration<T> {
+                value: T,
+                generation: u64,
+            }
+
+            pub(super) struct GenerationalSlab<T> {
+                slab: slab::Slab<ValueWithGeneration<T>>,
+                generation: u64,
+            }
+
+            impl<T> GenerationalSlab<T> {
+                pub(super) const fn new() -> Self {
+                    Self {
+                        slab: slab::Slab::new(),
+                        generation: 0,
+                    }
+                }
+
+                pub(super) fn insert(&mut self, value: T) -> Index {
+                    let generation = self.generation;
+                    let index = self.slab.insert(ValueWithGeneration { value, generation });
+                    self.generation = self.generation.wrapping_add(1);
+                    Index { index, generation }
+                }
+
+                pub(super) fn get(&self, index: Index) -> Option<&T> {
+                    match self.slab.get(index.index) {
+                        Some(vg) if vg.generation == index.generation => Some(&vg.value),
+                        _ => None,
+                    }
+                }
+
+                pub(super) fn get_mut(&mut self, index: Index) -> Option<&mut T> {
+                    match self.slab.get_mut(index.index) {
+                        Some(vg) if vg.generation == index.generation => Some(&mut vg.value),
+                        _ => None,
+                    }
+                }
+
+                pub(super) fn remove(&mut self, index: Index) -> T {
+                    let vg = self.slab.remove(index.index);
+                    assert_eq!(vg.generation, index.generation, "wrong generation");
+                    vg.value
+                }
+            }
+        }
 
         struct Item<T> {
             value: T,
             owners_count: Cell<usize>,
         }
 
-        type TypedStore<T> = Slab<Item<T>>;
+        type TypedStore<T> = generational_slab::GenerationalSlab<Item<T>>;
 
         thread_local!(
             static STORES: RefCell<
