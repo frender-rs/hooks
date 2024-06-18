@@ -38,6 +38,24 @@ pub mod local {
         _phantom: PhantomData<*const T>,
     }
 
+    impl<T: std::fmt::Debug> std::fmt::Debug for Key<T> {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            let mut d = f.debug_struct("Key");
+            let d = d.field("index", &self.index);
+            match self.try_map(|v| {
+                if let Some(v) = v {
+                    d.field("value", v)
+                } else {
+                    d.field("<value not present>", &())
+                }
+            }) {
+                Ok(d) => d,
+                Err(error) => d.field("store", &error),
+            }
+            .finish()
+        }
+    }
+
     impl<T> Eq for Key<T> {}
     impl<T> PartialEq for Key<T> {
         fn eq(&self, other: &Self) -> bool {
@@ -51,6 +69,10 @@ pub mod local {
                 index,
                 _phantom: PhantomData,
             }
+        }
+
+        fn try_map<R>(self, f: impl FnOnce(Option<&T>) -> R) -> Result<R, std::cell::BorrowError> {
+            <Store as StoreImpl>::try_map_at(self, f)
         }
     }
 
@@ -84,6 +106,12 @@ pub mod local {
         key: Key<T>,
     }
 
+    impl<T: std::fmt::Debug> std::fmt::Debug for Owner<T> {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            f.debug_tuple("Owner").field(&self.key).finish()
+        }
+    }
+
     impl<T: 'static> PartialEq for Owner<T> {
         fn eq(&self, other: &Self) -> bool {
             self.key == other.key
@@ -100,6 +128,11 @@ pub mod local {
         fn owners_count_at<T: 'static>(key: Key<T>) -> usize;
 
         fn map_at<T: 'static, R>(key: Key<T>, f: impl FnOnce(&T) -> R) -> R;
+        fn try_map_at<T: 'static, R>(
+            key: Key<T>,
+            f: impl FnOnce(Option<&T>) -> R,
+        ) -> Result<R, std::cell::BorrowError>;
+
         fn map_mut_at<T: 'static, R>(key: Key<T>, f: impl FnOnce(&mut T) -> R) -> R;
     }
 
@@ -207,6 +240,18 @@ pub mod local {
             })
         }
 
+        fn try_store<T: 'static, R>(
+            f: impl FnOnce(Option<&TypedStore<T>>) -> R,
+        ) -> Result<R, std::cell::BorrowError> {
+            STORES.with(|stores| {
+                let stores = stores.try_borrow()?;
+                let store = stores
+                    .get(&TypeId::of::<T>())
+                    .map(|store| store.downcast_ref::<TypedStore<T>>().unwrap());
+                Ok(f(store))
+            })
+        }
+
         impl super::StoreImpl for super::Store {
             fn insert<T: 'static>(value: T) -> Owner<T> {
                 store_mut::<T, Owner<T>>(|s| {
@@ -258,6 +303,20 @@ pub mod local {
 
             fn map_at<T: 'static, R>(key: Key<T>, f: impl FnOnce(&T) -> R) -> R {
                 store::<T, R>(|items| f(&items.get(key.index).unwrap().value))
+            }
+
+            fn try_map_at<T: 'static, R>(
+                key: Key<T>,
+                f: impl FnOnce(Option<&T>) -> R,
+            ) -> Result<R, std::cell::BorrowError> {
+                try_store::<T, R>(|items| {
+                    let item = if let Some(items) = items {
+                        items.get(key.index).map(|item: &Item<T>| &item.value)
+                    } else {
+                        None
+                    };
+                    f(item)
+                })
             }
 
             fn map_mut_at<T: 'static, R>(key: Key<T>, f: impl FnOnce(&mut T) -> R) -> R {
