@@ -39,12 +39,10 @@ hook_fn!(
     }
 );
 
-fn main() {
-    futures_lite::future::block_on(async {
-        let mut hook = use_demo().into_hook();
-        while let Some(()) = hook.next_value().await {}
-    });
-}
+futures_lite::future::block_on(async {
+    let mut hook = use_demo().into_hook();
+    while let Some(()) = hook.next_value().await {}
+});
 ```
 
 ### With `#[hook]`
