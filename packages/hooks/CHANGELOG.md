@@ -1,5 +1,20 @@
 # Changelog
 
+## [3.0.0-alpha.9](https://github.com/frender-rs/hooks/compare/hooks-v3.0.0-alpha.8...hooks-v3.0.0-alpha.9) (2024-06-18)
+
+
+### Features
+
+* add some features ([33ef051](https://github.com/frender-rs/hooks/commit/33ef051d1bcea0713283e19a89cac12b397b322b))
+* use_gen_update_state ([bf98b51](https://github.com/frender-rs/hooks/commit/bf98b5119dcec4ad62394ce469cbcfdc2a818194))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * hooks-gen bumped from 0.1.0 to 0.2.0
+
 ## [3.0.0-alpha.8](https://github.com/frender-rs/hooks/compare/hooks-v3.0.0-alpha.7...hooks-v3.0.0-alpha.8) (2024-06-17)
 
 
