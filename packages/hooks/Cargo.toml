@@ -34,27 +34,10 @@ all = [
     "use_memo",
     "use_mut",
     "use_poll_next_update",
-    "use_shared_ref",
-    "use_shared_signal",
     "use_state_with_updater",
     "use_uninitialized_hook",
-
-    "use_shared_update_state",
-
-    "use_shared_call",
-    "use_shared_reducer",
-    "use_shared_set",
-    "use_shared_toggle",
-
-    "use_gen_update_state",
-
-    "use_gen_call",
-    "use_gen_reducer",
-    "use_gen_set",
-    "use_gen_toggle",
-
-    "use_gen_ref",
-    "use_gen_signal",
+    "use_shared+",
+    "use_gen+",
 ]
 ShareValue = []
 Signal = ["ShareValue"]
@@ -73,14 +56,24 @@ use_uninitialized_hook = []
 
 UpdateState = ["use_state_with_updater"]
 use_shared_update_state = ["UpdateState"]
-
+"use_shared_update_state+" = [
+    "use_shared_call",
+    "use_shared_reducer",
+    "use_shared_set",
+    "use_shared_toggle",
+]
 use_shared_call = ["use_shared_update_state"]
 use_shared_reducer = ["use_shared_update_state"]
 use_shared_set = ["use_shared_update_state"]
 use_shared_toggle = ["use_shared_update_state"]
 
 use_gen_update_state = ["UpdateState", "dep:hooks-gen"]
-
+"use_gen_update_state+" = [
+    "use_gen_call",
+    "use_gen_reducer",
+    "use_gen_set",
+    "use_gen_toggle",
+]
 use_gen_call = ["use_gen_update_state"]
 use_gen_reducer = ["use_gen_update_state"]
 use_gen_set = ["use_gen_update_state"]
@@ -88,6 +81,19 @@ use_gen_toggle = ["use_gen_update_state"]
 
 use_gen_ref = ["dep:hooks-gen"]
 use_gen_signal = ["dep:hooks-gen"]
+
+"use_shared+" = [
+    #
+    "use_shared_ref",
+    "use_shared_signal",
+    "use_shared_update_state+",
+]
+"use_gen+" = [
+    #
+    "use_gen_ref",
+    "use_gen_signal",
+    "use_gen_update_state+",
+]
 
 [package.metadata.docs.rs]
 all-features = true
