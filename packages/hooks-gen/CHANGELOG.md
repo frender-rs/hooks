@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.2.0](https://github.com/frender-rs/hooks/compare/hooks-gen-v0.1.0...hooks-gen-v0.2.0) (2024-06-18)
+
+
+### ⚠ BREAKING CHANGES
+
+* **hooks-gen:** local::Key now requires 'static
+
+### Features
+
+* **hooks-gen:** impl Debug for local ([b597848](https://github.com/frender-rs/hooks/commit/b597848364b8f90c7cff8ae321e3a7228d05f752))
+* **hooks-gen:** local::Key now requires 'static ([88c532d](https://github.com/frender-rs/hooks/commit/88c532d09f444e7d4135a61ee3d0c72a5158f184))
+* now hooks-gen local store index is checked with generation ([ff6d843](https://github.com/frender-rs/hooks/commit/ff6d84343947b2b222eee0fb9e70d432fcaa1385))
+
 ## 0.1.0 (2024-06-17)
 
 
