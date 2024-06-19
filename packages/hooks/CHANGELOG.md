@@ -1,5 +1,22 @@
 # Changelog
 
+## [3.0.0-alpha.10](https://github.com/frender-rs/hooks/compare/hooks-v3.0.0-alpha.9...hooks-v3.0.0-alpha.10) (2024-06-19)
+
+
+### ⚠ BREAKING CHANGES
+
+* Signal::is_signal_of
+
+### Features
+
+* Signal::is_signal_of ([b72e0e7](https://github.com/frender-rs/hooks/commit/b72e0e79205d3d66c2cef88d059bd6a1b661775a))
+* ToOwnedShareValue and ToOwnedSignal ([3c90b49](https://github.com/frender-rs/hooks/commit/3c90b49c85bbb5cd4c7841400ec0da3064c39e63))
+
+
+### Bug Fixes
+
+* better constraints for SignalHook ([4f5cee2](https://github.com/frender-rs/hooks/commit/4f5cee24c95093ea7c62540ced78d3d5d4b5b859))
+
 ## [3.0.0-alpha.9](https://github.com/frender-rs/hooks/compare/hooks-v3.0.0-alpha.8...hooks-v3.0.0-alpha.9) (2024-06-18)
 
 
