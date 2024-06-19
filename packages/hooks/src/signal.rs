@@ -55,6 +55,8 @@ pub trait Signal: ShareValue {
     type SignalHook: SignalHook<SignalShareValue = Self::Value>;
     type SignalHookUninitialized: HookPollNextUpdate + HookUnmount + Default;
 
+    fn is_signal_of(&self, signal_hook: &Self::SignalHook) -> bool;
+
     /// This is the opposite of [`SignalHook::to_signal`].
     fn to_signal_hook(&self) -> Self::SignalHook;
 
@@ -76,6 +78,10 @@ pub trait Signal: ShareValue {
 impl<S: Signal + ?Sized> Signal for &S {
     type SignalHook = S::SignalHook;
     type SignalHookUninitialized = S::SignalHookUninitialized;
+
+    fn is_signal_of(&self, signal_hook: &Self::SignalHook) -> bool {
+        S::is_signal_of(self, signal_hook)
+    }
     fn to_signal_hook(&self) -> Self::SignalHook {
         S::to_signal_hook(self)
     }

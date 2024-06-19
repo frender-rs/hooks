@@ -179,6 +179,11 @@ impl<T> crate::Signal for GenSignal<T> {
     type SignalHook = GenSignalHook<T>;
     type SignalHookUninitialized = crate::utils::UninitializedHook<Self::SignalHook>;
 
+    fn is_signal_of(&self, signal_hook: &Self::SignalHook) -> bool {
+        use crate::SignalHook;
+        *self == signal_hook.to_signal()
+    }
+
     fn to_signal_hook(&self) -> Self::SignalHook {
         let owner = self.key.owner();
         GenSignalHook {

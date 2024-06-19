@@ -105,6 +105,10 @@ where
     type SignalHook = SignalEq<S::SignalHook>;
     type SignalHookUninitialized = S::SignalHookUninitialized;
 
+    fn is_signal_of(&self, signal_hook: &Self::SignalHook) -> bool {
+        self.0.is_signal_of(&signal_hook.0)
+    }
+
     fn to_signal_hook(&self) -> Self::SignalHook {
         SignalEq(self.0.to_signal_hook())
     }
