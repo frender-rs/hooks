@@ -9,29 +9,37 @@ use crate::ShareValue;
 mod sealed {
     use hooks_core::{HookValue, HookValueBounds};
 
+    use crate::ShareValue;
+
     use super::Signal;
 
-    pub trait HookValueImplSignal<
-        'hook,
-        V,
-        ImplicitBounds: HookValueBounds<'hook, Self> = &'hook Self,
-    >: HookValue<'hook, ImplicitBounds, Value = Self::HookValueImplSignal>
+    pub trait HookValueImplSignal<'hook, ImplicitBounds: HookValueBounds<'hook, Self> = &'hook Self>:
+        HookValue<'hook, ImplicitBounds, Value = Self::HookValueImplSignal>
     {
-        type HookValueImplSignal: Signal<SignalHook = Self, Value = V>;
+        type HookValueImplShareValueValue;
+        type HookValueImplSignal: Signal<
+            SignalHook = Self,
+            Value = Self::HookValueImplShareValueValue,
+        >;
     }
 
-    impl<'hook, H: ?Sized, V> HookValueImplSignal<'hook, V> for H
+    impl<'hook, H: ?Sized> HookValueImplSignal<'hook> for H
     where
         H: HookValue<'hook>,
-        H::Value: Signal<SignalHook = Self, Value = V>,
+        H::Value: Signal<SignalHook = Self>,
     {
+        type HookValueImplShareValueValue = <H::Value as ShareValue>::Value;
         type HookValueImplSignal = H::Value;
     }
 }
 
 /// `for<'hook> sealed::HookValueImplSignal<'hook>` here acts like [`for<'hook> HookValue<'hook, Value: Signal<SignalHook = Self, Value = Self::SignalShareValue>>`](crate::HookValue::Value).
 pub trait SignalHook:
-    Hook + for<'hook> sealed::HookValueImplSignal<'hook, Self::SignalShareValue>
+    Hook
+    + for<'hook> sealed::HookValueImplSignal<
+        'hook,
+        HookValueImplShareValueValue = Self::SignalShareValue,
+    >
 {
     type SignalShareValue;
 
