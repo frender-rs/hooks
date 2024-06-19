@@ -213,6 +213,16 @@ impl<T> crate::Signal for GenSignal<T> {
     }
 }
 
+#[cfg(feature = "ShareValue")]
+impl<T> crate::ToOwnedShareValue for GenSignal<T> {
+    type OwnedShareValue = Self;
+
+    #[inline]
+    fn to_owned_share_value(&self) -> Self {
+        *self
+    }
+}
+
 pub struct UseGenSignal<T: 'static>(pub T);
 
 hooks_core::impl_hook!(

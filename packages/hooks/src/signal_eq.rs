@@ -11,6 +11,7 @@ use hooks_core::{Hook, HookPollNextUpdate, HookUnmount, HookValue};
 /// - [`SignalHook`](crate::SignalHook)
 /// - [`ShareValue`](crate::ShareValue)
 /// - [`Signal`](crate::Signal)
+/// - [`ToOwnedSignal`](crate::ToOwnedSignal) + [`ToOwnedShareValue`](crate::ToOwnedShareValue) (where `S: ToOwnedSignal`)
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct SignalEq<S>(pub S);
 
@@ -130,5 +131,20 @@ where
 
     fn map_mut_and_notify_if<R>(&self, f: impl FnOnce(&mut Self::Value) -> (R, bool)) -> R {
         self.0.map_mut_and_notify_if(f)
+    }
+}
+
+#[cfg(feature = "Signal")]
+impl<S> crate::ToOwnedShareValue for SignalEq<S>
+where
+    S: crate::ToOwnedSignal,
+    S::Value: PartialEq,
+    S::SignalHook: Unpin,
+{
+    type OwnedShareValue = SignalEq<S::OwnedShareValue>;
+
+    #[inline]
+    fn to_owned_share_value(&self) -> Self::OwnedShareValue {
+        SignalEq(self.0.to_owned_share_value())
     }
 }

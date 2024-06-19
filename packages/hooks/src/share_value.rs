@@ -141,3 +141,16 @@ impl<S: ?Sized + ShareValue> ShareValue for &S {
         self.get_cloned()
     }
 }
+
+pub trait ToOwnedShareValue: ShareValue {
+    type OwnedShareValue: ShareValue<Value = Self::Value>;
+    fn to_owned_share_value(&self) -> Self::OwnedShareValue;
+}
+
+impl<S: ?Sized + ToOwnedShareValue> ToOwnedShareValue for &S {
+    type OwnedShareValue = S::OwnedShareValue;
+
+    fn to_owned_share_value(&self) -> Self::OwnedShareValue {
+        S::to_owned_share_value(self)
+    }
+}

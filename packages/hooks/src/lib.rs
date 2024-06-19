@@ -31,12 +31,12 @@ pub mod poll_next_update;
 #[cfg(feature = "ShareValue")]
 mod share_value;
 #[cfg(feature = "ShareValue")]
-pub use share_value::ShareValue;
+pub use share_value::{ShareValue, ToOwnedShareValue};
 
 #[cfg(feature = "Signal")]
 mod signal;
 #[cfg(feature = "Signal")]
-pub use signal::{use_signal, Signal, SignalHook, UseSignal};
+pub use signal::{use_signal, Signal, SignalHook, ToOwnedSignal, UseSignal};
 
 #[cfg(feature = "use_shared_ref")]
 mod shared_ref;

@@ -4,7 +4,7 @@ use std::pin::Pin;
 
 use hooks_core::{Hook, HookPollNextUpdate, HookUnmount};
 
-use crate::ShareValue;
+use crate::{ShareValue, ToOwnedShareValue};
 
 mod sealed {
     use hooks_core::{HookValue, HookValueBounds};
@@ -119,3 +119,23 @@ hooks_core::impl_hook!(
         self.0.h_signal_hook(hook)
     }
 );
+
+pub trait ToOwnedSignal: Signal + ToOwnedShareValue<OwnedShareValue = Self::OwnedSignal> {
+    type OwnedSignal: Signal<
+        SignalHook = Self::SignalHook,
+        Value = Self::Value,
+        SignalHookUninitialized = Self::SignalHookUninitialized,
+    >;
+}
+
+/// A trait alias for `Signal + ToOwnedShareValue<OwnedShareValue: Signal<SignalHook = Self::SignalHook, SignalHookUninitialized = Self::SignalHookUninitialized>>`
+impl<T: ?Sized + ToOwnedShareValue> ToOwnedSignal for T
+where
+    T: Signal,
+    T::OwnedShareValue: Signal<
+        SignalHook = Self::SignalHook,
+        SignalHookUninitialized = Self::SignalHookUninitialized,
+    >,
+{
+    type OwnedSignal = T::OwnedShareValue;
+}

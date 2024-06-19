@@ -186,6 +186,16 @@ impl<T> crate::Signal for SharedSignal<T> {
     }
 }
 
+#[cfg(feature = "ShareValue")]
+impl<T> crate::ToOwnedShareValue for SharedSignal<T> {
+    type OwnedShareValue = Self;
+
+    #[inline]
+    fn to_owned_share_value(&self) -> Self::OwnedShareValue {
+        self.clone()
+    }
+}
+
 hooks_core::impl_hook![
     type For<T> = SharedSignal<T>;
     fn unmount() {}
