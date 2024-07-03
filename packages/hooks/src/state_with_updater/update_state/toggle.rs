@@ -68,13 +68,13 @@ mod shared {
 mod gen {
     use super::{
         super::{
-            use_gen_update_state, use_gen_update_state_with, GenUpdateState, GenUpdateStateKey,
-            UseGenUpdateState, UseGenUpdateStateWith,
+            use_gen_update_state, use_gen_update_state_with, GenUpdateStateKey,
+            GenUpdateStateOwner, UseGenUpdateState, UseGenUpdateStateWith,
         },
         Toggle,
     };
 
-    pub type GenToggle = GenUpdateState<Toggle>;
+    pub type GenToggleOwner = GenUpdateStateOwner<Toggle>;
     pub type GenToggleKey = GenUpdateStateKey<Toggle>;
 
     impl GenToggleKey {

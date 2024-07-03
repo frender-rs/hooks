@@ -176,13 +176,13 @@ mod shared {
 mod gen {
     use super::{
         super::{
-            use_gen_update_state, use_gen_update_state_with, GenUpdateState, GenUpdateStateKey,
-            UseGenUpdateState, UseGenUpdateStateWith,
+            use_gen_update_state, use_gen_update_state_with, GenUpdateStateKey,
+            GenUpdateStateOwner, UseGenUpdateState, UseGenUpdateStateWith,
         },
         Set,
     };
 
-    pub type GenSet<S> = GenUpdateState<Set<S>>;
+    pub type GenSetOwner<S> = GenUpdateStateOwner<Set<S>>;
     pub type GenSetKey<S> = GenUpdateStateKey<Set<S>>;
 
     impl<S> GenSetKey<S> {

@@ -2,15 +2,15 @@ use std::cell::RefCell;
 
 use hooks_gen::{local, Key, Owner, Store};
 
-pub struct GenRef<T: 'static>(local::Owner<RefCell<T>>);
+pub struct GenRefOwner<T: 'static>(local::Owner<RefCell<T>>);
 
-impl<T: 'static> Clone for GenRef<T> {
+impl<T: 'static> Clone for GenRefOwner<T> {
     fn clone(&self) -> Self {
         Self(self.0.clone())
     }
 }
 
-impl<T: 'static> GenRef<T> {
+impl<T: 'static> GenRefOwner<T> {
     pub fn new(initial_value: T) -> Self {
         Self(local::Store.insert(RefCell::new(initial_value)))
     }
@@ -21,10 +21,10 @@ impl<T: 'static> GenRef<T> {
     }
 }
 
-impl<T: 'static> Unpin for GenRef<T> {}
+impl<T: 'static> Unpin for GenRefOwner<T> {}
 
 hooks_core::impl_hook!(
-    type For<T: 'static> = GenRef<T>;
+    type For<T: 'static> = GenRefOwner<T>;
 
     fn unmount() {}
 
@@ -41,9 +41,9 @@ hooks_core::impl_hook!(
 pub struct GenRefKey<T: 'static>(local::Key<RefCell<T>>);
 
 impl<T: 'static> GenRefKey<T> {
-    pub fn upgrade(self) -> GenRef<T> {
+    pub fn upgrade(self) -> GenRefOwner<T> {
         let owner = self.0.owner();
-        GenRef(owner)
+        GenRefOwner(owner)
     }
 }
 
@@ -90,13 +90,13 @@ pub struct UseGenRef<T: 'static>(pub T);
 hooks_core::impl_hook!(
     type For<T: 'static> = UseGenRef<T>;
 
-    fn into_hook(self) -> GenRef<T> {
-        GenRef::new(self.0)
+    fn into_hook(self) -> GenRefOwner<T> {
+        GenRefOwner::new(self.0)
     }
 
     fn update_hook(self, _hook: _) {}
 
-    fn h(self, hook: crate::utils::UninitializedHook<GenRef<T>>) {
+    fn h(self, hook: crate::utils::UninitializedHook<GenRefOwner<T>>) {
         hook.get_mut().use_into_or_update_hook(self)
     }
 );
@@ -106,13 +106,13 @@ pub struct UseGenRefWith<F>(pub F);
 hooks_core::impl_hook!(
     type For<T: 'static, F: FnOnce() -> T> = UseGenRefWith<F>;
 
-    fn into_hook(self) -> GenRef<T> {
-        GenRef::new(self.0())
+    fn into_hook(self) -> GenRefOwner<T> {
+        GenRefOwner::new(self.0())
     }
 
     fn update_hook(self, _hook: _) {}
 
-    fn h(self, hook: crate::utils::UninitializedHook<GenRef<T>>) {
+    fn h(self, hook: crate::utils::UninitializedHook<GenRefOwner<T>>) {
         hook.get_mut().use_into_or_update_hook(self)
     }
 );
@@ -123,7 +123,7 @@ hooks_core::impl_hook!(
 mod tests {
     use futures_lite::StreamExt;
 
-    use crate::{GenRef, ShareValue};
+    use crate::{GenRefOwner, ShareValue};
 
     #[test]
     #[cfg(feature = "use_effect")]
@@ -160,19 +160,19 @@ mod tests {
     }
 
     mod nested_share_value {
-        use crate::{GenRef, ShareValue};
+        use crate::{GenRefOwner, ShareValue};
 
         #[test]
         fn nested_map() {
             // self
             {
-                let ref_num = GenRef::new(0);
+                let ref_num = GenRefOwner::new(0);
                 ref_num.key().map(|_| ref_num.key().map(|_| {}));
             }
             // two
             {
-                let ref_num = GenRef::new(0);
-                let ref_num_2 = GenRef::new(0);
+                let ref_num = GenRefOwner::new(0);
+                let ref_num_2 = GenRefOwner::new(0);
 
                 ref_num.key().map(|_| ref_num_2.key().map(|_| {}));
                 ref_num_2.key().map(|_| ref_num.key().map(|_| {}));
@@ -182,14 +182,14 @@ mod tests {
         #[test]
         #[should_panic(expected = "already borrowed: BorrowMutError")]
         fn nested_self_map_mut_should_panic() {
-            let ref_num = GenRef::new(0);
+            let ref_num = GenRefOwner::new(0);
             ref_num.key().map_mut(|_| ref_num.key().map_mut(|_| {}));
         }
 
         #[test]
         #[should_panic(expected = "already mutably borrowed: BorrowError")]
         fn nested_self_map_mut_and_map_should_panic() {
-            let ref_num = GenRef::new(0);
+            let ref_num = GenRefOwner::new(0);
             ref_num.key().map_mut(|_| ref_num.key().map(|_| {}));
             ref_num.key().map(|_| ref_num.key().map_mut(|_| {}));
         }
@@ -197,7 +197,7 @@ mod tests {
         #[test]
         #[should_panic(expected = "already borrowed: BorrowMutError")]
         fn nested_self_map_and_map_mut_should_panic() {
-            let ref_num = GenRef::new(0);
+            let ref_num = GenRefOwner::new(0);
             ref_num.key().map(|_| ref_num.key().map_mut(|_| {}));
         }
 
@@ -205,8 +205,8 @@ mod tests {
         fn nested_map_mut() {
             // two
             {
-                let ref_num = GenRef::new(0);
-                let ref_num_2 = GenRef::new(0);
+                let ref_num = GenRefOwner::new(0);
+                let ref_num_2 = GenRefOwner::new(0);
 
                 ref_num.key().map_mut(|_| ref_num_2.key().map_mut(|_| {}));
                 ref_num_2.key().map_mut(|_| ref_num.key().map_mut(|_| {}));
@@ -222,9 +222,9 @@ mod tests {
     // which can be implemented with FrozenVec<Box<Chunk<Item>>>.
     // The chunk size increases exponentially
     fn insert_while_map() {
-        let ref_num = GenRef::new(0);
+        let ref_num = GenRefOwner::new(0);
         ref_num.key().map(|_| {
-            GenRef::new(0);
+            GenRefOwner::new(0);
         })
     }
 }

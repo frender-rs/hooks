@@ -123,13 +123,13 @@ mod shared {
 mod gen {
     use super::{
         super::{
-            use_gen_update_state, use_gen_update_state_with, GenUpdateState, GenUpdateStateKey,
-            IntoUpdateStateResult, UseGenUpdateState, UseGenUpdateStateWith,
+            use_gen_update_state, use_gen_update_state_with, GenUpdateStateKey,
+            GenUpdateStateOwner, IntoUpdateStateResult, UseGenUpdateState, UseGenUpdateStateWith,
         },
         Call,
     };
 
-    pub type GenCall<F> = GenUpdateState<Call<F>>;
+    pub type GenCallOwner<F> = GenUpdateStateOwner<Call<F>>;
     pub type GenCallKey<F> = GenUpdateStateKey<Call<F>>;
 
     impl<F> GenCallKey<F> {

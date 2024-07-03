@@ -58,7 +58,7 @@ pub use shared_signal::{
 mod gen_ref;
 #[cfg(feature = "use_gen_ref")]
 pub use gen_ref::{
-    GenRef, GenRefKey, UseGenRef, UseGenRef as use_gen_ref, UseGenRefWith,
+    GenRefKey, GenRefOwner, UseGenRef, UseGenRef as use_gen_ref, UseGenRefWith,
     UseGenRefWith as use_gen_ref_with,
 };
 
@@ -88,7 +88,7 @@ pub use state_with_updater::{
 
 #[cfg(feature = "use_gen_update_state")]
 pub use state_with_updater::{
-    use_gen_update_state, use_gen_update_state_with, GenUpdateState, GenUpdateStateKey,
+    use_gen_update_state, use_gen_update_state_with, GenUpdateStateKey, GenUpdateStateOwner,
     UseGenUpdateState, UseGenUpdateStateWith,
 };
 
@@ -122,21 +122,22 @@ pub use state_with_updater::{
 
 #[cfg(feature = "use_gen_call")]
 pub use state_with_updater::{
-    use_gen_call, use_gen_call_with, GenCall, GenCallKey, UseGenCall, UseGenCallWith,
+    use_gen_call, use_gen_call_with, GenCallKey, GenCallOwner, UseGenCall, UseGenCallWith,
 };
 #[cfg(feature = "use_gen_reducer")]
 pub use state_with_updater::{
-    use_gen_reduce, use_gen_reduce_with, use_gen_reducer, use_gen_reducer_with, GenReduce,
-    GenReduceKey, GenReducer, GenReducerKey, UseGenReduce, UseGenReduceWith, UseGenReducer,
+    use_gen_reduce, use_gen_reduce_with, use_gen_reducer, use_gen_reducer_with, GenReduceKey,
+    GenReduceOwner, GenReducerKey, GenReducerOwner, UseGenReduce, UseGenReduceWith, UseGenReducer,
     UseGenReducerWith,
 };
 #[cfg(feature = "use_gen_set")]
 pub use state_with_updater::{
-    use_gen_set, use_gen_set_with, GenSet, GenSetKey, UseGenSet, UseGenSetWith,
+    use_gen_set, use_gen_set_with, GenSetKey, GenSetOwner, UseGenSet, UseGenSetWith,
 };
 #[cfg(feature = "use_gen_toggle")]
 pub use state_with_updater::{
-    use_gen_toggle, use_gen_toggle_with, GenToggle, GenToggleKey, UseGenToggle, UseGenToggleWith,
+    use_gen_toggle, use_gen_toggle_with, GenToggleKey, GenToggleOwner, UseGenToggle,
+    UseGenToggleWith,
 };
 
 #[cfg(feature = "use_uninitialized_hook")]

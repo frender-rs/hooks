@@ -214,15 +214,15 @@ mod shared {
 mod gen {
     use super::{
         super::{
-            use_gen_update_state, use_gen_update_state_with, GenUpdateState, GenUpdateStateKey,
-            UseGenUpdateState, UseGenUpdateStateWith,
+            use_gen_update_state, use_gen_update_state_with, GenUpdateStateKey,
+            GenUpdateStateOwner, UseGenUpdateState, UseGenUpdateStateWith,
         },
         Reduce, Reducer,
     };
 
-    pub type GenReducer<A, R, AS> = GenUpdateState<Reducer<A, R, AS>>;
+    pub type GenReducerOwner<A, R, AS> = GenUpdateStateOwner<Reducer<A, R, AS>>;
     pub type GenReducerKey<A, R, AS> = GenUpdateStateKey<Reducer<A, R, AS>>;
-    pub type GenReduce<A, R> = GenReducer<A, R, Vec<A>>;
+    pub type GenReduceOwner<A, R> = GenReducerOwner<A, R, Vec<A>>;
     pub type GenReduceKey<A, R> = GenReducerKey<A, R, Vec<A>>;
 
     impl<A, R, AS: Default + Extend<A> + IntoIterator<Item = A>> GenReducerKey<A, R, AS> {

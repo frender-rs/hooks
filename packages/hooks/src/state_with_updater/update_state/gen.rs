@@ -13,7 +13,7 @@ use super::{
 
 #[derive(Debug)]
 pub struct StateWithGenUpdateState<S, U: 'static + UpdateState<S>>(
-    StateWithUpdater<S, GenUpdateState<U>>,
+    StateWithUpdater<S, GenUpdateStateOwner<U>>,
 );
 
 hooks_core::impl_hook!(
@@ -35,16 +35,16 @@ hooks_core::impl_hook!(
 );
 
 #[derive(Debug)]
-pub struct GenUpdateState<U: 'static>(local::Owner<RefCell<WakerAndUpdater<U>>>);
+pub struct GenUpdateStateOwner<U: 'static>(local::Owner<RefCell<WakerAndUpdater<U>>>);
 
 // Is this needed?
-impl<U> Drop for GenUpdateState<U> {
+impl<U> Drop for GenUpdateStateOwner<U> {
     fn drop(&mut self) {
         self.0.key().map(|this| this.borrow_mut().wake())
     }
 }
 
-impl<U> GenUpdateState<U> {
+impl<U> GenUpdateStateOwner<U> {
     pub fn new(updater: U) -> Self {
         Self(local::Store.insert(RefCell::new(WakerAndUpdater {
             waker: None,
@@ -70,8 +70,8 @@ impl<U> Clone for GenUpdateStateKey<U> {
 
 impl<U> GenUpdateStateKey<U> {
     /// The opposite of [`GenUpdateState::key`].
-    pub fn upgrade(self) -> GenUpdateState<U> {
-        GenUpdateState(self.0.owner())
+    pub fn upgrade(self) -> GenUpdateStateOwner<U> {
+        GenUpdateStateOwner(self.0.owner())
     }
 
     pub fn map_mut_update_state<R>(&self, f: impl FnOnce(&mut U) -> R) -> R {
@@ -99,7 +99,7 @@ impl<U> GenUpdateStateKey<U> {
     }
 }
 
-impl<U: UpdateState<S>, S: ?Sized> StateUpdater<S> for GenUpdateState<U> {
+impl<U: UpdateState<S>, S: ?Sized> StateUpdater<S> for GenUpdateStateOwner<U> {
     fn poll_update_state(&mut self, state: &mut S, cx: &mut std::task::Context<'_>) -> Poll<bool> {
         self.0.key().map(|this| {
             let WakerAndUpdater { waker, updater } = &mut *this.borrow_mut();
@@ -121,7 +121,7 @@ hooks_core::impl_hook!(
 
     fn into_hook(self) -> StateWithGenUpdateState<S, U> {
         StateWithGenUpdateState(
-            UseStateWithUpdater(self.0, GenUpdateState::new(self.1)).into_hook(),
+            UseStateWithUpdater(self.0, GenUpdateStateOwner::new(self.1)).into_hook(),
         )
     }
 
@@ -140,7 +140,7 @@ hooks_core::impl_hook!(
     fn into_hook(self) -> StateWithGenUpdateState<S, U> {
         let (initial_value, update_state) = self.0();
         StateWithGenUpdateState(
-            UseStateWithUpdater(initial_value, GenUpdateState::new(update_state)).into_hook(),
+            UseStateWithUpdater(initial_value, GenUpdateStateOwner::new(update_state)).into_hook(),
         )
     }
 
