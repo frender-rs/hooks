@@ -1,6 +1,22 @@
 # Changelog
 <!-- Touch this file so that the release-please would know this commit only affects this package -->
 
+## [3.0.0-alpha.11](https://github.com/frender-rs/hooks/compare/hooks-v3.0.0-alpha.10...hooks-v3.0.0-alpha.11) (2024-07-03)
+
+
+### ⚠ BREAKING CHANGES
+
+* rename GenRef to GenRefOwner, GenUpdateState to GenUpdateStateOwner, GenCall to GenCallOwner, GenReduce to GenReduceOwner, GenReducer to GenReducerOwner, GenSet to GenSetOwner, GenToggle to GenToggleOwner
+
+### Features
+
+* rename GenRef to GenRefOwner, GenUpdateState to GenUpdateStateOwner, GenCall to GenCallOwner, GenReduce to GenReduceOwner, GenReducer to GenReducerOwner, GenSet to GenSetOwner, GenToggle to GenToggleOwner ([484d4b9](https://github.com/frender-rs/hooks/commit/484d4b9ccdcda3b82511b9c6a6fc1389564ae8a9))
+
+
+### Miscellaneous Chores
+
+* release ([1f0bae4](https://github.com/frender-rs/hooks/commit/1f0bae457dc18545f0c88acea2b66c139fa345a4))
+
 ## [3.0.0-alpha.10](https://github.com/frender-rs/hooks/compare/hooks-v3.0.0-alpha.9...hooks-v3.0.0-alpha.10) (2024-06-19)
 
 
