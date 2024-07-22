@@ -255,6 +255,9 @@ hooks_core::impl_hook!(
     }
 );
 
+pub type GenSignalEq<T> = crate::SignalEq<GenSignal<T>>;
+pub type GenSignalHookEq<T> = crate::SignalEq<GenSignalHook<T>>;
+
 #[cfg(feature = "ShareValue")]
 #[cfg(feature = "futures-core")]
 #[cfg(test)]

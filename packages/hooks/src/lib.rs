@@ -50,7 +50,8 @@ pub use shared_ref::{
 mod shared_signal;
 #[cfg(feature = "use_shared_signal")]
 pub use shared_signal::{
-    SharedSignal, UseSharedSignal, UseSharedSignal as use_shared_signal, UseSharedSignalWith,
+    RefSharedSignalEq, SharedSignal, SharedSignalEq, UseSharedSignal,
+    UseSharedSignal as use_shared_signal, UseSharedSignalWith,
     UseSharedSignalWith as use_shared_signal_with,
 };
 
@@ -66,8 +67,8 @@ pub use gen_ref::{
 mod gen_signal;
 #[cfg(feature = "use_gen_signal")]
 pub use gen_signal::{
-    GenSignal, GenSignalHook, UseGenSignal, UseGenSignal as use_gen_signal, UseGenSignalWith,
-    UseGenSignalWith as use_gen_signal_with,
+    GenSignal, GenSignalEq, GenSignalHook, GenSignalHookEq, UseGenSignal,
+    UseGenSignal as use_gen_signal, UseGenSignalWith, UseGenSignalWith as use_gen_signal_with,
 };
 
 #[cfg(feature = "use_state_with_updater")]

@@ -246,6 +246,9 @@ hooks_core::impl_hook![
     }
 ];
 
+pub type SharedSignalEq<T> = crate::SignalEq<SharedSignal<T>>;
+pub type RefSharedSignalEq<'a, T> = crate::SignalEq<&'a SharedSignal<T>>;
+
 #[cfg(feature = "ShareValue")]
 #[cfg(feature = "futures-core")]
 #[cfg(test)]
