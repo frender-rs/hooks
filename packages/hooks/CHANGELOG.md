@@ -1,5 +1,17 @@
 # Changelog
 
+## [3.0.0-alpha.12](https://github.com/frender-rs/hooks/compare/hooks-v3.0.0-alpha.11...hooks-v3.0.0-alpha.12) (2024-07-22)
+
+
+### Features
+
+* RefSharedSignalEq, SharedSignalEq, GenSignalEq, GenSignalHookEq ([88aec42](https://github.com/frender-rs/hooks/commit/88aec42754d643938f9daf9beb2af183e0b50799))
+
+
+### Miscellaneous Chores
+
+* release ([a978b5d](https://github.com/frender-rs/hooks/commit/a978b5d2abf186f30b8efa97addcff8e53bdf259))
+
 ## [3.0.0-alpha.11](https://github.com/frender-rs/hooks/compare/hooks-v3.0.0-alpha.10...hooks-v3.0.0-alpha.11) (2024-07-03)
 
 
