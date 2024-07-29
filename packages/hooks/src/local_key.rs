@@ -29,60 +29,12 @@ mod share_value {
     impl<S: crate::ShareValue> crate::ShareValue for &'static LocalKey<S> {
         type Value = S::Value;
 
+        crate::proxy_share_value_with_provide!(LocalKey::with);
+
         fn try_unwrap(self) -> Result<Self::Value, Self> {
             Err(self)
         }
 
-        #[inline]
-        fn get(&self) -> Self::Value
-        where
-            Self::Value: Copy,
-        {
-            self.with(S::get)
-        }
-
-        #[inline]
-        fn get_cloned(&self) -> Self::Value
-        where
-            Self::Value: Clone,
-        {
-            self.with(S::get_cloned)
-        }
-
-        fn map<R>(&self, f: impl FnOnce(&Self::Value) -> R) -> R {
-            self.with(|s| s.map(f))
-        }
-
-        #[inline]
-        fn set(&self, new_value: Self::Value) {
-            self.with(|s| s.set(new_value))
-        }
-
-        /// The old value is returned.
-        #[inline]
-        fn replace(&self, new_value: Self::Value) -> Self::Value {
-            self.with(|s| s.replace(new_value))
-        }
-
-        /// The old value is returned.
-        #[inline]
-        fn replace_mut<F: FnOnce(&mut Self::Value) -> Self::Value>(&self, f: F) -> Self::Value {
-            self.with(|s| s.replace_mut(f))
-        }
-
-        /// The old value is returned.
-        #[inline]
-        fn replace_with<F: FnOnce(&Self::Value) -> Self::Value>(&self, f: F) -> Self::Value {
-            self.with(|s| s.replace_with(f))
-        }
-
-        fn map_mut<R>(&self, f: impl FnOnce(&mut Self::Value) -> R) -> R {
-            self.with(|s| s.map_mut(f))
-        }
-
-        /// Returns `true` if `self` and `other` are sharing values from the same allocation.
-        /// In that case, `self` and `other` are equivalent to each other
-        /// because calling the same method on either of them leads to the same result.
         fn equivalent_to(&self, other: &Self) -> bool {
             same_local_key_or_value(self, other, S::equivalent_to)
         }
@@ -189,7 +141,9 @@ mod signal {
     );
 
     impl<S: 'static + Signal> ShareValue for LocalKeySignalHook<S> {
-        crate::share_value::proxy_share_value!(
+        type Value = S::Value;
+
+        crate::proxy_share_value!(
             |self| -> &'static LocalKey<S> { &self.local_key },
             |other| &other.local_key
         );

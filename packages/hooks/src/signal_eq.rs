@@ -59,7 +59,9 @@ where
     S: crate::Signal<Value = T>,
     T: PartialEq,
 {
-    crate::share_value::proxy_share_value_non_eq!(|self| -> S { &self.0 }, |other| &other.0);
+    type Value = T;
+
+    crate::proxy_share_value_non_eq!(|self| -> S { &self.0 }, |other| &other.0);
 
     fn try_unwrap(self) -> Result<Self::Value, Self>
     where

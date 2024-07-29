@@ -63,7 +63,9 @@ impl<T: 'static> PartialEq for GenRefKey<T> {
 
 #[cfg(feature = "ShareValue")]
 impl<T: 'static> crate::ShareValue for GenRefOwner<T> {
-    crate::share_value::proxy_share_value!(|self| -> GenRefKey<T> { &self.key() }, |other| {
+    type Value = T;
+
+    crate::proxy_share_value!(|self| -> GenRefKey<T> { &self.key() }, |other| {
         &other.key()
     });
 

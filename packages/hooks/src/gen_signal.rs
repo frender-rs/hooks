@@ -171,10 +171,11 @@ impl<T> crate::ShareValue for GenSignal<T> {
 
 #[cfg(feature = "ShareValue")]
 impl<T> crate::ShareValue for GenSignalHook<T> {
-    crate::share_value::proxy_share_value!(
-        |self| -> GenSignal<T> { &self._to_signal() },
-        |other| { &other._to_signal() }
-    );
+    type Value = T;
+
+    crate::proxy_share_value!(|self| -> GenSignal<T> { &self._to_signal() }, |other| {
+        &other._to_signal()
+    });
 
     fn try_unwrap(self) -> Result<Self::Value, Self>
     where
