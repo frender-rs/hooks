@@ -36,6 +36,7 @@ mod sealed {
 /// `for<'hook> sealed::HookValueImplSignal<'hook>` here acts like [`for<'hook> HookValue<'hook, Value: Signal<SignalHook = Self, Value = Self::SignalShareValue>>`](crate::HookValue::Value).
 pub trait SignalHook:
     Hook
+    + Signal<Value = Self::SignalShareValue, SignalHook = Self>
     + for<'hook> sealed::HookValueImplSignal<
         'hook,
         HookValueImplShareValueValue = Self::SignalShareValue,

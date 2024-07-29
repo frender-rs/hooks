@@ -169,6 +169,65 @@ impl<T> crate::ShareValue for GenSignal<T> {
     }
 }
 
+#[cfg(feature = "ShareValue")]
+impl<T> crate::ShareValue for GenSignalHook<T> {
+    crate::share_value::proxy_share_value!(
+        |self| -> GenSignal<T> { &self._to_signal() },
+        |other| { &other._to_signal() }
+    );
+
+    fn try_unwrap(self) -> Result<Self::Value, Self>
+    where
+        Self: Sized,
+    {
+        Err(self)
+    }
+}
+
+#[cfg(feature = "ShareValue")]
+impl<T> crate::ToOwnedShareValue for GenSignalHook<T> {
+    type OwnedShareValue = GenSignal<T>;
+
+    fn to_owned_share_value(&self) -> Self::OwnedShareValue {
+        self._to_signal()
+    }
+}
+
+#[cfg(feature = "Signal")]
+impl<T> crate::Signal for GenSignalHook<T> {
+    type SignalHook = Self;
+    type SignalHookUninitialized = crate::utils::UninitializedHook<Self::SignalHook>;
+
+    fn is_signal_of(&self, signal_hook: &Self::SignalHook) -> bool {
+        self._to_signal().is_signal_of(signal_hook)
+    }
+
+    fn to_signal_hook(&self) -> Self::SignalHook {
+        self.clone()
+    }
+
+    fn update_signal_hook(&self, mut hook: std::pin::Pin<&mut Self::SignalHook>) {
+        if !self.is_signal_of(&hook) {
+            hook.set(self.to_signal_hook())
+        }
+    }
+
+    fn h_signal_hook<'hook>(
+        &self,
+        hook: std::pin::Pin<&'hook mut Self::SignalHookUninitialized>,
+    ) -> crate::Value<'hook, Self::SignalHook> {
+        hook.get_mut().use_with_signal(self)
+    }
+
+    fn notify_changed(&self) {
+        self.inner().map(SignalInner::notify_changed)
+    }
+
+    fn map_mut_and_notify_if<R>(&self, f: impl FnOnce(&mut Self::Value) -> (R, bool)) -> R {
+        self._to_signal().map_mut_and_notify_if(f)
+    }
+}
+
 #[cfg(feature = "Signal")]
 impl<T> crate::SignalHook for GenSignalHook<T> {
     type SignalShareValue = T;

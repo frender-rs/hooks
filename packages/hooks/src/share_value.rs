@@ -67,9 +67,10 @@ pub trait ShareValue {
     fn equivalent_to(&self, other: &Self) -> bool;
 }
 
+/// Proxy the methods that can't be optimized by [`PartialEq`].
 macro_rules! proxy_share_value_non_eq {
     (|$_self:ident| -> $ty:ty { $expr:expr }, |$other:ident| $other_expr:expr) => {
-        type Value = <$ty>::Value;
+        type Value = <$ty as $crate::ShareValue>::Value;
 
         fn map<R>(&$_self, f: impl FnOnce(&Self::Value) -> R) -> R {
             <$ty>::map($expr, f)
