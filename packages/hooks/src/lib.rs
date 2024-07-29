@@ -150,6 +150,8 @@ pub use signal_eq::SignalEq;
 mod into_eq;
 pub use into_eq::IntoEq;
 
+pub mod local_key;
+
 pub mod prelude {
     pub use hooks_core::prelude::*;
 
