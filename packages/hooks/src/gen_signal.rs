@@ -69,6 +69,12 @@ impl<T> GenSignalHook<T> {
     fn inner(&self) -> &local::Owner<SignalInner<T>> {
         self.imp.inner()
     }
+
+    fn _to_signal(&self) -> GenSignal<T> {
+        GenSignal {
+            key: self.inner().key(),
+        }
+    }
 }
 
 /// GenSignal is !Send + !Sync
@@ -168,9 +174,7 @@ impl<T> crate::SignalHook for GenSignalHook<T> {
     type SignalShareValue = T;
 
     fn to_signal(&self) -> GenSignal<T> {
-        GenSignal {
-            key: self.inner().key(),
-        }
+        self._to_signal()
     }
 }
 
