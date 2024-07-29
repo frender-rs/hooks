@@ -39,7 +39,7 @@ impl<H: Hook + Unpin> UninitializedHook<H> {
     #[cfg(feature = "Signal")]
     pub(crate) fn use_with_signal(
         &mut self,
-        signal: &impl crate::Signal<SignalHook = H, SignalHookUninitialized = Self>,
+        signal: &impl crate::Signal<SignalHook = H>,
     ) -> crate::Value<H> {
         self.use_with(
             || signal.to_signal_hook(),

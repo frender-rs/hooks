@@ -142,6 +142,7 @@ impl<T> crate::ShareValue for SharedSignal<T> {
 #[cfg(feature = "Signal")]
 impl<T> crate::SignalHook for SharedSignal<T> {
     type SignalShareValue = T;
+    type SignalHookUninitialized = crate::utils::UninitializedHook<Self>;
 
     fn to_signal(&self) -> &Self {
         self
@@ -151,7 +152,6 @@ impl<T> crate::SignalHook for SharedSignal<T> {
 #[cfg(feature = "Signal")]
 impl<T> crate::Signal for SharedSignal<T> {
     type SignalHook = Self;
-    type SignalHookUninitialized = crate::utils::UninitializedHook<Self>;
 
     fn is_signal_of(&self, signal_hook: &Self::SignalHook) -> bool {
         use crate::SignalHook;
@@ -172,7 +172,9 @@ impl<T> crate::Signal for SharedSignal<T> {
 
     fn h_signal_hook<'hook>(
         &self,
-        hook: std::pin::Pin<&'hook mut Self::SignalHookUninitialized>,
+        hook: std::pin::Pin<
+            &'hook mut <Self::SignalHook as crate::SignalHook>::SignalHookUninitialized,
+        >,
     ) -> crate::Value<'hook, Self::SignalHook> {
         hook.get_mut().use_with_signal(self)
     }

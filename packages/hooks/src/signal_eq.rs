@@ -46,6 +46,7 @@ where
     H::SignalShareValue: PartialEq,
 {
     type SignalShareValue = H::SignalShareValue;
+    type SignalHookUninitialized = H::SignalHookUninitialized;
 
     fn to_signal(&self) -> SignalEq<crate::Value<'_, H>> {
         SignalEq(self.0.to_signal())
@@ -104,7 +105,6 @@ where
     S::SignalHook: Unpin,
 {
     type SignalHook = SignalEq<S::SignalHook>;
-    type SignalHookUninitialized = S::SignalHookUninitialized;
 
     fn is_signal_of(&self, signal_hook: &Self::SignalHook) -> bool {
         self.0.is_signal_of(&signal_hook.0)
@@ -120,7 +120,9 @@ where
 
     fn h_signal_hook<'hook>(
         &self,
-        hook: std::pin::Pin<&'hook mut Self::SignalHookUninitialized>,
+        hook: std::pin::Pin<
+            &'hook mut <Self::SignalHook as crate::SignalHook>::SignalHookUninitialized,
+        >,
     ) -> crate::Value<'hook, Self::SignalHook> {
         SignalEq(self.0.h_signal_hook(hook))
     }

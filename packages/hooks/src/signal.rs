@@ -44,6 +44,8 @@ pub trait SignalHook:
 {
     type SignalShareValue;
 
+    type SignalHookUninitialized: HookPollNextUpdate + HookUnmount + Default;
+
     /// This is the opposite of [`Signal::to_signal_hook`].
     ///
     /// In contrast to [`Hook::use_hook`], this method just require a `&Self` instead of `Pin<&mut Self>`.
@@ -54,7 +56,6 @@ pub trait SignalHook:
 
 pub trait Signal: ShareValue {
     type SignalHook: SignalHook<SignalShareValue = Self::Value>;
-    type SignalHookUninitialized: HookPollNextUpdate + HookUnmount + Default;
 
     fn is_signal_of(&self, signal_hook: &Self::SignalHook) -> bool;
 
@@ -64,7 +65,7 @@ pub trait Signal: ShareValue {
     fn update_signal_hook(&self, hook: Pin<&mut Self::SignalHook>);
     fn h_signal_hook<'hook>(
         &self,
-        hook: Pin<&'hook mut Self::SignalHookUninitialized>,
+        hook: Pin<&'hook mut <Self::SignalHook as SignalHook>::SignalHookUninitialized>,
     ) -> crate::Value<'hook, Self::SignalHook>;
 
     fn use_signal(&self) -> UseSignal<'_, Self> {
@@ -78,7 +79,6 @@ pub trait Signal: ShareValue {
 
 impl<S: Signal + ?Sized> Signal for &S {
     type SignalHook = S::SignalHook;
-    type SignalHookUninitialized = S::SignalHookUninitialized;
 
     fn is_signal_of(&self, signal_hook: &Self::SignalHook) -> bool {
         S::is_signal_of(self, signal_hook)
@@ -91,7 +91,9 @@ impl<S: Signal + ?Sized> Signal for &S {
     }
     fn h_signal_hook<'hook>(
         &self,
-        hook: ::core::pin::Pin<&'hook mut Self::SignalHookUninitialized>,
+        hook: ::core::pin::Pin<
+            &'hook mut <Self::SignalHook as SignalHook>::SignalHookUninitialized,
+        >,
     ) -> crate::Value<'hook, Self::SignalHook> {
         S::h_signal_hook(self, hook)
     }
@@ -116,27 +118,20 @@ hooks_core::impl_hook!(
         self.0.update_signal_hook(hook)
     }
 
-    fn h(self, hook: S::SignalHookUninitialized) {
+    fn h(self, hook: <S::SignalHook as SignalHook>::SignalHookUninitialized) {
         self.0.h_signal_hook(hook)
     }
 );
 
 pub trait ToOwnedSignal: Signal + ToOwnedShareValue<OwnedShareValue = Self::OwnedSignal> {
-    type OwnedSignal: Signal<
-        SignalHook = Self::SignalHook,
-        Value = Self::Value,
-        SignalHookUninitialized = Self::SignalHookUninitialized,
-    >;
+    type OwnedSignal: Signal<SignalHook = Self::SignalHook, Value = Self::Value>;
 }
 
 /// A trait alias for `Signal + ToOwnedShareValue<OwnedShareValue: Signal<SignalHook = Self::SignalHook, SignalHookUninitialized = Self::SignalHookUninitialized>>`
 impl<T: ?Sized + ToOwnedShareValue> ToOwnedSignal for T
 where
     T: Signal,
-    T::OwnedShareValue: Signal<
-        SignalHook = Self::SignalHook,
-        SignalHookUninitialized = Self::SignalHookUninitialized,
-    >,
+    T::OwnedShareValue: Signal<SignalHook = Self::SignalHook>,
 {
     type OwnedSignal = T::OwnedShareValue;
 }

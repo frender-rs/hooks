@@ -196,7 +196,6 @@ impl<T> crate::ToOwnedShareValue for GenSignalHook<T> {
 #[cfg(feature = "Signal")]
 impl<T> crate::Signal for GenSignalHook<T> {
     type SignalHook = Self;
-    type SignalHookUninitialized = crate::utils::UninitializedHook<Self::SignalHook>;
 
     fn is_signal_of(&self, signal_hook: &Self::SignalHook) -> bool {
         self._to_signal().is_signal_of(signal_hook)
@@ -214,7 +213,9 @@ impl<T> crate::Signal for GenSignalHook<T> {
 
     fn h_signal_hook<'hook>(
         &self,
-        hook: std::pin::Pin<&'hook mut Self::SignalHookUninitialized>,
+        hook: std::pin::Pin<
+            &'hook mut <Self::SignalHook as crate::SignalHook>::SignalHookUninitialized,
+        >,
     ) -> crate::Value<'hook, Self::SignalHook> {
         hook.get_mut().use_with_signal(self)
     }
@@ -231,6 +232,7 @@ impl<T> crate::Signal for GenSignalHook<T> {
 #[cfg(feature = "Signal")]
 impl<T> crate::SignalHook for GenSignalHook<T> {
     type SignalShareValue = T;
+    type SignalHookUninitialized = crate::utils::UninitializedHook<Self>;
 
     fn to_signal(&self) -> GenSignal<T> {
         self._to_signal()
@@ -240,7 +242,6 @@ impl<T> crate::SignalHook for GenSignalHook<T> {
 #[cfg(feature = "Signal")]
 impl<T> crate::Signal for GenSignal<T> {
     type SignalHook = GenSignalHook<T>;
-    type SignalHookUninitialized = crate::utils::UninitializedHook<Self::SignalHook>;
 
     fn is_signal_of(&self, signal_hook: &Self::SignalHook) -> bool {
         use crate::SignalHook;
@@ -262,7 +263,9 @@ impl<T> crate::Signal for GenSignal<T> {
 
     fn h_signal_hook<'hook>(
         &self,
-        hook: std::pin::Pin<&'hook mut Self::SignalHookUninitialized>,
+        hook: std::pin::Pin<
+            &'hook mut <Self::SignalHook as crate::SignalHook>::SignalHookUninitialized,
+        >,
     ) -> crate::Value<'hook, Self::SignalHook> {
         hook.get_mut().use_with_signal(self)
     }
