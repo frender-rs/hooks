@@ -1,5 +1,21 @@
 # Changelog
 
+## [3.0.0-alpha.13](https://github.com/frender-rs/hooks/compare/hooks-v3.0.0-alpha.12...hooks-v3.0.0-alpha.13) (2024-07-29)
+
+
+### ⚠ BREAKING CHANGES
+
+* move assoc type SignalHookUninitialized to SignalHook
+* now SignalHook requires Signal; impl ToOwnedShareValue for GenSignalHook<T>
+
+### Features
+
+* impl ShareValue, Signal, ToOwnedShareValue for &'static LocalKey&lt;S&gt; ([1d327af](https://github.com/frender-rs/hooks/commit/1d327af70c28a41d76266cfff32a9ab1750dea5f))
+* impl ToOwnedShareValue for SharedRef&lt;T&gt;; impl ShareValue, ToOwnedShareValue for GenRefOwner<T>; impl ToOwnedShareValue for GenRefKey<T> ([9572634](https://github.com/frender-rs/hooks/commit/9572634c31cc8b49c26a878e99ae72e887f7fcdd))
+* macro_rules! proxy_share_value_non_eq, proxy_share_value, proxy_share_value_with_provide ([0a045fb](https://github.com/frender-rs/hooks/commit/0a045fb2777fa2f3512bf3b7cf60ed2612a1570b))
+* move assoc type SignalHookUninitialized to SignalHook ([950ecfb](https://github.com/frender-rs/hooks/commit/950ecfb13454164c84da2b12ce46ccad1ad11ee3))
+* now SignalHook requires Signal; impl ToOwnedShareValue for GenSignalHook&lt;T&gt; ([570a0ab](https://github.com/frender-rs/hooks/commit/570a0ab360097651123bad6c53b85f9056ef8dc6))
+
 ## [3.0.0-alpha.12](https://github.com/frender-rs/hooks/compare/hooks-v3.0.0-alpha.11...hooks-v3.0.0-alpha.12) (2024-07-22)
 
 
