@@ -62,6 +62,26 @@ impl<T: 'static> PartialEq for GenRefKey<T> {
 }
 
 #[cfg(feature = "ShareValue")]
+impl<T: 'static> crate::ShareValue for GenRefOwner<T> {
+    crate::share_value::proxy_share_value!(|self| -> GenRefKey<T> { &self.key() }, |other| {
+        &other.key()
+    });
+
+    fn try_unwrap(self) -> Result<Self::Value, Self> {
+        Err(self)
+    }
+}
+
+#[cfg(feature = "ShareValue")]
+impl<T: 'static> crate::ToOwnedShareValue for GenRefOwner<T> {
+    type OwnedShareValue = GenRefKey<T>;
+
+    fn to_owned_share_value(&self) -> Self::OwnedShareValue {
+        self.key()
+    }
+}
+
+#[cfg(feature = "ShareValue")]
 impl<T: 'static> crate::ShareValue for GenRefKey<T> {
     type Value = T;
 
@@ -82,6 +102,15 @@ impl<T: 'static> crate::ShareValue for GenRefKey<T> {
 
     fn equivalent_to(&self, other: &Self) -> bool {
         *self == *other
+    }
+}
+
+#[cfg(feature = "ShareValue")]
+impl<T: 'static> crate::ToOwnedShareValue for GenRefKey<T> {
+    type OwnedShareValue = Self;
+
+    fn to_owned_share_value(&self) -> Self::OwnedShareValue {
+        *self
     }
 }
 

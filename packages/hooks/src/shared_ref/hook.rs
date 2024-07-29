@@ -81,6 +81,15 @@ impl<T> crate::ShareValue for SharedRef<T> {
     }
 }
 
+#[cfg(feature = "ShareValue")]
+impl<T> crate::ToOwnedShareValue for SharedRef<T> {
+    type OwnedShareValue = Self;
+
+    fn to_owned_share_value(&self) -> Self::OwnedShareValue {
+        self.clone()
+    }
+}
+
 hooks_core::impl_hook![
     type For<T> = SharedRef<T>;
     fn unmount() {}
