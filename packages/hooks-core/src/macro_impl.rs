@@ -630,26 +630,6 @@ macro_rules! __impl_phantom {
 #[doc(hidden)]
 #[macro_export]
 macro_rules! __impl_impl_hook {
-    // TODO: remove this
-    (
-        generics! { params! { $($generic_params:tt)* } $($generics_other:tt)* }
-        for_ty! { $ty:ty }
-        where_clause! { $( where $($where_clause:tt)*)? }
-        rest! {
-            ;
-            $($body:tt)*
-        }
-    ) => {
-        $crate::__impl_impl_hook! {
-            generic_params { $($generic_params)* }
-            for_ty { $ty }
-            where_clause { $( where $($where_clause)*)? }
-            body {
-                $($body)*
-            }
-        }
-    };
-    // TODO: remove this
     (
         generic_params $generic_params:tt
         for_ty $for_ty:tt
@@ -721,40 +701,6 @@ macro_rules! __impl_impl_hook_generics_consumed {
             [
                 generic_params $before_gt
                 for_ty { $ty }
-            ]
-            { where $($rest)* }
-            => $crate::__impl_impl_hook!
-        }
-    };
-}
-
-#[doc(hidden)]
-#[macro_export]
-macro_rules! __impl_impl_hook_generics_parsed {
-    (
-        generics! $generics:tt
-        rest! {
-            = $ty:ty ;
-            $($rest:tt)*
-        }
-    ) => {
-        $crate::__impl_impl_hook! {
-            generics! $generics
-            for_ty! { $ty }
-            where_clause! {}
-            rest! { ; $($rest)* }
-        }
-    };
-    (
-        generics! $generics:tt
-        rest! {
-            = $ty:ty where $($rest:tt)*
-        }
-    ) => {
-        $crate::__private::parse_where_clause! {
-            [
-                generics! $generics
-                for_ty! { $ty }
             ]
             { where $($rest)* }
             => $crate::__impl_impl_hook!

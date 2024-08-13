@@ -638,22 +638,6 @@ macro_rules! impl_hook {
             gt_and_rest {> $($rest)*}
         }
     };
-    (
-        type For $(<>)? = $($rest:tt)*
-    ) => {
-        $crate::__impl_impl_hook_generics_parsed! {
-            generics! { params! {}  }
-            rest!     { = $($rest)* }
-        }
-    };
-    (
-        type For < $($rest:tt)*
-    ) => {
-        $crate::__private::parse_generics! {
-            {< $($rest)*}
-            => $crate::__impl_impl_hook_generics_parsed!
-        }
-    };
 }
 
 /// Expands to an opaque type [`impl Hook`](trait@crate::Hook)
