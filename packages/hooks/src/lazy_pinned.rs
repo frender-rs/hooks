@@ -21,11 +21,12 @@ impl<T> LazyPinned<T> {
 }
 
 hooks_core::impl_hook![
-    type For<T> = LazyPinned<T>;
-    fn unmount() {}
-    #[inline]
-    fn poll_next_update(self) {
-        ::core::task::Poll::Ready(false)
+    impl<T> LazyPinned<T> {
+        fn unmount() {}
+        #[inline]
+        fn poll_next_update(self) {
+            ::core::task::Poll::Ready(false)
+        }
     }
 ];
 
@@ -33,15 +34,16 @@ pub struct UseLazyPinned<T>(pub T);
 pub use UseLazyPinned as use_lazy_pinned;
 
 hooks_core::impl_hook![
-    type For<T> = UseLazyPinned<T>;
-    fn into_hook(self) -> super::pinned::Pinned<T> {
-        super::pinned::Pinned { inner: self.0 }
-    }
-    #[inline]
-    fn update_hook(self, _hook: _) {}
-    #[inline]
-    fn h(self, hook: LazyPinned<T>) {
-        crate::utils::pin::pin_project_or_insert_with(hook.project().inner, || self.0)
+    impl<T> UseLazyPinned<T> {
+        fn into_hook(self) -> super::pinned::Pinned<T> {
+            super::pinned::Pinned { inner: self.0 }
+        }
+        #[inline]
+        fn update_hook(self, _hook: _) {}
+        #[inline]
+        fn h(self, hook: LazyPinned<T>) {
+            crate::utils::pin::pin_project_or_insert_with(hook.project().inner, || self.0)
+        }
     }
 ];
 
@@ -49,16 +51,16 @@ pub struct UseLazyPinnedWith<T, F: FnOnce() -> T>(pub F);
 pub use UseLazyPinnedWith as use_lazy_pinned_with;
 
 hooks_core::impl_hook![
-    type For<T, F: FnOnce() -> T> = UseLazyPinnedWith<T, F>;
-
-    fn into_hook(self) -> super::pinned::Pinned<T> {
-        super::pinned::Pinned { inner: self.0() }
-    }
-    #[inline]
-    fn update_hook(self, _hook: _) {}
-    #[inline]
-    fn h(self, hook: LazyPinned<T>) {
-        crate::utils::pin::pin_project_or_insert_with(hook.project().inner, self.0)
+    impl<T, F: FnOnce() -> T> UseLazyPinnedWith<T, F> {
+        fn into_hook(self) -> super::pinned::Pinned<T> {
+            super::pinned::Pinned { inner: self.0() }
+        }
+        #[inline]
+        fn update_hook(self, _hook: _) {}
+        #[inline]
+        fn h(self, hook: LazyPinned<T>) {
+            crate::utils::pin::pin_project_or_insert_with(hook.project().inner, self.0)
+        }
     }
 ];
 

@@ -102,20 +102,20 @@ mod signal {
     }
 
     hooks_core::impl_hook!(
-        type For<S: 'static + Signal> = LocalKeySignalHook<S>;
+        impl<S: 'static + Signal> LocalKeySignalHook<S> {
+            fn unmount(self) {
+                self.project().signal_hook.unmount()
+            }
 
-        fn unmount(self) {
-            self.project().signal_hook.unmount()
-        }
+            fn poll_next_update(self, cx: _) {
+                self.project().signal_hook.poll_next_update(cx)
+            }
 
-        fn poll_next_update(self, cx: _) {
-            self.project().signal_hook.poll_next_update(cx)
-        }
-
-        fn use_hook(self) -> &'static LocalKey<S> {
-            let this = self.project();
-            let _ = this.signal_hook.use_hook();
-            *this.local_key
+            fn use_hook(self) -> &'static LocalKey<S> {
+                let this = self.project();
+                let _ = this.signal_hook.use_hook();
+                *this.local_key
+            }
         }
     );
 
@@ -129,14 +129,14 @@ mod signal {
     }
 
     hooks_core::impl_hook!(
-        type For<S: 'static + Signal> = LocalKeySignalHookUninitialized<S>;
+        impl<S: 'static + Signal> LocalKeySignalHookUninitialized<S> {
+            fn unmount(self) {
+                self.project().signal_hook.unmount()
+            }
 
-        fn unmount(self) {
-            self.project().signal_hook.unmount()
-        }
-
-        fn poll_next_update(self, cx: _) {
-            self.project().signal_hook.poll_next_update(cx)
+            fn poll_next_update(self, cx: _) {
+                self.project().signal_hook.poll_next_update(cx)
+            }
         }
     );
 

@@ -245,17 +245,18 @@ impl<T, SR: SharableRef<Value = SignalInner<T>>> SignalOwner<T, SR> {
 }
 
 hooks_core::impl_hook![
-    type For<T, SR: SharableRef<Value = SignalInner<T>>> = SignalOwner<T, SR>;
-    fn unmount() {}
-    #[inline]
-    fn poll_next_update(self, cx: _) {
-        self.get_mut().impl_poll_next_update(cx)
-    }
-    #[inline]
-    fn use_hook(self) -> &'hook Self {
-        let this = self.get_mut();
-        this.mark_as_seen();
-        this
+    impl<T, SR: SharableRef<Value = SignalInner<T>>> SignalOwner<T, SR> {
+        fn unmount() {}
+        #[inline]
+        fn poll_next_update(self, cx: _) {
+            self.get_mut().impl_poll_next_update(cx)
+        }
+        #[inline]
+        fn use_hook(self) -> &'hook Self {
+            let this = self.get_mut();
+            this.mark_as_seen();
+            this
+        }
     }
 ];
 

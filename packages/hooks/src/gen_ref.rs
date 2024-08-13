@@ -24,17 +24,17 @@ impl<T: 'static> GenRefOwner<T> {
 impl<T: 'static> Unpin for GenRefOwner<T> {}
 
 hooks_core::impl_hook!(
-    type For<T: 'static> = GenRefOwner<T>;
+    impl<T: 'static> GenRefOwner<T> {
+        fn unmount() {}
 
-    fn unmount() {}
+        fn poll_next_update(self, _cx: _) {
+            std::task::Poll::Ready(false)
+        }
 
-    fn poll_next_update(self, _cx: _) {
-        std::task::Poll::Ready(false)
-    }
-
-    #[inline]
-    fn use_hook(self) -> GenRefKey<T> {
-        GenRefKey(self.0.key())
+        #[inline]
+        fn use_hook(self) -> GenRefKey<T> {
+            GenRefKey(self.0.key())
+        }
     }
 );
 
@@ -119,32 +119,32 @@ impl<T: 'static> crate::ToOwnedShareValue for GenRefKey<T> {
 pub struct UseGenRef<T: 'static>(pub T);
 
 hooks_core::impl_hook!(
-    type For<T: 'static> = UseGenRef<T>;
+    impl<T: 'static> UseGenRef<T> {
+        fn into_hook(self) -> GenRefOwner<T> {
+            GenRefOwner::new(self.0)
+        }
 
-    fn into_hook(self) -> GenRefOwner<T> {
-        GenRefOwner::new(self.0)
-    }
+        fn update_hook(self, _hook: _) {}
 
-    fn update_hook(self, _hook: _) {}
-
-    fn h(self, hook: crate::utils::UninitializedHook<GenRefOwner<T>>) {
-        hook.get_mut().use_into_or_update_hook(self)
+        fn h(self, hook: crate::utils::UninitializedHook<GenRefOwner<T>>) {
+            hook.get_mut().use_into_or_update_hook(self)
+        }
     }
 );
 
 pub struct UseGenRefWith<F>(pub F);
 
 hooks_core::impl_hook!(
-    type For<T: 'static, F: FnOnce() -> T> = UseGenRefWith<F>;
+    impl<T: 'static, F: FnOnce() -> T> UseGenRefWith<F> {
+        fn into_hook(self) -> GenRefOwner<T> {
+            GenRefOwner::new(self.0())
+        }
 
-    fn into_hook(self) -> GenRefOwner<T> {
-        GenRefOwner::new(self.0())
-    }
+        fn update_hook(self, _hook: _) {}
 
-    fn update_hook(self, _hook: _) {}
-
-    fn h(self, hook: crate::utils::UninitializedHook<GenRefOwner<T>>) {
-        hook.get_mut().use_into_or_update_hook(self)
+        fn h(self, hook: crate::utils::UninitializedHook<GenRefOwner<T>>) {
+            hook.get_mut().use_into_or_update_hook(self)
+        }
     }
 );
 

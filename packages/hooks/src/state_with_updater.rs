@@ -34,20 +34,20 @@ mod state {
     }
 
     hooks_core::impl_hook![
-        type For<T, U: StateUpdater<T>> = StateWithUpdater<T, U>;
+        impl<T, U: StateUpdater<T>> StateWithUpdater<T, U> {
+            fn unmount() {}
 
-        fn unmount() {}
+            #[inline]
+            fn poll_next_update(mut self, cx: _) {
+                let this = self.get_mut();
+                this.updater.poll_update_state(&mut this.state, cx)
+            }
 
-        #[inline]
-        fn poll_next_update(mut self, cx: _) {
-            let this = self.get_mut();
-            this.updater.poll_update_state(&mut this.state, cx)
-        }
-
-        #[inline]
-        fn use_hook(self) -> (&'hook mut T, &'hook mut U) {
-            let this = self.get_mut();
-            (&mut this.state, &mut this.updater)
+            #[inline]
+            fn use_hook(self) -> (&'hook mut T, &'hook mut U) {
+                let this = self.get_mut();
+                (&mut this.state, &mut this.updater)
+            }
         }
     ];
 }
@@ -62,31 +62,31 @@ pub struct UseStateWithUpdater<S, U: StateUpdater<S>>(
 pub struct UseStateWithUpdaterWith<S, U: StateUpdater<S>, F: FnOnce() -> (S, U)>(pub F);
 
 hooks_core::impl_hook![
-    type For<T, U: StateUpdater<T>> = UseStateWithUpdater<T, U>;
+    impl<T, U: StateUpdater<T>> UseStateWithUpdater<T, U> {
+        fn into_hook(self) -> StateWithUpdater<T, U> {
+            StateWithUpdater::new(self.0, self.1)
+        }
 
-    fn into_hook(self) -> StateWithUpdater<T, U> {
-        StateWithUpdater::new(self.0, self.1)
-    }
+        fn update_hook(self, _hook: _) {}
 
-    fn update_hook(self, _hook: _) {}
-
-    fn h(self, hook: crate::utils::UninitializedHook<StateWithUpdater<T, U>>) {
-        hook.get_mut().use_into_or_update_hook(self)
+        fn h(self, hook: crate::utils::UninitializedHook<StateWithUpdater<T, U>>) {
+            hook.get_mut().use_into_or_update_hook(self)
+        }
     }
 ];
 
 hooks_core::impl_hook![
-    type For<T, U: StateUpdater<T>, F: FnOnce() -> (T, U)> = UseStateWithUpdaterWith<T, U, F>;
+    impl<T, U: StateUpdater<T>, F: FnOnce() -> (T, U)> UseStateWithUpdaterWith<T, U, F> {
+        fn into_hook(self) -> StateWithUpdater<T, U> {
+            let (initial_state, updater) = self.0();
+            StateWithUpdater::new(initial_state, updater)
+        }
 
-    fn into_hook(self) -> StateWithUpdater<T, U> {
-        let (initial_state, updater) = self.0();
-        StateWithUpdater::new(initial_state, updater)
-    }
+        fn update_hook(self, _hook: _) {}
 
-    fn update_hook(self, _hook: _) {}
-
-    fn h(self, hook: crate::utils::UninitializedHook<StateWithUpdater<T, U>>) {
-        hook.get_mut().use_into_or_update_hook(self)
+        fn h(self, hook: crate::utils::UninitializedHook<StateWithUpdater<T, U>>) {
+            hook.get_mut().use_into_or_update_hook(self)
+        }
     }
 ];
 

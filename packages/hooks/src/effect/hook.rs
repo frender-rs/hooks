@@ -28,22 +28,23 @@ impl<Dep: std::fmt::Debug, E: EffectFor<Dep>> std::fmt::Debug for Effect<Dep, E>
 }
 
 hooks_core::impl_hook![
-    type For<Dep, E: EffectFor<Dep>> = Effect<Dep, E>;
-    #[inline]
-    fn unmount(self) {
-        self.get_mut().inner.unmount()
-    }
-    fn poll_next_update(self) {
-        let this = self.get_mut();
-        if this.inner.effect.is_some() {
-            if let Some(dependency) = &this.dependency {
-                this.inner.cleanup_and_effect_for(dependency);
-            }
+    impl<Dep, E: EffectFor<Dep>> Effect<Dep, E> {
+        #[inline]
+        fn unmount(self) {
+            self.get_mut().inner.unmount()
         }
-        Poll::Ready(false)
+        fn poll_next_update(self) {
+            let this = self.get_mut();
+            if this.inner.effect.is_some() {
+                if let Some(dependency) = &this.dependency {
+                    this.inner.cleanup_and_effect_for(dependency);
+                }
+            }
+            Poll::Ready(false)
+        }
+        #[inline(always)]
+        fn use_hook(self) {}
     }
-    #[inline(always)]
-    fn use_hook(self) {}
 ];
 
 impl<Dep, E: EffectFor<Dep>> Effect<Dep, E> {
@@ -167,21 +168,22 @@ pub struct UseEffect<Dep: PartialEq, E: EffectFor<Dep>>(pub E, pub Dep);
 pub use UseEffect as use_effect;
 
 hooks_core::impl_hook![
-    type For<Dep: PartialEq, E: EffectFor<Dep>> = UseEffect<Dep, E>;
-    #[inline]
-    fn into_hook(self) -> Effect<Dep, E> {
-        Effect {
-            dependency: Some(self.1),
-            inner: EffectInner::new_registered(self.0),
+    impl<Dep: PartialEq, E: EffectFor<Dep>> UseEffect<Dep, E> {
+        #[inline]
+        fn into_hook(self) -> Effect<Dep, E> {
+            Effect {
+                dependency: Some(self.1),
+                inner: EffectInner::new_registered(self.0),
+            }
         }
-    }
-    #[inline]
-    fn update_hook(self, hook: _) {
-        hook.register_effect_if_dep_ne(self.0, self.1)
-    }
-    #[inline]
-    fn h(self, hook: Effect<Dep, E>) {
-        hook.register_effect_if_dep_ne(self.0, self.1)
+        #[inline]
+        fn update_hook(self, hook: _) {
+            hook.register_effect_if_dep_ne(self.0, self.1)
+        }
+        #[inline]
+        fn h(self, hook: Effect<Dep, E>) {
+            hook.register_effect_if_dep_ne(self.0, self.1)
+        }
     }
 ];
 
@@ -221,26 +223,25 @@ pub fn use_effect_with<Dep, E: EffectFor<Dep>>(
 }
 
 hooks_core::impl_hook![
-    type For<Dep, E: EffectFor<Dep>, F: FnOnce(&mut Option<Dep>) -> Option<E>> =
-        UseEffectWith<Dep, E, F>;
+    impl<Dep, E: EffectFor<Dep>, F: FnOnce(&mut Option<Dep>) -> Option<E>> UseEffectWith<Dep, E, F> {
+        fn into_hook(self) -> Effect<Dep, E> {
+            let mut dependency = None;
+            let effect = self.0(&mut dependency);
 
-    fn into_hook(self) -> Effect<Dep, E> {
-        let mut dependency = None;
-        let effect = self.0(&mut dependency);
-
-        Effect {
-            dependency,
-            inner: effect.map(EffectInner::new_registered).unwrap_or_default(),
+            Effect {
+                dependency,
+                inner: effect.map(EffectInner::new_registered).unwrap_or_default(),
+            }
         }
-    }
 
-    #[inline]
-    fn update_hook(self, hook: _) {
-        hook.register_effect_if(self.0)
-    }
-    #[inline]
-    fn h(self, hook: Effect<Dep, E>) {
-        hook.register_effect_if(self.0)
+        #[inline]
+        fn update_hook(self, hook: _) {
+            hook.register_effect_if(self.0)
+        }
+        #[inline]
+        fn h(self, hook: Effect<Dep, E>) {
+            hook.register_effect_if(self.0)
+        }
     }
 ];
 

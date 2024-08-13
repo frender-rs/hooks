@@ -91,14 +91,15 @@ impl<T> crate::ToOwnedShareValue for SharedRef<T> {
 }
 
 hooks_core::impl_hook![
-    type For<T> = SharedRef<T>;
-    fn unmount() {}
-    #[inline(always)]
-    fn poll_next_update(self, _cx: _) {
-        std::task::Poll::Ready(false)
-    }
-    #[inline]
-    fn use_hook(self) -> &'hook Self {
-        self.get_mut()
+    impl<T> SharedRef<T> {
+        fn unmount() {}
+        #[inline(always)]
+        fn poll_next_update(self, _cx: _) {
+            std::task::Poll::Ready(false)
+        }
+        #[inline]
+        fn use_hook(self) -> &'hook Self {
+            self.get_mut()
+        }
     }
 ];

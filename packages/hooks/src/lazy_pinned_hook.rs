@@ -44,26 +44,26 @@ impl<H: Hook> LazyPinnedHook<H> {
 }
 
 hooks_core::impl_hook![
-    type For<H: HookPollNextUpdate + HookUnmount> = LazyPinnedHook<H>;
-
-    fn unmount(self) {
-        if let Some(hook) = self.pin_project_hook() {
-            H::unmount(hook)
+    impl<H: HookPollNextUpdate + HookUnmount> LazyPinnedHook<H> {
+        fn unmount(self) {
+            if let Some(hook) = self.pin_project_hook() {
+                H::unmount(hook)
+            }
         }
-    }
 
-    fn poll_next_update(self, cx: _) {
-        let hook = self.pin_project_hook();
-        if let Some(hook) = hook {
-            <H as HookPollNextUpdate>::poll_next_update(hook, cx)
-        } else {
-            std::task::Poll::Ready(false)
+        fn poll_next_update(self, cx: _) {
+            let hook = self.pin_project_hook();
+            if let Some(hook) = hook {
+                <H as HookPollNextUpdate>::poll_next_update(hook, cx)
+            } else {
+                std::task::Poll::Ready(false)
+            }
         }
-    }
 
-    #[inline(always)]
-    fn use_hook(self) -> Pin<&'hook mut Self> {
-        self
+        #[inline(always)]
+        fn use_hook(self) -> Pin<&'hook mut Self> {
+            self
+        }
     }
 ];
 
@@ -141,17 +141,18 @@ pub fn use_lazy_pinned_hook<H: Hook>() -> UseLazyPinnedHook<H> {
 }
 
 hooks_core::impl_hook![
-    type For<H: Hook> = UseLazyPinnedHook<H>;
-    #[inline]
-    fn into_hook(self) -> LazyPinnedHook<H> {
-        LazyPinnedHook::default()
-    }
+    impl<H: Hook> UseLazyPinnedHook<H> {
+        #[inline]
+        fn into_hook(self) -> LazyPinnedHook<H> {
+            LazyPinnedHook::default()
+        }
 
-    #[inline]
-    fn update_hook(self, _hook: _) {}
+        #[inline]
+        fn update_hook(self, _hook: _) {}
 
-    #[inline]
-    fn h(self, hook: LazyPinnedHook<H>) {
-        hook
+        #[inline]
+        fn h(self, hook: LazyPinnedHook<H>) {
+            hook
+        }
     }
 ];

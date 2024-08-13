@@ -42,23 +42,25 @@ pin_project_lite::pin_project![
 ];
 
 crate::impl_hook![
-    type For<InnerHook, U, I: sealed::Initialized> = FnHook<InnerHook, U, I>
+    impl<InnerHook, U, I: sealed::Initialized> FnHook<InnerHook, U, I>
     where
         InnerHook: Default + HookPollNextUpdate + HookUnmount,
-        for<'hook> U: FnMutOneArg<Pin<&'hook mut InnerHook>>;
-
-    fn poll_next_update(self, cx: _) {
-        let this = self.project();
-        if I::is_initialized(this.initialized) {
-            this.inner_hook.poll_next_update(cx)
-        } else {
-            std::task::Poll::Ready(true)
+        for<'hook> U: FnMutOneArg<Pin<&'hook mut InnerHook>>,
+    {
+        fn poll_next_update(self, cx: _) {
+            let this = self.project();
+            if I::is_initialized(this.initialized) {
+                this.inner_hook.poll_next_update(cx)
+            } else {
+                std::task::Poll::Ready(true)
+            }
         }
-    }
-    fn unmount(self) {
-        let this = self.project();
-        if I::is_initialized(this.initialized) {
-            this.inner_hook.unmount()
+
+        fn unmount(self) {
+            let this = self.project();
+            if I::is_initialized(this.initialized) {
+                this.inner_hook.unmount()
+            }
         }
     }
 ];
@@ -107,23 +109,24 @@ impl<InnerHook: Default, U> Default for FnHookUninitialized<InnerHook, U> {
 }
 
 crate::impl_hook![
-    type For<InnerHook, U> = FnHookUninitialized<InnerHook, U>
+    impl<InnerHook, U> FnHookUninitialized<InnerHook, U>
     where
         InnerHook: Default + HookPollNextUpdate + HookUnmount,
-        for<'hook> U: FnMutOneArg<Pin<&'hook mut InnerHook>>;
-
-    fn poll_next_update(self, cx: _) {
-        let this = self.project();
-        if this.use_hook.is_some() {
-            this.inner_hook.poll_next_update(cx)
-        } else {
-            std::task::Poll::Ready(true)
+        for<'hook> U: FnMutOneArg<Pin<&'hook mut InnerHook>>,
+    {
+        fn poll_next_update(self, cx: _) {
+            let this = self.project();
+            if this.use_hook.is_some() {
+                this.inner_hook.poll_next_update(cx)
+            } else {
+                std::task::Poll::Ready(true)
+            }
         }
-    }
-    fn unmount(self) {
-        let this = self.project();
-        if this.use_hook.is_some() {
-            this.inner_hook.unmount()
+        fn unmount(self) {
+            let this = self.project();
+            if this.use_hook.is_some() {
+                this.inner_hook.unmount()
+            }
         }
     }
 ];
@@ -138,34 +141,35 @@ pub mod use_fn_hook {
         >(pub U, pub PhantomData<InnerHook>);
 
         crate::impl_hook![
-            type For<InnerHook, U> = UseFnHook<InnerHook, U>
+            impl<InnerHook, U> UseFnHook<InnerHook, U>
             where
                 InnerHook: Default + HookPollNextUpdate + HookUnmount,
-                for<'hook> U: FnMutOneArg<Pin<&'hook mut InnerHook>>;
-
-            fn into_hook(self) -> FnHook<InnerHook, U, bool> {
-                FnHook {
-                    inner_hook: Default::default(),
-                    use_hook: self.0,
-                    initialized: false,
+                for<'hook> U: FnMutOneArg<Pin<&'hook mut InnerHook>>,
+            {
+                fn into_hook(self) -> FnHook<InnerHook, U, bool> {
+                    FnHook {
+                        inner_hook: Default::default(),
+                        use_hook: self.0,
+                        initialized: false,
+                    }
                 }
-            }
 
-            fn update_hook(self, hook: _) {
-                let hook = hook.project();
-                if !*hook.initialized {
-                    *hook.initialized = true;
-                    // value is dropped
-                    let _ = hook.use_hook.call_mut_with_one_arg(hook.inner_hook);
+                fn update_hook(self, hook: _) {
+                    let hook = hook.project();
+                    if !*hook.initialized {
+                        *hook.initialized = true;
+                        // value is dropped
+                        let _ = hook.use_hook.call_mut_with_one_arg(hook.inner_hook);
+                    }
+                    *hook.use_hook = self.0;
                 }
-                *hook.use_hook = self.0;
-            }
 
-            #[inline]
-            fn h(self, hook: FnHookUninitialized<InnerHook, U>) {
-                let hook = hook.project();
-                let use_hook = hook.use_hook.insert(self.0);
-                use_hook.call_mut_with_one_arg(hook.inner_hook)
+                #[inline]
+                fn h(self, hook: FnHookUninitialized<InnerHook, U>) {
+                    let hook = hook.project();
+                    let use_hook = hook.use_hook.insert(self.0);
+                    use_hook.call_mut_with_one_arg(hook.inner_hook)
+                }
             }
         ];
     }

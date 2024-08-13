@@ -103,18 +103,19 @@ impl<T: 'static> Clone for GenSignal<T> {
 }
 
 hooks_core::impl_hook![
-    type For<T> = GenSignalHook<T>;
-    fn unmount() {}
-    #[inline]
-    fn poll_next_update(self, cx: _) {
-        self.get_mut().imp.impl_poll_next_update_never_false(cx)
-    }
-    #[inline]
-    fn use_hook(self) -> GenSignal<T> {
-        use hooks_core::HookExt;
+    impl<T> GenSignalHook<T> {
+        fn unmount() {}
+        #[inline]
+        fn poll_next_update(self, cx: _) {
+            self.get_mut().imp.impl_poll_next_update_never_false(cx)
+        }
+        #[inline]
+        fn use_hook(self) -> GenSignal<T> {
+            use hooks_core::HookExt;
 
-        GenSignal {
-            key: self.get_mut().imp.use_hook().inner().key(),
+            GenSignal {
+                key: self.get_mut().imp.use_hook().inner().key(),
+            }
         }
     }
 ];
@@ -293,32 +294,32 @@ impl<T> crate::ToOwnedShareValue for GenSignal<T> {
 pub struct UseGenSignal<T: 'static>(pub T);
 
 hooks_core::impl_hook!(
-    type For<T> = UseGenSignal<T>;
+    impl<T> UseGenSignal<T> {
+        fn into_hook(self) -> GenSignalHook<T> {
+            GenSignalHook::new(self.0)
+        }
 
-    fn into_hook(self) -> GenSignalHook<T> {
-        GenSignalHook::new(self.0)
-    }
+        fn update_hook(self, _hook: _) {}
 
-    fn update_hook(self, _hook: _) {}
-
-    fn h(self, hook: crate::utils::UninitializedHook<GenSignalHook<T>>) {
-        hook.get_mut().use_into_or_update_hook(self)
+        fn h(self, hook: crate::utils::UninitializedHook<GenSignalHook<T>>) {
+            hook.get_mut().use_into_or_update_hook(self)
+        }
     }
 );
 
 pub struct UseGenSignalWith<F>(pub F);
 
 hooks_core::impl_hook!(
-    type For<T: 'static, F: FnOnce() -> T> = UseGenSignalWith<F>;
+    impl<T: 'static, F: FnOnce() -> T> UseGenSignalWith<F> {
+        fn into_hook(self) -> GenSignalHook<T> {
+            GenSignalHook::new(self.0())
+        }
 
-    fn into_hook(self) -> GenSignalHook<T> {
-        GenSignalHook::new(self.0())
-    }
+        fn update_hook(self, _hook: _) {}
 
-    fn update_hook(self, _hook: _) {}
-
-    fn h(self, hook: crate::utils::UninitializedHook<GenSignalHook<T>>) {
-        hook.get_mut().use_into_or_update_hook(self)
+        fn h(self, hook: crate::utils::UninitializedHook<GenSignalHook<T>>) {
+            hook.get_mut().use_into_or_update_hook(self)
+        }
     }
 );
 

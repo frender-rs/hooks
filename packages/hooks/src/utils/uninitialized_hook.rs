@@ -55,18 +55,18 @@ impl<H> Default for UninitializedHook<H> {
 }
 
 hooks_core::impl_hook![
-    type For<H: Unpin + Hook> = UninitializedHook<H>;
-
-    fn unmount(self) {
-        if let Some(hook) = &mut self.get_mut().0 {
-            H::unmount(Pin::new(hook))
+    impl<H: Unpin + Hook> UninitializedHook<H> {
+        fn unmount(self) {
+            if let Some(hook) = &mut self.get_mut().0 {
+                H::unmount(Pin::new(hook))
+            }
         }
-    }
-    fn poll_next_update(self, cx: _) {
-        if let Some(hook) = &mut self.get_mut().0 {
-            H::poll_next_update(Pin::new(hook), cx)
-        } else {
-            std::task::Poll::Ready(false)
+        fn poll_next_update(self, cx: _) {
+            if let Some(hook) = &mut self.get_mut().0 {
+                H::poll_next_update(Pin::new(hook), cx)
+            } else {
+                std::task::Poll::Ready(false)
+            }
         }
     }
 ];

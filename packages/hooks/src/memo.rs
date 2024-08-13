@@ -27,16 +27,17 @@ impl<Data, Dep> Memo<Data, Dep> {
 }
 
 hooks_core::impl_hook![
-    type For<Data, Dep> = Memo<Data, Dep>;
-    fn unmount() {}
-    #[inline]
-    fn poll_next_update(self) {
-        std::task::Poll::Ready(false)
-    }
-    #[inline]
-    fn use_hook(self) -> (&'hook mut Data, &'hook mut Dep) {
-        let this = self.get_mut();
-        (&mut this.data, &mut this.dependency)
+    impl<Data, Dep> Memo<Data, Dep> {
+        fn unmount() {}
+        #[inline]
+        fn poll_next_update(self) {
+            std::task::Poll::Ready(false)
+        }
+        #[inline]
+        fn use_hook(self) -> (&'hook mut Data, &'hook mut Dep) {
+            let this = self.get_mut();
+            (&mut this.data, &mut this.dependency)
+        }
     }
 ];
 
@@ -44,20 +45,20 @@ pub struct UseMemo<Data, Dep: PartialEq, F: FnOnce(&Dep) -> Data>(pub F, pub Dep
 pub use UseMemo as use_memo;
 
 hooks_core::impl_hook![
-    type For<Data, Dep: PartialEq, F: FnOnce(&Dep) -> Data> = UseMemo<Data, Dep, F>;
-
-    fn into_hook(self) -> Memo<Data, Dep> {
-        Memo {
-            data: self.0(&self.1),
-            dependency: self.1,
+    impl<Data, Dep: PartialEq, F: FnOnce(&Dep) -> Data> UseMemo<Data, Dep, F> {
+        fn into_hook(self) -> Memo<Data, Dep> {
+            Memo {
+                data: self.0(&self.1),
+                dependency: self.1,
+            }
         }
-    }
 
-    fn update_hook(self, hook: _) {
-        let _ = hook.get_mut().update_if_ne_and_get(self.0, self.1);
-    }
+        fn update_hook(self, hook: _) {
+            let _ = hook.get_mut().update_if_ne_and_get(self.0, self.1);
+        }
 
-    fn h(self, hook: UninitializedHook<Memo<Data, Dep>>) {
-        hook.get_mut().use_into_or_update_hook(self)
+        fn h(self, hook: UninitializedHook<Memo<Data, Dep>>) {
+            hook.get_mut().use_into_or_update_hook(self)
+        }
     }
 ];

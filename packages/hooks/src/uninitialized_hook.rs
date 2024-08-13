@@ -33,35 +33,36 @@ impl<U: HookPollNextUpdate + HookUnmount + Default> UninitializedHook<U> {
 }
 
 hooks_core::impl_hook![
-    type For<H: HookPollNextUpdate + HookUnmount + Default> = UninitializedHook<H>;
+    impl<H: HookPollNextUpdate + HookUnmount + Default> UninitializedHook<H> {
+        fn unmount(self) {
+            H::unmount(self.pin_project())
+        }
 
-    fn unmount(self) {
-        H::unmount(self.pin_project())
-    }
+        fn poll_next_update(self, cx: _) {
+            <H as HookPollNextUpdate>::poll_next_update(self.pin_project(), cx)
+        }
 
-    fn poll_next_update(self, cx: _) {
-        <H as HookPollNextUpdate>::poll_next_update(self.pin_project(), cx)
-    }
-
-    #[inline(always)]
-    fn use_hook(self) -> Pin<&'hook mut Self> {
-        self
+        #[inline(always)]
+        fn use_hook(self) -> Pin<&'hook mut Self> {
+            self
+        }
     }
 ];
 
 pub struct UseUninitializedHook<U: HookPollNextUpdate + HookUnmount + Default>(PhantomData<U>);
 
 hooks_core::impl_hook![
-    type For<U: HookPollNextUpdate + HookUnmount + Default> = UseUninitializedHook<U>;
-    #[inline]
-    fn into_hook(self) -> UninitializedHook<U> {
-        Default::default()
-    }
-    #[inline(always)]
-    fn update_hook(self, _hook: _) {}
-    #[inline(always)]
-    fn h(self, hook: UninitializedHook<U>) {
-        hook
+    impl<U: HookPollNextUpdate + HookUnmount + Default> UseUninitializedHook<U> {
+        #[inline]
+        fn into_hook(self) -> UninitializedHook<U> {
+            Default::default()
+        }
+        #[inline(always)]
+        fn update_hook(self, _hook: _) {}
+        #[inline(always)]
+        fn h(self, hook: UninitializedHook<U>) {
+            hook
+        }
     }
 ];
 

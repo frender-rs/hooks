@@ -54,35 +54,37 @@ impl<E: EffectForNoneDependency> EffectOnce<E> {
 }
 
 hooks_core::impl_hook![
-    type For<E: EffectForNoneDependency> = EffectOnce<E>;
-    #[inline]
-    fn unmount(self) {
-        drop(std::mem::take(self.get_mut()))
+    impl<E: EffectForNoneDependency> EffectOnce<E> {
+        #[inline]
+        fn unmount(self) {
+            drop(std::mem::take(self.get_mut()))
+        }
+        #[inline]
+        fn poll_next_update(self) {
+            self.get_mut().impl_poll()
+        }
+        #[inline]
+        fn use_hook(self) -> () {}
     }
-    #[inline]
-    fn poll_next_update(self) {
-        self.get_mut().impl_poll()
-    }
-    #[inline]
-    fn use_hook(self) -> () {}
 ];
 
 pub struct UseEffectOnce<E>(pub E);
 pub use UseEffectOnce as use_effect_once;
 
 hooks_core::impl_hook![
-    type For<E: EffectForNoneDependency> = UseEffectOnce<E>;
-    #[inline]
-    fn into_hook(self) -> EffectOnce<E> {
-        EffectOnce { inner: Err(self.0) }
-    }
-    #[inline]
-    fn update_hook(self, hook: _) {
-        hook.get_mut().register_effect_with(move || self.0)
-    }
-    #[inline]
-    fn h(self, hook: EffectOnce<E>) {
-        hooks_core::UpdateHook::update_hook(self, hook)
+    impl<E: EffectForNoneDependency> UseEffectOnce<E> {
+        #[inline]
+        fn into_hook(self) -> EffectOnce<E> {
+            EffectOnce { inner: Err(self.0) }
+        }
+        #[inline]
+        fn update_hook(self, hook: _) {
+            hook.get_mut().register_effect_with(move || self.0)
+        }
+        #[inline]
+        fn h(self, hook: EffectOnce<E>) {
+            hooks_core::UpdateHook::update_hook(self, hook)
+        }
     }
 ];
 
@@ -96,21 +98,21 @@ pub fn use_effect_once_with<E: EffectForNoneDependency>(
 }
 
 hooks_core::impl_hook![
-    type For<E: EffectForNoneDependency, F: FnOnce() -> E> = UseEffectOnceWith<F>;
-
-    #[inline]
-    fn into_hook(self) -> EffectOnce<E> {
-        EffectOnce {
-            inner: Err(self.0()),
+    impl<E: EffectForNoneDependency, F: FnOnce() -> E> UseEffectOnceWith<F> {
+        #[inline]
+        fn into_hook(self) -> EffectOnce<E> {
+            EffectOnce {
+                inner: Err(self.0()),
+            }
         }
-    }
-    #[inline]
-    fn update_hook(self, hook: _) {
-        hook.get_mut().register_effect_with(self.0)
-    }
-    #[inline]
-    fn h(self, hook: EffectOnce<E>) {
-        hooks_core::UpdateHook::update_hook(self, hook)
+        #[inline]
+        fn update_hook(self, hook: _) {
+            hook.get_mut().register_effect_with(self.0)
+        }
+        #[inline]
+        fn h(self, hook: EffectOnce<E>) {
+            hooks_core::UpdateHook::update_hook(self, hook)
+        }
     }
 ];
 

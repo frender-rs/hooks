@@ -4,10 +4,11 @@ use super::*;
 pub struct HookTuple<T>(pub T);
 
 crate::impl_hook![
-    type For = HookTuple<()>;
-    fn unmount() {}
-    fn poll_next_update(self) {
-        std::task::Poll::Ready(false)
+    impl<__> HookTuple<()> {
+        fn unmount() {}
+        fn poll_next_update(self) {
+            std::task::Poll::Ready(false)
+        }
     }
 ];
 

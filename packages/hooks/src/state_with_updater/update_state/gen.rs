@@ -17,20 +17,20 @@ pub struct StateWithGenUpdateState<S, U: 'static + UpdateState<S>>(
 );
 
 hooks_core::impl_hook!(
-    type For<S, U: 'static + UpdateState<S>> = StateWithGenUpdateState<S, U>;
+    impl<S, U: 'static + UpdateState<S>> StateWithGenUpdateState<S, U> {
+        fn unmount(self) {
+            Pin::new(&mut self.get_mut().0).unmount()
+        }
 
-    fn unmount(self) {
-        Pin::new(&mut self.get_mut().0).unmount()
-    }
+        fn poll_next_update(self, cx: _) {
+            Pin::new(&mut self.get_mut().0).poll_next_update(cx)
+        }
 
-    fn poll_next_update(self, cx: _) {
-        Pin::new(&mut self.get_mut().0).poll_next_update(cx)
-    }
-
-    #[inline]
-    fn use_hook(self) -> (&'hook mut S, GenUpdateStateKey<U>) {
-        let (state, updater) = Pin::new(&mut self.get_mut().0).use_hook();
-        (state, updater.key())
+        #[inline]
+        fn use_hook(self) -> (&'hook mut S, GenUpdateStateKey<U>) {
+            let (state, updater) = Pin::new(&mut self.get_mut().0).use_hook();
+            (state, updater.key())
+        }
     }
 );
 
@@ -117,36 +117,37 @@ impl<U: UpdateState<S>, S: ?Sized> StateUpdater<S> for GenUpdateStateOwner<U> {
 pub struct UseGenUpdateState<S, U: 'static + UpdateState<S>>(pub S, pub U);
 
 hooks_core::impl_hook!(
-    type For<S, U: UpdateState<S>> = UseGenUpdateState<S, U>;
+    impl<S, U: UpdateState<S>> UseGenUpdateState<S, U> {
+        fn into_hook(self) -> StateWithGenUpdateState<S, U> {
+            StateWithGenUpdateState(
+                UseStateWithUpdater(self.0, GenUpdateStateOwner::new(self.1)).into_hook(),
+            )
+        }
 
-    fn into_hook(self) -> StateWithGenUpdateState<S, U> {
-        StateWithGenUpdateState(
-            UseStateWithUpdater(self.0, GenUpdateStateOwner::new(self.1)).into_hook(),
-        )
-    }
+        fn update_hook(self, _hook: _) {}
 
-    fn update_hook(self, _hook: _) {}
-
-    fn h(self, hook: crate::utils::UninitializedHook<StateWithGenUpdateState<S, U>>) {
-        hook.get_mut().use_into_or_update_hook(self)
+        fn h(self, hook: crate::utils::UninitializedHook<StateWithGenUpdateState<S, U>>) {
+            hook.get_mut().use_into_or_update_hook(self)
+        }
     }
 );
 
 pub struct UseGenUpdateStateWith<F>(pub F);
 
 hooks_core::impl_hook!(
-    type For<S, U: 'static + UpdateState<S>, F: FnOnce() -> (S, U)> = UseGenUpdateStateWith<F>;
+    impl<S, U: 'static + UpdateState<S>, F: FnOnce() -> (S, U)> UseGenUpdateStateWith<F> {
+        fn into_hook(self) -> StateWithGenUpdateState<S, U> {
+            let (initial_value, update_state) = self.0();
+            StateWithGenUpdateState(
+                UseStateWithUpdater(initial_value, GenUpdateStateOwner::new(update_state))
+                    .into_hook(),
+            )
+        }
 
-    fn into_hook(self) -> StateWithGenUpdateState<S, U> {
-        let (initial_value, update_state) = self.0();
-        StateWithGenUpdateState(
-            UseStateWithUpdater(initial_value, GenUpdateStateOwner::new(update_state)).into_hook(),
-        )
-    }
+        fn update_hook(self, _hook: _) {}
 
-    fn update_hook(self, _hook: _) {}
-
-    fn h(self, hook: crate::utils::UninitializedHook<StateWithGenUpdateState<S, U>>) {
-        hook.get_mut().use_into_or_update_hook(self)
+        fn h(self, hook: crate::utils::UninitializedHook<StateWithGenUpdateState<S, U>>) {
+            hook.get_mut().use_into_or_update_hook(self)
+        }
     }
 );

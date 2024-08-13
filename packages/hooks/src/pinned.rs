@@ -16,33 +16,34 @@ impl<T> Pinned<T> {
 }
 
 hooks_core::impl_hook![
-    type For<T> = Pinned<T>;
+    impl<T> Pinned<T> {
+        fn unmount() {}
 
-    fn unmount() {}
-
-    #[inline]
-    fn poll_next_update(self) {
-        std::task::Poll::Ready(false)
-    }
-    #[inline]
-    fn use_hook(self) -> Pin<&'hook mut T> {
-        self.pin_project_inner()
+        #[inline]
+        fn poll_next_update(self) {
+            std::task::Poll::Ready(false)
+        }
+        #[inline]
+        fn use_hook(self) -> Pin<&'hook mut T> {
+            self.pin_project_inner()
+        }
     }
 ];
 
 pub struct UseDefaultPinned<T: Default>(PhantomData<T>);
 
 hooks_core::impl_hook![
-    type For<T: Default> = UseDefaultPinned<T>;
-    #[inline(always)]
-    fn into_hook(self) -> Pinned<T> {
-        Default::default()
-    }
-    #[inline(always)]
-    fn update_hook(self, _hook: _) {}
-    #[inline(always)]
-    fn h(self, hook: Pinned<T>) {
-        hooks_core::Hook::use_hook(hook)
+    impl<T: Default> UseDefaultPinned<T> {
+        #[inline(always)]
+        fn into_hook(self) -> Pinned<T> {
+            Default::default()
+        }
+        #[inline(always)]
+        fn update_hook(self, _hook: _) {}
+        #[inline(always)]
+        fn h(self, hook: Pinned<T>) {
+            hooks_core::Hook::use_hook(hook)
+        }
     }
 ];
 

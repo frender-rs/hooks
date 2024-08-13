@@ -199,52 +199,54 @@ impl<T> crate::ToOwnedShareValue for SharedSignal<T> {
 }
 
 hooks_core::impl_hook![
-    type For<T> = SharedSignal<T>;
-    fn unmount() {}
-    #[inline]
-    fn poll_next_update(self, cx: _) {
-        use hooks_core::HookPollNextUpdateExt;
-        self.get_mut().imp.poll_next_update(cx)
-    }
-    #[inline]
-    fn use_hook(self) -> &'hook Self {
-        use hooks_core::HookExt;
+    impl<T> SharedSignal<T> {
+        fn unmount() {}
+        #[inline]
+        fn poll_next_update(self, cx: _) {
+            use hooks_core::HookPollNextUpdateExt;
+            self.get_mut().imp.poll_next_update(cx)
+        }
+        #[inline]
+        fn use_hook(self) -> &'hook Self {
+            use hooks_core::HookExt;
 
-        let this = self.get_mut();
-        _ = this.imp.use_hook();
-        this
+            let this = self.get_mut();
+            _ = this.imp.use_hook();
+            this
+        }
     }
 ];
 
 pub struct UseSharedSignal<T>(pub T);
 
 hooks_core::impl_hook![
-    type For<T> = UseSharedSignal<T>;
-    #[inline]
-    fn into_hook(self) -> SharedSignal<T> {
-        SharedSignal::new(self.0)
-    }
-    #[inline(always)]
-    fn update_hook(self, _hook: _) {}
-    fn h(self, hook: crate::utils::UninitializedHook<SharedSignal<T>>) {
-        hook.get_mut().use_into_or_update_hook(self)
+    impl<T> UseSharedSignal<T> {
+        #[inline]
+        fn into_hook(self) -> SharedSignal<T> {
+            SharedSignal::new(self.0)
+        }
+        #[inline(always)]
+        fn update_hook(self, _hook: _) {}
+        fn h(self, hook: crate::utils::UninitializedHook<SharedSignal<T>>) {
+            hook.get_mut().use_into_or_update_hook(self)
+        }
     }
 ];
 
 pub struct UseSharedSignalWith<T, F: FnOnce() -> T>(pub F);
 
 hooks_core::impl_hook![
-    type For<T, F: FnOnce() -> T> = UseSharedSignalWith<T, F>;
+    impl<T, F: FnOnce() -> T> UseSharedSignalWith<T, F> {
+        #[inline]
+        fn into_hook(self) -> SharedSignal<T> {
+            SharedSignal::new(self.0())
+        }
 
-    #[inline]
-    fn into_hook(self) -> SharedSignal<T> {
-        SharedSignal::new(self.0())
-    }
-
-    #[inline(always)]
-    fn update_hook(self, _hook: _) {}
-    fn h(self, hook: crate::utils::UninitializedHook<SharedSignal<T>>) {
-        hook.get_mut().use_into_or_update_hook(self)
+        #[inline(always)]
+        fn update_hook(self, _hook: _) {}
+        fn h(self, hook: crate::utils::UninitializedHook<SharedSignal<T>>) {
+            hook.get_mut().use_into_or_update_hook(self)
+        }
     }
 ];
 

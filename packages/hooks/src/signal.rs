@@ -108,18 +108,18 @@ impl<S: Signal + ?Sized> Signal for &S {
 pub struct UseSignal<'a, S: Signal + ?Sized>(&'a S);
 
 hooks_core::impl_hook!(
-    type For<S: Signal> = UseSignal<'_, S>;
+    impl<S: Signal> UseSignal<'_, S> {
+        fn into_hook(self) -> S::SignalHook {
+            self.0.to_signal_hook()
+        }
 
-    fn into_hook(self) -> S::SignalHook {
-        self.0.to_signal_hook()
-    }
+        fn update_hook(self, hook: _) {
+            self.0.update_signal_hook(hook)
+        }
 
-    fn update_hook(self, hook: _) {
-        self.0.update_signal_hook(hook)
-    }
-
-    fn h(self, hook: <S::SignalHook as SignalHook>::SignalHookUninitialized) {
-        self.0.h_signal_hook(hook)
+        fn h(self, hook: <S::SignalHook as SignalHook>::SignalHookUninitialized) {
+            self.0.h_signal_hook(hook)
+        }
     }
 );
 

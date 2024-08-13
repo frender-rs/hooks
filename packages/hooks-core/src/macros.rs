@@ -391,75 +391,55 @@ macro_rules! transform_hook_fn_body_as_closure {
 /// struct OutputOnce<T>(pub Option<T>);
 ///
 /// impl_hook!(
-///     type For<T: Unpin> = OutputOnce<T>;
+///     impl<T: Unpin> OutputOnce<T> {
+///         /// HookUnmount is implemented with default `fn unmount()`
+///         fn unmount() {}
 ///
-///     /// HookUnmount is implemented with default `fn unmount()`
-///     fn unmount() {}
+///         /// HookPollNextUpdate is implemented
+///         fn poll_next_update(self, _cx: _) {
+///             std::task::Poll::Ready(self.get_mut().0.is_some())
+///         }
 ///
-///     /// HookPollNextUpdate is implemented
-///     fn poll_next_update(self, _cx: _) {
-///         std::task::Poll::Ready(self.get_mut().0.is_some())
-///     }
-///
-///     /// HookValue and Hook is implemented
-///     /// HookValue::Value is `&'hook mut Option<T>`
-///     #[inline]
-///     fn use_hook(self) -> &'hook mut Option<T> {
-///         &mut self.get_mut().0
+///         /// HookValue and Hook is implemented
+///         /// HookValue::Value is `&'hook mut Option<T>`
+///         #[inline]
+///         fn use_hook(self) -> &'hook mut Option<T> {
+///             &mut self.get_mut().0
+///         }
 ///     }
 /// );
 /// ```
 ///
-/// ## Declare the type to impl for with `type For = ...;`
+/// ## Just write the methods of the traits you want to impl in one impl block
 ///
 /// ```
 /// # use hooks_core::impl_hook;
 /// # struct MyType;
 /// impl_hook!(
-///     type For = MyType;
-/// #   fn poll_next_update(self) { false.into() }
+///     impl<__> MyType { // <__> helps rustfmt to format this macro.
+///         // write methods here
+/// #       fn poll_next_update(self) { false.into() }
+///     }
 /// );
 /// # fn asserts() -> impl hooks_core::HookPollNextUpdate { MyType }
 /// ```
 ///
-/// You can declare generics and bounds.
+/// Generics and where clause are supported.
 ///
 /// ```
 /// # use hooks_core::impl_hook;
 /// # struct MyType<'a, T, F>(&'a T, F);
 /// impl_hook!(
-///     type For<'a, T: Clone + Default, F: FnMut(&T) -> T> = MyType<'a, T, F>;
-/// #   fn poll_next_update(self) { false.into() }
+///     impl<'a, T: Clone + Default, F: FnMut(&T) -> T> MyType<'a, T, F>
+///     where
+///         T: Sized,
+///     {
+///         // write methods here
+/// #       fn poll_next_update(self) { false.into() }
+///     }
 /// );
 /// # fn asserts() -> impl hooks_core::HookPollNextUpdate { MyType(&1, Clone::clone) }
 /// ```
-///
-/// Parsing with `macro_rules` is limited.
-/// For example, complex bounds are not supported.
-///
-/// ```compile_fail
-/// # use hooks_core::impl_hook;
-/// # struct MyType<F: for<'a> FnMut(&'a str) -> &'a str>(F);
-/// impl_hook!(
-///     type For<F: for<'a> FnMut(&'a str) -> &'a str> = MyType<F>;
-/// #   fn poll_next_update(self) { false.into() }
-/// );
-/// ```
-///
-/// You can move complex bounds to a special where clause `where __![...]: __`
-///
-/// ```
-/// # use hooks_core::impl_hook;
-/// # struct MyType<F: for<'a> FnMut(&'a str) -> &'a str>(F);
-/// impl_hook!(
-///     type For<F> = MyType<F>
-///         where __![F: for<'a> FnMut(&'a str) -> &'a str]: __;
-/// #   fn poll_next_update(self) { false.into() }
-/// );
-/// # fn asserts() -> impl hooks_core::HookPollNextUpdate { MyType(|v: &str| v) }
-/// ```
-///
-/// After declaring the type, you can easily impl traits for this type with methods.
 ///
 /// ## Supported traits
 ///
@@ -475,8 +455,9 @@ macro_rules! transform_hook_fn_body_as_closure {
 /// ```
 /// # use hooks_core::impl_hook; struct MyType;
 /// impl_hook!(
-///     type For = MyType;
-///     fn unmount() {}
+///     impl<__> MyType {
+///         fn unmount() {}
+///     }
 /// );
 /// ```
 ///
@@ -486,9 +467,10 @@ macro_rules! transform_hook_fn_body_as_closure {
 /// # use hooks_core::impl_hook; struct MyType;
 /// # impl MyType { fn do_something(&self) {} }
 /// impl_hook!(
-///     type For = MyType;
-///     fn unmount(self) {
-///         self.do_something();
+///     impl<__> MyType {
+///         fn unmount(self) {
+///             self.do_something();
+///         }
 ///     }
 /// );
 /// ```
@@ -512,10 +494,11 @@ macro_rules! transform_hook_fn_body_as_closure {
 /// #     inner: std::future::Ready<bool>,
 /// # });
 /// impl_hook!(
-///     type For = MyType;
-///     fn poll_next_update(self, cx: _) {
-/// #       let cx: &mut std::task::Context<'_> = cx;
-///         self.project().inner.poll(cx)
+///     impl<__> MyType {
+///         fn poll_next_update(self, cx: _) {
+/// #           let cx: &mut std::task::Context<'_> = cx;
+///             self.project().inner.poll(cx)
+///         }
 ///     }
 /// );
 /// ```
@@ -534,11 +517,12 @@ macro_rules! transform_hook_fn_body_as_closure {
 /// # use hooks_core::impl_hook;
 /// # #[derive(Clone, Copy)] struct MyValueType; struct MyType(MyValueType);
 /// impl_hook!(
-///     type For = MyType;
-///     fn unmount() {}
-///     fn poll_next_update(self, cx: _) { todo!() }
-///     fn use_hook(self) -> MyValueType {
-///         self.0
+///     impl<__> MyType {
+///         fn unmount() {}
+///         fn poll_next_update(self, cx: _) { todo!() }
+///         fn use_hook(self) -> MyValueType {
+///             self.0
+///         }
 ///     }
 /// );
 /// ```
@@ -553,11 +537,12 @@ macro_rules! transform_hook_fn_body_as_closure {
 ///
 /// ```
 /// # use hooks_core::impl_hook; struct UseMyHook(i32); struct MyHook(i32);
-/// # impl_hook!( type For = MyHook; fn unmount() {} fn poll_next_update(self, cx: _) { todo!() } fn use_hook(self) {} );
+/// # impl_hook!( impl MyHook { fn unmount() {} fn poll_next_update(self, cx: _) { todo!() } fn use_hook(self) {} });
 /// impl_hook!(
-///     type For = UseMyHook;
-///     fn into_hook(self) -> MyHook {
-///         MyHook(self.0)
+///     impl<__> UseMyHook {
+///         fn into_hook(self) -> MyHook {
+///             MyHook(self.0)
+///         }
 ///     }
 /// );
 /// ```
@@ -574,14 +559,15 @@ macro_rules! transform_hook_fn_body_as_closure {
 ///
 /// ```
 /// # use hooks_core::impl_hook; struct UseMyHook(i32); struct MyHook(i32);
-/// # impl_hook!( type For = MyHook; fn unmount() {} fn poll_next_update(self, cx: _) { todo!() } fn use_hook(self) {} );
+/// # impl_hook!( impl MyHook { fn unmount() {} fn poll_next_update(self, cx: _) { todo!() } fn use_hook(self) {} });
 /// impl_hook!(
-///     type For = UseMyHook;
-///     fn into_hook(self) -> MyHook {
-///         MyHook(self.0)
-///     }
-///     fn update_hook(self, mut hook: _) {
-///         hook.0 = self.0
+///     impl<__> UseMyHook {
+///         fn into_hook(self) -> MyHook {
+///             MyHook(self.0)
+///         }
+///         fn update_hook(self, mut hook: _) {
+///             hook.0 = self.0
+///         }
 ///     }
 /// );
 /// ```
@@ -599,18 +585,19 @@ macro_rules! transform_hook_fn_body_as_closure {
 /// ```
 /// # use hooks_core::impl_hook; struct UseMyHook(i32); struct MyHook(i32);
 /// # #[derive(Default)] struct MyHookUninitialized(Option<i32>);
-/// # impl_hook!( type For = MyHook; fn unmount() {} fn poll_next_update(self, cx: _) { todo!() } fn use_hook(self) {} );
-/// # impl_hook!( type For = MyHookUninitialized; fn unmount() {} fn poll_next_update(self, cx: _) { todo!() } );
+/// # impl_hook!( impl MyHook { fn unmount() {} fn poll_next_update(self, cx: _) { todo!() } fn use_hook(self) {} });
+/// # impl_hook!( impl MyHookUninitialized { fn unmount() {} fn poll_next_update(self, cx: _) { todo!() } });
 /// impl_hook!(
-///     type For = UseMyHook;
-///     fn into_hook(self) -> MyHook {
-///         MyHook(self.0)
-///     }
-///     fn update_hook(self, mut hook: _) {
-///         hook.0 = self.0
-///     }
-///     fn h(self, mut hook: MyHookUninitialized) {
-///         hook.0.get_or_insert(self.0);
+///     impl<__> UseMyHook {
+///         fn into_hook(self) -> MyHook {
+///             MyHook(self.0)
+///         }
+///         fn update_hook(self, mut hook: _) {
+///             hook.0 = self.0
+///         }
+///         fn h(self, mut hook: MyHookUninitialized) {
+///             hook.0.get_or_insert(self.0);
+///         }
 ///     }
 /// );
 /// ```
