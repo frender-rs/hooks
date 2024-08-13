@@ -17,3 +17,6 @@ smol = "1.2.5"
 [dev-dependencies.hooks-macro-core]
 path = "../hooks-macro-core"
 features = ["extra-traits"]
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(hook_macro_fail)'] }
