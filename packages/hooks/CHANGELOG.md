@@ -1,6 +1,20 @@
 # Changelog
 <!-- Touch this file so that the release-please would know this commit only affects this package -->
 
+## [3.0.0-alpha.14](https://github.com/frender-rs/hooks/compare/hooks-v3.0.0-alpha.13...hooks-v3.0.0-alpha.14) (2024-08-13)
+
+
+### Miscellaneous Chores
+
+* release hooks ([fd0ef9d](https://github.com/frender-rs/hooks/commit/fd0ef9da123c3f89bb2b326113c19c1af169d61e))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * hooks-core bumped from 3.0.0-alpha.4 to 3.0.0-alpha.5
+
 ## [3.0.0-alpha.13](https://github.com/frender-rs/hooks/compare/hooks-v3.0.0-alpha.12...hooks-v3.0.0-alpha.13) (2024-07-29)
 
 
