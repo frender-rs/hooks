@@ -643,9 +643,9 @@ dependencies = [
 
 [[package]]
 name = "syn-lite"
-version = "0.1.2"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "95841c852a7ba1b0d9352aa8a7c777a6ddd2034ea7c4cf5c01273054fe120791"
+checksum = "07fb5430edf4c0b255c1ed5f61335a56d2e1ccbfa8608b452e657f6e18ffc08b"
 
 [[package]]
 name = "tracing"
