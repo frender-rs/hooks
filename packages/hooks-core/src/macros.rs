@@ -627,6 +627,31 @@ macro_rules! transform_hook_fn_body_as_closure {
 #[macro_export]
 macro_rules! impl_hook {
     (
+        // this empty generic helps with rustfmt
+        impl <$(__)?> $($rest:tt)*
+    ) => {
+        $crate::__impl_impl_hook_generics_consumed! {
+            before_gt {}
+            gt_and_rest {> $($rest)*}
+        }
+    };
+    (
+        impl < $($generics_and_rest:tt)*
+    ) => {
+        $crate::__private::consume_till_outer_gt! {
+            on_finish { $crate::__impl_impl_hook_generics_consumed! }
+            input { $($generics_and_rest)* }
+        }
+    };
+    (
+        impl $($rest:tt)*
+    ) => {
+        $crate::__impl_impl_hook_generics_consumed! {
+            before_gt {}
+            gt_and_rest {> $($rest)*}
+        }
+    };
+    (
         type For $(<>)? = $($rest:tt)*
     ) => {
         $crate::__impl_impl_hook_generics_parsed! {

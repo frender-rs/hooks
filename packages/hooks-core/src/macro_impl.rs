@@ -630,12 +630,44 @@ macro_rules! __impl_phantom {
 #[doc(hidden)]
 #[macro_export]
 macro_rules! __impl_impl_hook {
+    // TODO: remove this
     (
         generics! { params! { $($generic_params:tt)* } $($generics_other:tt)* }
         for_ty! { $ty:ty }
         where_clause! { $( where $($where_clause:tt)*)? }
         rest! {
             ;
+            $($body:tt)*
+        }
+    ) => {
+        $crate::__impl_impl_hook! {
+            generic_params { $($generic_params)* }
+            for_ty { $ty }
+            where_clause { $( where $($where_clause)*)? }
+            body {
+                $($body)*
+            }
+        }
+    };
+    // TODO: remove this
+    (
+        generic_params $generic_params:tt
+        for_ty $for_ty:tt
+        where_clause! $where_clause:tt
+        rest! { $body:tt }
+    ) => {
+        $crate::__impl_impl_hook! {
+            generic_params $generic_params
+            for_ty $for_ty
+            where_clause $where_clause
+            body $body
+        }
+    };
+    (
+        generic_params { $($generic_params:tt)* }
+        for_ty { $ty:ty }
+        where_clause { $( where $($where_clause:tt)*)? }
+        body {
             $(
                 $(#$fn_attr:tt)*
                 fn $fn_name:ident $args:tt $(-> $fn_ret_ty:ty)?
@@ -656,6 +688,42 @@ macro_rules! __impl_impl_hook {
                     {$($impl_hook)*}
                 ]
             )*
+        }
+    };
+}
+
+#[doc(hidden)]
+#[macro_export]
+macro_rules! __impl_impl_hook_generics_consumed {
+    (
+        before_gt $before_gt:tt
+        gt_and_rest {
+            > $ty:ty {
+                $($rest:tt)*
+            }
+        }
+    ) => {
+        $crate::__impl_impl_hook! {
+            generic_params $before_gt
+            for_ty { $ty }
+            where_clause {}
+            body { $($rest)* }
+        }
+    };
+    (
+        before_gt $before_gt:tt
+        gt_and_rest {
+            > $ty:ty
+            where $($rest:tt)*
+        }
+    ) => {
+        $crate::__private::parse_where_clause! {
+            [
+                generic_params $before_gt
+                for_ty { $ty }
+            ]
+            { where $($rest)* }
+            => $crate::__impl_impl_hook!
         }
     };
 }
