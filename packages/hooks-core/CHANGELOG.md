@@ -1,6 +1,23 @@
 # Changelog
 <!-- Touch this file so that the release-please would know this commit only affects this package -->
 
+## [3.0.0-alpha.5](https://github.com/frender-rs/hooks/compare/hooks-core-v3.0.0-alpha.4...hooks-core-v3.0.0-alpha.5) (2024-08-13)
+
+
+### ⚠ BREAKING CHANGES
+
+* remove `type For` syntax in impl_hook! macro.
+
+### Features
+
+* allow impl syntax in impl_hook! ([99b7524](https://github.com/frender-rs/hooks/commit/99b752453f685aa0eae608b033bafddb9a0da147))
+* remove `type For` syntax in impl_hook! macro. ([da9206c](https://github.com/frender-rs/hooks/commit/da9206c54951b224018acfe4666b8d3533bcef1a))
+
+
+### Miscellaneous Chores
+
+* release hooks-core ([ac36c5b](https://github.com/frender-rs/hooks/commit/ac36c5bbe39650170612fe32faff05cf1c74145f))
+
 ## [3.0.0-alpha.4](https://github.com/frender-rs/hooks/compare/hooks-core-v3.0.0-alpha.3...hooks-core-v3.0.0-alpha.4) (2024-06-17)
 
 
