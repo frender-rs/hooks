@@ -355,7 +355,7 @@ checksum = "fbf6a919d6cf397374f7dfeeea91d974c7c0a7221d0d0f4f20d859d329e53fcc"
 
 [[package]]
 name = "hooks"
-version = "3.0.0-alpha.14"
+version = "3.0.0-alpha.15"
 dependencies = [
  "async-io 2.3.3",
  "futures-lite 2.3.0",
@@ -367,7 +367,7 @@ dependencies = [
 
 [[package]]
 name = "hooks-core"
-version = "3.0.0-alpha.5"
+version = "3.0.0-alpha.6"
 dependencies = [
  "futures-core",
  "hooks",
@@ -402,7 +402,7 @@ dependencies = [
 
 [[package]]
 name = "hooks-test"
-version = "0.1.23"
+version = "0.1.24"
 dependencies = [
  "futures-lite 1.12.0",
  "hooks",

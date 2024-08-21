@@ -1,7 +1,7 @@
 {
-  "packages/hooks-core": "3.0.0-alpha.5",
-  "packages/hooks": "3.0.0-alpha.14",
-  "packages/hooks-test": "0.1.23",
+  "packages/hooks-core": "3.0.0-alpha.6",
+  "packages/hooks": "3.0.0-alpha.15",
+  "packages/hooks-test": "0.1.24",
   "packages/hooks-macro": "0.2.0",
   "packages/hooks-macro-core": "0.4.0",
   "packages/hooks-gen": "0.2.0"
