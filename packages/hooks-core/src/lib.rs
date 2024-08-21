@@ -31,7 +31,10 @@ pub mod prelude_h {
 
 #[doc(hidden)]
 pub mod __private {
-    pub use syn_lite::{consume_till_outer_gt, expand_or, parse_item_fn, parse_where_clause};
+    pub use syn_lite::{
+        consume_inner_attrs, consume_optional_where_clause, consume_till_outer_gt, expand_or,
+        parse_item_fn,
+    };
 }
 
 #[doc(hidden)]

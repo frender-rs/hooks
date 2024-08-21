@@ -674,18 +674,28 @@ macro_rules! UpdateHookUninitialized {
     // Implementation details
     (@ extract_lifetimes_from_generics {
         value! { $value:ty }
-        params_name! {$(
-            $($lt:lifetime)?
-            $($tp0:ident $($tp1:ident)?)?
-        ),+}
+        $(generics_info! {
+            $({
+                $(lifetime_attrs $lifetime_attrs:tt)?
+                lifetime {$lt:lifetime}
+                $($rest:tt)*
+            })*
+            $({
+                $(const_attrs $const_attrs:tt)?
+                $(type_attrs $type_attrs:tt)?
+                $(const $const:tt)?
+                name $name:tt
+                $($rest2:tt)*
+            })*
+        })?
         // explicitly specified lifetime bounds
         bounds! { $($bounds:tt)* }
     }) => {
         $crate::UpdateHookUninitialized![
             $value,
             $(
-                $( $lt + )?
-            )+
+                $( $lt + )*
+            )?
             $($bounds)*
         ]
     };

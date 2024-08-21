@@ -279,14 +279,16 @@ macro_rules! __impl_fn_hook_body {
 macro_rules! __impl_hook_fn_bounds_resolved {
     ($hook_bounds:tt #[hook $(($($options:tt)*))? ] $($rest:tt)*) => {
         $crate::__private::parse_item_fn! {
-            [$hook_bounds ($($($options)*)?)]
-            {$($rest)*} => $crate::__impl_hook_fn_item_fn_parsed!
+            on_finish { $crate::__impl_hook_fn_item_fn_parsed! }
+            prepend { $hook_bounds ($($($options)*)?) }
+            input {$($rest)*}
         }
     };
     ($hook_bounds:tt $($rest:tt)*) => {
         $crate::__private::parse_item_fn! {
-            [$hook_bounds ()]
-            {$($rest)*} => $crate::__impl_hook_fn_item_fn_parsed!
+            on_finish { $crate::__impl_hook_fn_item_fn_parsed! }
+            prepend {$hook_bounds ()}
+            input {$($rest)*}
         }
     };
 }
@@ -325,36 +327,70 @@ macro_rules! __impl_capture_lifetimes {
 #[macro_export]
 macro_rules! __impl_hook_fn_item_fn_parsed {
     (
+        $hook_bounds:tt
+        $method_path:tt
+        item_fn {
+            $(outer_attrs $outer_attrs:tt)?
+            vis $vis:tt
+            sig $sig:tt
+            block { $fn_body:tt }
+        }
+        rest {}
+    ) => {
+        $crate::__private::consume_inner_attrs! {
+            on_finish {$crate::__impl_hook_fn_item_fn_body_parsed!}
+            prepend {
+                $hook_bounds
+                $method_path
+                item_fn {
+                    $(outer_attrs $outer_attrs)?
+                    vis $vis
+                    sig $sig
+                }
+            }
+            input $fn_body
+        }
+    };
+}
+
+#[doc(hidden)]
+#[macro_export]
+macro_rules! __impl_hook_fn_item_fn_body_parsed {
+    (
         { $($hook_bounds:tt)* } // { 'a + 'b }
         ($($method_path:ident),* $(,)?)
-        item_fn! {
-            outer_attrs! { $($outer_attrs:tt)* }
-            vis! { $vis:vis }
-            sig! {
-                ident! { $name:ident }
-                generics! {
-                    params! { $($generic_params:tt)* }
-                    impl_generics! $impl_generics:tt
-                    type_generics! { $($type_generics:tt)* }
-                    params_name! $params_name:tt
-                }
-                paren_inputs! { $paren_inputs:tt }
-                output! { $(-> $ret_ty:ty)? }
-                where_clause! { $($where_clause:tt)* }
+        item_fn {
+            $(outer_attrs { $($outer_attrs:tt)* })?
+            vis { $vis:vis }
+            sig {
+                fn { $fn:tt }
+                ident { $name:ident }
+                $(
+                    lt {<}
+                    parsed_generics {
+                        generics      { $($generic_params:tt)* }
+                        impl_generics $impl_generics:tt
+                        type_generics { $($type_generics:tt)* }
+                        generics_info $generics_info:tt
+                    }
+                    gt {>}
+                )?
+                paren_inputs { $paren_inputs:tt }
+                output { $(-> $ret_ty:ty)? }
+                $(where_clause { $($where_clause:tt)* })?
             }
-            inner_attrs! { $($inner_attrs:tt)* }
-            stmts! { $($stmts:tt)* }
         }
-        rest! {}
+        inner_attrs { $($inner_attrs:tt)* }
+        rest { $($stmts:tt)* }
     ) => {
-        $($outer_attrs)*
+        $($($outer_attrs)*)?
         $vis fn $name
-        <$($generic_params)*>
+        <$($($generic_params)*)?>
         $paren_inputs
         -> $crate::UpdateHookUninitialized![
             @ extract_lifetimes_from_generics {
                 value! { $crate::__private::expand_or![[$($ret_ty)?]()] }
-                params_name! $params_name
+                $(generics_info! $generics_info)?
                 bounds! { $($hook_bounds)* }
             }
         ]
@@ -367,19 +403,16 @@ macro_rules! __impl_hook_fn_item_fn_parsed {
 
             enum __HooksImplNever {}
 
-            struct __HooksValueOfThisHook <$($generic_params)*>
+            struct __HooksValueOfThisHook <$($($generic_params)*)?>
             $($where_clause)*
             {
-                __: $crate::__impl_phantoms![
-                    __HooksImplNever,
-                    $params_name
-                ]
+                __: (__HooksImplNever, $($crate::__impl_phantoms! $generics_info)?)
             }
 
             impl<
                 'hook,
-                $($generic_params)*
-            > $crate::HookValue<'hook> for __HooksValueOfThisHook <$($type_generics)*>
+                $($($generic_params)*)?
+            > $crate::HookValue<'hook> for __HooksValueOfThisHook <$($($type_generics)*)?>
             $($where_clause)*
             {
                 type Value = $crate::__private::expand_or![[$($ret_ty)?]()];
@@ -387,7 +420,7 @@ macro_rules! __impl_hook_fn_item_fn_parsed {
 
             $crate::fn_hook::use_fn_hook $(::$method_path)*
             ::<
-                __HooksValueOfThisHook <$($type_generics)*>
+                __HooksValueOfThisHook <$($($type_generics)*)?>
                 , _, _
             >
             (
@@ -597,32 +630,37 @@ macro_rules! __impl_hook_methods {
 #[macro_export]
 macro_rules! __impl_phantoms {
     (
-        $ty:ty,
-        {$(
-            $($lt:lifetime)?
-            $($tp0:ident $($tp1:ident)?)?
-        ),+}
+        $($generics_info:tt)*
     ) => {
-        (
-            $ty,
-            $(
-                $( $crate::__impl_phantom![$lt] )?
-                $( $crate::__impl_phantom![$tp0 $($tp1)?] )?
-            ),*
-        )
+        ($(
+            $crate::__impl_phantom! $generics_info,
+        )*)
     };
 }
 
 #[doc(hidden)]
 #[macro_export]
 macro_rules! __impl_phantom {
-    ($lt:lifetime) => {
+    (
+        $(lifetime_attrs $attrs:tt)?
+        lifetime {$lt:lifetime}
+        $($rest:tt)*
+    ) => {
         ::core::marker::PhantomData::<&$lt()>
     };
-    (const $tp:ident) => {
+    (
+        $(const_attrs $attrs:tt)?
+        const {const}
+        name {$name:ident}
+        $($rest:tt)*
+    ) => {
         ()
     };
-    ($tp:ident) => {
+    (
+        $(type_attrs $attrs:tt)?
+        name {$tp:ident}
+        $($rest:tt)*
+    ) => {
         ::core::marker::PhantomData::<$tp>
     };
 }
@@ -633,20 +671,20 @@ macro_rules! __impl_impl_hook {
     (
         generic_params $generic_params:tt
         for_ty $for_ty:tt
-        where_clause! $where_clause:tt
-        rest! { $body:tt }
+        $(where_clause $where_clause:tt)?
+        rest { $body:tt }
     ) => {
         $crate::__impl_impl_hook! {
             generic_params $generic_params
             for_ty $for_ty
-            where_clause $where_clause
+            $(where_clause $where_clause)?
             body $body
         }
     };
     (
         generic_params { $($generic_params:tt)* }
         for_ty { $ty:ty }
-        where_clause { $( where $($where_clause:tt)*)? }
+        $(where_clause { $( where $($where_clause:tt)*)? })?
         body {
             $(
                 $(#$fn_attr:tt)*
@@ -659,7 +697,7 @@ macro_rules! __impl_impl_hook {
             (
                 [$($generic_params)*]
                 [$ty]
-                [$($($where_clause)*)?]
+                [$($($($where_clause)*)?)?]
             )
             $(
                 $fn_name [
@@ -686,7 +724,6 @@ macro_rules! __impl_impl_hook_generics_consumed {
         $crate::__impl_impl_hook! {
             generic_params $before_gt
             for_ty { $ty }
-            where_clause {}
             body { $($rest)* }
         }
     };
@@ -697,13 +734,13 @@ macro_rules! __impl_impl_hook_generics_consumed {
             where $($rest:tt)*
         }
     ) => {
-        $crate::__private::parse_where_clause! {
-            [
+        $crate::__private::consume_optional_where_clause! {
+            on_finish {$crate::__impl_impl_hook!}
+            prepend {
                 generic_params $before_gt
                 for_ty { $ty }
-            ]
-            { where $($rest)* }
-            => $crate::__impl_impl_hook!
+            }
+            input { where $($rest)* }
         }
     };
 }
