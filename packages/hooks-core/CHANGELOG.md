@@ -1,6 +1,13 @@
 # Changelog
 <!-- Touch this file so that the release-please would know this commit only affects this package -->
 
+## [3.0.0-alpha.6](https://github.com/frender-rs/hooks/compare/hooks-core-v3.0.0-alpha.5...hooks-core-v3.0.0-alpha.6) (2024-08-21)
+
+
+### Features
+
+* upgrade syn-lite ([f60ab5b](https://github.com/frender-rs/hooks/commit/f60ab5bcd90f61e1001a16ab4d1c04c80fa24e57))
+
 ## [3.0.0-alpha.5](https://github.com/frender-rs/hooks/compare/hooks-core-v3.0.0-alpha.4...hooks-core-v3.0.0-alpha.5) (2024-08-13)
 
 
